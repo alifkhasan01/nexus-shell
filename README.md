@@ -21,18 +21,19 @@ quickshell-bar/
     ├── PowerMenuItem.qml
     ├── Dashboard.qml          # panel dashboard ala Caelestia, dibuka dari Clock
     └── dashboard/
-        ├── MediaCard.qml       # media player via MPRIS (play/pause/next/prev)
+        ├── MediaCard.qml       # media player via MPRIS + cava visualizer
         ├── QuickToggles.qml    # baris toggle WiFi/Bluetooth/DND/Night Light
         ├── QuickToggle.qml     # komponen pill toggle generik
         ├── SliderRow.qml       # slider generik (dipakai volume & brightness)
-        └── SystemStats.qml     # CPU / RAM / uptime
+        ├── SystemStats.qml     # CPU / RAM / uptime
+        └── cava_feed.sh        # feed data cava ke /tmp/qs-cava.out untuk visualizer
 ```
 
 ## Dashboard
 
 Klik jam di tengah bar buat buka/tutup dashboard (dropdown dari atas, mirip dashboard Caelestia). Isinya:
 
-- **Media player** — MPRIS (`Quickshell.Services.Mpris`): cover art, judul/artis, play/pause/next/prev
+- **Media player** — MPRIS (`Quickshell.Services.Mpris`): cover art, judul/artis, play/pause/next/prev; dilengkapi **cava visualizer** 16 bar animasi di bagian bawah card
 - **Quick toggles** — WiFi (`nmcli`), Bluetooth (`bluetoothctl`), DND (`dunstctl`), Night Light (`hyprsunset`)
 - **Slider** — volume (Pipewire) & brightness (`brightnessctl`), langsung drag
 - **System stats** — CPU, RAM (dari `/proc/stat` & `free`), uptime
@@ -41,6 +42,7 @@ Klik jam di tengah bar buat buka/tutup dashboard (dropdown dari atas, mirip dash
 
 - `quickshell` (git terbaru, dengan module `Quickshell.Hyprland`, `Quickshell.Services.Pipewire`, `Quickshell.Services.UPower`, `Quickshell.Services.Mpris`)
 - `brightnessctl` (untuk brightness)
+- `cava` — untuk audio visualizer di MediaCard. Jalankan `cava_feed.sh` di background sebelum/bersamaan dengan quickshell
 - `nmcli`, `bluetoothctl`, `dunstctl`, `hyprsunset` untuk quick toggles di dashboard — **ganti command-nya** di `modules/dashboard/QuickToggles.qml` kalau tooling kamu beda (mis. `iwctl` untuk WiFi, `mako` bukan `dunst`, `wlsunset` bukan `hyprsunset`)
 - Nerd Font (icon di Text pakai glyph nerd font, ganti kalau font kamu beda)
 - App launcher pilihan kamu (default dipanggil: `fuzzel`, ganti di `MenuButton.qml`)
@@ -62,6 +64,12 @@ Tambahkan ke `hyprland.conf` biar auto-start:
 
 ```
 exec-once = qs -c quickshell-bar
+```
+
+Untuk mengaktifkan **cava visualizer** di MediaCard, jalankan juga `cava_feed.sh`:
+
+```
+exec-once = bash ~/.config/quickshell/modules/dashboard/cava_feed.sh
 ```
 
 ## Yang perlu disesuaikan
