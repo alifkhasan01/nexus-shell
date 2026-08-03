@@ -56,6 +56,9 @@ Item {
         }
     }
 
+    // Signal ke Bar.qml untuk tampilkan OSD
+    signal osdVolume(real value, bool muted)
+
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
@@ -65,8 +68,10 @@ Item {
             if (mouse.button === Qt.LeftButton) {
                 root.togglePanel()
             } else if (mouse.button === Qt.RightButton) {
-                if (root.sink?.audio)
+                if (root.sink?.audio) {
                     root.sink.audio.muted = !root.sink.audio.muted
+                    root.osdVolume(root.sink.audio.volume, root.sink.audio.muted)
+                }
             }
         }
 
@@ -75,6 +80,15 @@ Item {
             const step = 0.05
             let v = root.sink.audio.volume + (wheel.angleDelta.y > 0 ? step : -step)
             root.sink.audio.volume = Math.max(0, Math.min(1, v))
+            volDebounce.restart()
         }
+    }
+
+    // Debounce agar OSD tidak update setiap frame saat scroll cepat
+    Timer {
+        id: volDebounce
+        interval: 60
+        repeat: false
+        onTriggered: root.osdVolume(root.volume, root.muted)
     }
 }

@@ -48,6 +48,9 @@ Item {
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 
+    // Signal ke Bar.qml untuk tampilkan OSD
+    signal osdBrightness(real value)
+
     // ── Scroll untuk ubah brightness ──────────────────────────────────────
     MouseArea {
         anchors.fill: parent
@@ -61,6 +64,7 @@ Item {
 
             const arg = wheel.angleDelta.y > 0 ? (step + "%+") : (step + "%-")
             setProcess.command = ["brightnessctl", "--device=amdgpu_bl1", "set", arg]
+            root._pendingOsd = true
             setProcess.running = true
         }
     }
@@ -69,5 +73,17 @@ Item {
     Process {
         id: setProcess
         onExited: getProcess.running = true
+    }
+
+    // Kirim OSD setelah nilai aktual diperbarui dari getProcess
+    property bool _pendingOsd: false
+
+    Connections {
+        target: root
+        function onPercentChanged() {
+            if (!root._pendingOsd) return
+            root._pendingOsd = false
+            root.osdBrightness(root.percent / 100)
+        }
     }
 }

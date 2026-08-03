@@ -467,7 +467,24 @@ PanelWindow {
     }
 
     // ── Proses ────────────────────────────────────────────────────────────
-    Process { id: btToggleProc; onRunningChanged: if (!running) statusProc.running = true }
+
+    // Nama perangkat terakhir yang diaksi (untuk notifikasi)
+    property string _lastDeviceName: ""
+    property bool   _lastWasConnect: false
+    property bool   _lastWasRemove:  false
+
+    Process {
+        id: btToggleProc
+        onRunningChanged: {
+            if (!running) {
+                statusProc.running = true
+                btNotifyProc.command = root.btEnabled
+                    ? ["notify-send", "-a", "Bluetooth", "-i", "bluetooth-active-symbolic", "-t", "3000", "Bluetooth aktif", "Bluetooth telah dinyalakan."]
+                    : ["notify-send", "-a", "Bluetooth", "-i", "bluetooth-disabled-symbolic", "-t", "3000", "Bluetooth nonaktif", "Bluetooth telah dimatikan."]
+                btNotifyProc.running = true
+            }
+        }
+    }
 
     Process {
         id: scanProc
@@ -483,6 +500,9 @@ PanelWindow {
     Process {
         id: connectProc
         function connectDevice(addr) {
+            root._lastDeviceName = (root.devices.find(d => d.address === addr) || {}).name || addr
+            root._lastWasConnect = true
+            root._lastWasRemove  = false
             command = ["sh", "-c", [
                 "timeout 6 bluetoothctl pair " + addr + " 2>/dev/null;",
                 "timeout 5 bluetoothctl trust " + addr + " 2>/dev/null;",
@@ -491,26 +511,58 @@ PanelWindow {
             ].join(" ")]
             running = true
         }
-        onRunningChanged: if (!running) listProc.running = true
+        onRunningChanged: {
+            if (!running) {
+                listProc.running = true
+                btNotifyProc.command = ["notify-send", "-a", "Bluetooth",
+                    "-i", "bluetooth-active-symbolic", "-t", "3000",
+                    "Terhubung", root._lastDeviceName + " berhasil dihubungkan."]
+                btNotifyProc.running = true
+            }
+        }
     }
 
     Process {
         id: disconnectProc
         function disconnectDevice(addr) {
+            root._lastDeviceName = (root.devices.find(d => d.address === addr) || {}).name || addr
+            root._lastWasConnect = false
+            root._lastWasRemove  = false
             command = ["sh", "-c", "bluetoothctl disconnect " + addr]
             running = true
         }
-        onRunningChanged: if (!running) listProc.running = true
+        onRunningChanged: {
+            if (!running) {
+                listProc.running = true
+                btNotifyProc.command = ["notify-send", "-a", "Bluetooth",
+                    "-i", "bluetooth-disabled-symbolic", "-t", "3000",
+                    "Terputus", root._lastDeviceName + " telah diputus."]
+                btNotifyProc.running = true
+            }
+        }
     }
 
     Process {
         id: removeProc
         function removeDevice(addr) {
+            root._lastDeviceName = (root.devices.find(d => d.address === addr) || {}).name || addr
+            root._lastWasRemove  = true
             command = ["sh", "-c", "bluetoothctl remove " + addr]
             running = true
         }
-        onRunningChanged: if (!running) listProc.running = true
+        onRunningChanged: {
+            if (!running) {
+                listProc.running = true
+                btNotifyProc.command = ["notify-send", "-a", "Bluetooth",
+                    "-i", "bluetooth-disabled-symbolic", "-t", "3000",
+                    "Perangkat dihapus", root._lastDeviceName + " telah di-unpair."]
+                btNotifyProc.running = true
+            }
+        }
     }
+
+    // Proses notifikasi bersama
+    Process { id: btNotifyProc }
 
     Process {
         id: statusProc

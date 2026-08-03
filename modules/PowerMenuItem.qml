@@ -11,6 +11,9 @@ Rectangle {
     property var command: []
     property color iconColor: Root.Colors.subtext
     property bool highlighted: false
+    // Teks notifikasi — isi dari luar untuk item yang perlu notif sebelum aksi
+    property string notifyTitle: ""
+    property string notifyBody:  ""
 
     signal triggered()
 
@@ -49,21 +52,31 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
-            root.triggered()
-            if (root.command.length > 0)
-                proc.running = true
+        onClicked: root._doActivate()
+    }
+
+    Process { id: proc;        command: root.command }
+    Process { id: notifyProc;  onExited: proc.running = true }
+
+    function _doActivate() {
+        root.triggered()
+        if (root.command.length === 0) return
+        if (root.notifyTitle !== "") {
+            notifyProc.command = ["notify-send",
+                "-a", "Power",
+                "-i", "system-shutdown-symbolic",
+                "-t", "3000",
+                "-u", "normal",
+                root.notifyTitle,
+                root.notifyBody
+            ]
+            notifyProc.running = true
+        } else {
+            proc.running = true
         }
     }
 
-    Process {
-        id: proc
-        command: root.command
-    }
-
     function activate() {
-        root.triggered()
-        if (root.command.length > 0)
-            proc.running = true
+        root._doActivate()
     }
 }

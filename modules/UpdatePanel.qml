@@ -617,9 +617,15 @@ PanelWindow {
                 root.logText += "\n✓ Update selesai."
                 root.pending = 0
                 root.packages = []
+                notifyProc.command = ["notify-send", "-a", "System Update", "-i", "system-software-update", "-t", "5000", "Update selesai", "Semua paket berhasil diperbarui."]
             } else {
                 root.logText += "\n✗ Update gagal (exit " + code + ")."
+                notifyProc.command = ["notify-send", "-a", "System Update", "-i", "dialog-error", "-t", "6000", "-u", "critical", "Update gagal", "Proses update berhenti dengan kode " + code + "."]
             }
+            notifyProc.running = true
         }
     }
+
+    // ── Notifikasi ────────────────────────────────────────────────────────
+    Process { id: notifyProc }
 }

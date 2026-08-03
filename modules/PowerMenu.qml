@@ -121,6 +121,8 @@ PanelWindow {
                 label: "Lock"
                 iconColor: Root.Colors.blue
                 command: ["loginctl", "lock-session"]
+                notifyTitle: "Mengunci layar"
+                notifyBody:  "Sesi akan dikunci."
                 highlighted: root.focusedIndex === 0
                 onTriggered: root.closeRequested()
             }
@@ -132,6 +134,8 @@ PanelWindow {
                 label: "Suspend"
                 iconColor: Root.Colors.lavender
                 command: ["systemctl", "suspend"]
+                notifyTitle: "Masuk mode tidur"
+                notifyBody:  "Sistem akan di-suspend."
                 highlighted: root.focusedIndex === 1
                 onTriggered: root.closeRequested()
             }
@@ -143,6 +147,8 @@ PanelWindow {
                 label: "Reboot"
                 iconColor: Root.Colors.yellow
                 command: ["reboot"]
+                notifyTitle: "Merestart sistem"
+                notifyBody:  "Sistem akan di-restart sekarang."
                 highlighted: root.focusedIndex === 2
                 onTriggered: root.closeRequested()
             }
@@ -166,6 +172,8 @@ PanelWindow {
                 label: "Logout"
                 iconColor: Root.Colors.peach
                 command: ["hyprctl", "dispatch", "exit"]
+                notifyTitle: "Keluar dari sesi"
+                notifyBody:  "Sesi Hyprland akan diterminasi."
                 highlighted: root.focusedIndex === 3
                 onTriggered: root.closeRequested()
             }
@@ -177,6 +185,8 @@ PanelWindow {
                 label: "Shutdown"
                 iconColor: Root.Colors.red
                 command: ["shutdown", "-h", "now"]
+                notifyTitle: "Mematikan sistem"
+                notifyBody:  "Sistem akan dimatikan sekarang."
                 highlighted: root.focusedIndex === 4
                 onTriggered: root.closeRequested()
             }

@@ -138,9 +138,12 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.updatePanelOpen = false
                         }
+                        onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
 
-                    Brightness {}
+                    Brightness {
+                        onOsdBrightness: value => osd.showBrightness(value)
+                    }
                     Battery {}
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
@@ -226,6 +229,9 @@ PanelWindow {
 
     // ── Notification Popup ────────────────────────────────────────────────
     NotificationPopup {}
+
+    // ── OSD (Volume & Brightness) ─────────────────────────────────────────
+    Osd { id: osd }
 
     Process {
         id: controlCenterProcess
