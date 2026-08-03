@@ -5,8 +5,9 @@ import "../" as Root
 Text {
     id: root
 
-    property string timeFormat: "ddd, dd MMM  •  HH:mm:ss"
+    property string timeFormat: "ddd, dd MMM  •  HH:mm"
     signal clicked()
+    signal rightClicked()
 
     text: Qt.formatDateTime(clock.date, timeFormat)
     color: Root.Colors.text
@@ -21,7 +22,12 @@ Text {
     MouseArea {
         anchors.fill: parent
         anchors.margins: -6
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.clicked()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton) root.rightClicked()
+            else root.clicked()
+        }
     }
 }

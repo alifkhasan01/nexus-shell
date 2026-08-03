@@ -6,7 +6,7 @@ Rectangle {
     id: root
 
     // Ganti sesuai app launcher yang dipakai: fuzzel, wofi, rofi -show drun, dll.
-    property string launcherCommand: "fuzzel"
+    property string launcherCommand: "walker"
 
     width: 34
     height: 26

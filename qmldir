@@ -1,2 +1,3 @@
 module shell
 singleton Colors 1.0 Colors.qml
+singleton CavaService 1.0 CavaService.qml

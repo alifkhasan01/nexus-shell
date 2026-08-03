@@ -5,6 +5,7 @@ import "../../" as Root
 // Toggle pill generik: jalankan checkCommand secara berkala buat tau status
 // on/off (dianggap ON kalau stdout mengandung checkMatch), lalu jalankan
 // onCommand / offCommand pas diklik.
+// Right-click (atau long-press) membuka managerCommand jika diisi.
 Rectangle {
     id: root
 
@@ -14,10 +15,12 @@ Rectangle {
     property string checkMatch: "yes"
     property string onCommand: ""
     property string offCommand: ""
+    // Opsional: command untuk membuka connection manager (klik kanan)
+    property string managerCommand: ""
     property bool active: false
 
-    width: 84
-    height: 60
+    implicitWidth: 84
+    implicitHeight: 60
     radius: 14
     color: active ? Root.Colors.blue : Root.Colors.surface0
 
@@ -41,18 +44,51 @@ Rectangle {
         }
     }
 
+    // Indikator kecil di pojok kanan bawah kalau ada manager (petunjuk ada
+    // aksi klik kanan)
+    Rectangle {
+        visible: root.managerCommand !== ""
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.margins: 5
+        width: 5
+        height: 5
+        radius: 3
+        color: root.active ? Qt.rgba(1,1,1,0.5) : Root.Colors.subtext
+        opacity: 0.7
+    }
+
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: {
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        pressAndHoldInterval: 600
+
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton) {
+                if (root.managerCommand !== "") {
+                    managerProc.command = ["sh", "-c", root.managerCommand]
+                    managerProc.running = true
+                }
+                return
+            }
+            // klik kiri: toggle on/off
             toggleProc.command = ["sh", "-c", root.active ? root.offCommand : root.onCommand]
             toggleProc.running = true
-            // asumsi optimis, dikoreksi lagi oleh poll berikutnya
+            // update optimis, dikoreksi lagi oleh poll berikutnya
             root.active = !root.active
+        }
+
+        onPressAndHold: {
+            if (root.managerCommand !== "") {
+                managerProc.command = ["sh", "-c", root.managerCommand]
+                managerProc.running = true
+            }
         }
     }
 
     Process { id: toggleProc }
+    Process { id: managerProc }
 
     Process {
         id: checkProc

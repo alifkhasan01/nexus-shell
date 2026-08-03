@@ -8,7 +8,7 @@ RowLayout {
     spacing: 6
 
     // Jumlah workspace yang selalu ditampilkan (1..N)
-    property int workspaceCount: 5
+    property int workspaceCount: 10
 
     Repeater {
         model: root.workspaceCount
@@ -38,7 +38,7 @@ RowLayout {
                 anchors.fill: parent
                 anchors.margins: -3
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Hyprland.dispatch("workspace " + wsDelegate.wsId)
+                onClicked: Hyprland.dispatch('hl.dsp.focus({ workspace = ' + wsDelegate.wsId + ' })')
             }
         }
     }

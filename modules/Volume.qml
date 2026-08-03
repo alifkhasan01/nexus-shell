@@ -4,28 +4,55 @@ import "../" as Root
 
 Item {
     id: root
-    width: label.width
+    implicitWidth: label.implicitWidth
+    width: implicitWidth
     height: 20
 
-    property var sink: Pipewire.defaultAudioSink
-    property real volume: sink?.audio ? sink.audio.volume : 0
-    property bool muted: sink?.audio ? sink.audio.muted : true
+    // dikontrol dari Bar.qml
+    property bool panelOpen: false
+    signal togglePanel()
 
-    // Wajib supaya properti audio pada sink ter-refresh (lihat dokumentasi Pipewire)
+    // Resolve sink yang benar-benar aktif dipakai:
+    // kalau BT sink ada dan sedang jadi defaultAudioSink, pakai itu.
+    property var _defaultSink: Pipewire.defaultAudioSink
+    property var _btSink: {
+        const nodes = Pipewire.nodes.values
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i]
+            if (!n || !n.audio || !n.isSink || n.isStream) continue
+            const props = n.properties || {}
+            if (props["device.api"] === "bluez5" ||
+                (n.name || "").startsWith("bluez_output."))
+                return n
+        }
+        return null
+    }
+    property var sink: {
+        if (_btSink && _defaultSink && _btSink.id === _defaultSink.id)
+            return _btSink
+        return _defaultSink
+    }
+
+    property real volume: sink?.audio ? sink.audio.volume : 0
+    property bool muted:  sink?.audio ? sink.audio.muted  : true
+
     PwObjectTracker {
-        objects: [root.sink]
+        objects: [root._defaultSink, root._btSink].filter(n => n != null)
     }
 
     Text {
         id: label
         anchors.centerIn: parent
-        color: root.muted ? Root.Colors.subtext : Root.Colors.text
+        color: root.muted ? Root.Colors.subtext
+             : root.panelOpen ? Root.Colors.blue
+             : Root.Colors.text
         font.pixelSize: 14
+        Behavior on color { ColorAnimation { duration: 150 } }
         text: {
-            if (root.muted || !root.sink?.audio) return "󰝟  --%"
+            if (root.muted || !root.sink?.audio) return "󰸈"
             const pct = Math.round(root.volume * 100)
             const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
-            return icon + "   " + pct + "%"
+            return icon + "  " + pct + "%"
         }
     }
 
@@ -35,9 +62,11 @@ Item {
         cursorShape: Qt.PointingHandCursor
 
         onClicked: mouse => {
-            if (!root.sink?.audio) return
-            if (mouse.button === Qt.RightButton) {
-                root.sink.audio.muted = !root.sink.audio.muted
+            if (mouse.button === Qt.LeftButton) {
+                root.togglePanel()
+            } else if (mouse.button === Qt.RightButton) {
+                if (root.sink?.audio)
+                    root.sink.audio.muted = !root.sink.audio.muted
             }
         }
 

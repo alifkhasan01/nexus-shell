@@ -8,6 +8,7 @@ Item {
 
     property string icon: ""
     property real value: 0     // 0..1
+    property real scrollStep: 0.05
     signal moved(real value)
 
     height: 34
@@ -61,5 +62,19 @@ Item {
         }
 
         onMoved: root.moved(slider.value)
+    }
+
+    // Scroll handler — WheelHandler lebih reliable dari MouseArea.onWheel
+    // di Qt 6 karena tidak konflik dengan Slider drag events.
+    WheelHandler {
+        target: null          // tangani manual, jangan forward ke Slider
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+        onWheel: event => {
+            const step = root.scrollStep
+            const delta = event.angleDelta.y > 0 ? step : -step
+            const newVal = Math.max(0, Math.min(1, slider.value + delta))
+            slider.value = newVal
+            root.moved(newVal)
+        }
     }
 }

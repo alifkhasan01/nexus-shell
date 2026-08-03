@@ -14,7 +14,11 @@ Item {
     Text {
         id: label
         anchors.centerIn: parent
-        color: root.percent <= 15 && !root.charging ? Root.Colors.red : Root.Colors.text
+        color: {
+            if (root.charging)        return Root.Colors.yellow
+            if (root.percent <= 20)   return Root.Colors.red
+            return Root.Colors.text
+        }
         font.pixelSize: 14
         text: {
             let icon

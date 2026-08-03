@@ -5,58 +5,51 @@ import "../../" as Root
 
 RowLayout {
     id: root
-    spacing: 20
+    spacing: 14
 
-    property real cpuPercent: 0
-    property real ramPercent: 0
-    property string uptime: ""
+    property string ramText:  "—"
+    property string diskText: "—"
+    property string uptime:   "—"
 
-    function statItem(icon, value) {
-        return icon + "  " + value
-    }
-
+    // RAM
     RowLayout {
-        spacing: 6
-        Text { text: "󰻠"; color: Root.Colors.mauve; font.pixelSize: 14 }
-        Text { text: Math.round(root.cpuPercent) + "%"; color: Root.Colors.text; font.pixelSize: 13 }
-    }
-    RowLayout {
-        spacing: 6
-        Text { text: "󰍛"; color: Root.Colors.green; font.pixelSize: 14 }
-        Text { text: Math.round(root.ramPercent) + "%"; color: Root.Colors.text; font.pixelSize: 13 }
-    }
-    RowLayout {
-        spacing: 6
-        Text { text: "󰅐"; color: Root.Colors.peach; font.pixelSize: 14 }
-        Text { text: root.uptime; color: Root.Colors.text; font.pixelSize: 13 }
+        spacing: 5
+        Text { text: "󰍛"; color: Root.Colors.green;  font.pixelSize: 13 }
+        Text { text: root.ramText;  color: Root.Colors.text; font.pixelSize: 12 }
     }
 
-    // CPU: dihitung dari delta /proc/stat antar dua polling
-    property var lastCpu: null
+    // Disk (root partition)
+    RowLayout {
+        spacing: 5
+        Text { text: "󰋊"; color: Root.Colors.yellow; font.pixelSize: 13 }
+        Text { text: root.diskText; color: Root.Colors.text; font.pixelSize: 12 }
+    }
+
+    // Uptime
+    RowLayout {
+        spacing: 5
+        Text { text: "󰅐"; color: Root.Colors.peach;  font.pixelSize: 13 }
+        Text { text: root.uptime;   color: Root.Colors.text; font.pixelSize: 12 }
+    }
+
+    // ── Proses ──────────────────────────────────────────────────────────
 
     Process {
-        id: cpuProc
-        command: ["sh", "-c", "head -n1 /proc/stat"]
+        id: ramProc
+        command: ["sh", "-c",
+            "free -b | awk '/^Mem:/ {used=$2-$7; printf \"%s / %s\", int(used/1073741824*10)/10\"G\", int($2/1073741824*10)/10\"G\"}'"]
         stdout: StdioCollector {
-            onStreamFinished: {
-                const parts = text.trim().split(/\s+/).slice(1).map(Number)
-                const idle = parts[3] + parts[4]
-                const total = parts.reduce((a, b) => a + b, 0)
-                if (root.lastCpu) {
-                    const dIdle = idle - root.lastCpu.idle
-                    const dTotal = total - root.lastCpu.total
-                    if (dTotal > 0) root.cpuPercent = 100 * (1 - dIdle / dTotal)
-                }
-                root.lastCpu = { idle, total }
-            }
+            onStreamFinished: root.ramText = text.trim()
         }
     }
 
     Process {
-        id: ramProc
-        command: ["sh", "-c", "free -b | awk '/^Mem:/ {printf \"%.4f\", ($2-$7)/$2*100}'"]
+        id: diskProc
+        command: ["sh", "-c",
+            "df -h / | awk 'NR==2 {print $3\"/\"$2\" (\"$5\")\"}'"
+        ]
         stdout: StdioCollector {
-            onStreamFinished: root.ramPercent = parseFloat(text) || 0
+            onStreamFinished: root.diskText = text.trim()
         }
     }
 
@@ -69,13 +62,13 @@ RowLayout {
     }
 
     Timer {
-        interval: 2000
+        interval: 10000
         running: true
         repeat: true
         triggeredOnStart: true
         onTriggered: {
-            cpuProc.running = true
-            ramProc.running = true
+            ramProc.running  = true
+            diskProc.running = true
         }
     }
 

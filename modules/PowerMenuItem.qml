@@ -1,38 +1,69 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell.Io
 import "../" as Root
 
 Rectangle {
     id: root
+
     property string label: ""
     property string icon: ""
     property var command: []
+    property color iconColor: Root.Colors.subtext
+    property bool highlighted: false
 
-    width: parent ? parent.width : 140
-    height: 30
-    radius: 6
-    color: mouseArea.containsMouse ? Root.Colors.surface1 : "transparent"
+    signal triggered()
 
-    Row {
-        anchors.verticalCenter: parent.verticalCenter
-        anchors.left: parent.left
-        anchors.leftMargin: 10
-        spacing: 8
+    width: parent ? parent.width : 160
+    height: 36
+    radius: 8
+    color: highlighted
+        ? Root.Colors.surface2
+        : (ma.containsMouse ? Root.Colors.surface1 : "transparent")
+    Behavior on color { ColorAnimation { duration: 100 } }
 
-        Text { text: root.icon; color: Root.Colors.subtext; font.pixelSize: 14 }
-        Text { text: root.label; color: Root.Colors.text; font.pixelSize: 13 }
+    RowLayout {
+        anchors.fill: parent
+        anchors.leftMargin: 12
+        anchors.rightMargin: 12
+        spacing: 10
+
+        Text {
+            text: root.icon
+            font.pixelSize: 15
+            color: (highlighted || ma.containsMouse) ? Root.Colors.text : root.iconColor
+            Behavior on color { ColorAnimation { duration: 100 } }
+        }
+
+        Text {
+            text: root.label
+            font.pixelSize: 13
+            color: (highlighted || ma.containsMouse) ? Root.Colors.text : Root.Colors.subtext
+            Behavior on color { ColorAnimation { duration: 100 } }
+            Layout.fillWidth: true
+        }
     }
 
     MouseArea {
-        id: mouseArea
+        id: ma
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: proc.running = true
+        onClicked: {
+            root.triggered()
+            if (root.command.length > 0)
+                proc.running = true
+        }
     }
 
     Process {
         id: proc
         command: root.command
+    }
+
+    function activate() {
+        root.triggered()
+        if (root.command.length > 0)
+            proc.running = true
     }
 }
