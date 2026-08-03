@@ -56,7 +56,7 @@ Scope {
     // ── PAM Context ─────────────────────────────────────────────────────
     PamContext {
         id: pamCtx
-        config: "hyprlock"
+        config: "system-auth"
 
         onMessageChanged: {
             root._message      = message
