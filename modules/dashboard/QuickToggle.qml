@@ -75,8 +75,11 @@ Rectangle {
             // klik kiri: toggle on/off
             toggleProc.command = ["sh", "-c", root.active ? root.offCommand : root.onCommand]
             toggleProc.running = true
-            // update optimis, dikoreksi lagi oleh poll berikutnya
+            // update optimis — tunda poll selama 2 detik agar tidak
+            // di-overwrite sebelum proses on/off sempat berjalan
             root.active = !root.active
+            root._debouncing = true
+            debounceTimer.restart()
         }
 
         onPressAndHold: {
@@ -89,6 +92,16 @@ Rectangle {
 
     Process { id: toggleProc }
     Process { id: managerProc }
+
+    // Tunda poll setelah toggle agar optimistic update tidak langsung
+    // di-overwrite sebelum proses on/off sempat berjalan
+    property bool _debouncing: false
+
+    Timer {
+        id: debounceTimer
+        interval: 2000
+        onTriggered: root._debouncing = false
+    }
 
     Process {
         id: checkProc
@@ -103,6 +116,6 @@ Rectangle {
         running: root.checkCommand !== ""
         repeat: true
         triggeredOnStart: true
-        onTriggered: checkProc.running = true
+        onTriggered: if (!root._debouncing) checkProc.running = true
     }
 }

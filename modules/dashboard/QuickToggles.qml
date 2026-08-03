@@ -243,16 +243,5 @@ GridLayout {
         onCommand: "nohup hyprsunset -t 4500 </dev/null >/dev/null 2>&1 &"
         offCommand: "pkill -x hyprsunset"
         managerCommand: ""
-
-        // Pastikan hyprsunset mati saat quickshell pertama kali load,
-        // supaya toggle selalu mulai dari OFF
-        Component.onCompleted: {
-            killOnStartProc.running = true
-        }
-
-        Process {
-            id: killOnStartProc
-            command: ["sh", "-c", "pkill -x hyprsunset; true"]
-        }
     }
 }

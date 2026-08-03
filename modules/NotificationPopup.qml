@@ -31,7 +31,7 @@ PanelWindow {
         actionsSupported:    true
         bodySupported:       true
         bodyMarkupSupported: false
-        imageSupported:      true
+        imageSupported:      false
         keepOnReload:        false
 
         onNotification: notif => {
@@ -158,29 +158,10 @@ PanelWindow {
                 anchors.rightMargin: 14
                 spacing: 4
 
-                // ── Header: ikon + nama app + badge + tutup ───────────────
+                // ── Header: nama app + badge + tutup ─────────────────
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 8
-
-                    // Ikon aplikasi
-                    Item {
-                        width: 18; height: 18
-                        Image {
-                            anchors.fill: parent
-                            source: (notification?.appIcon ?? "") !== "" ? notification.appIcon : ""
-                            visible: status === Image.Ready
-                            fillMode: Image.PreserveAspectFit
-                            smooth: true
-                        }
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰍡"
-                            font.pixelSize: 13
-                            color: Root.Colors.subtext
-                            visible: (notification?.appIcon ?? "") === ""
-                        }
-                    }
 
                     // Nama app
                     Text {
@@ -230,18 +211,6 @@ PanelWindow {
                             onClicked: card.doClose()
                         }
                     }
-                }
-
-                // ── Gambar notifikasi ─────────────────────────────────────
-                Image {
-                    visible: (notification?.image ?? "") !== "" && status === Image.Ready
-                    source: (notification?.image ?? "") !== "" ? notification.image : ""
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 72
-                    fillMode: Image.PreserveAspectCrop
-                    smooth: true
-                    clip: true
-                    layer.enabled: true
                 }
 
                 // ── Summary ───────────────────────────────────────────────

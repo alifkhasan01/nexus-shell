@@ -120,9 +120,9 @@ PanelWindow {
                 icon: "󰍁"
                 label: "Lock"
                 iconColor: Root.Colors.blue
-                command: ["loginctl", "lock-session"]
+                command: ["quickshell", "ipc", "call", "lockscreen", "lock"]
                 notifyTitle: "Mengunci layar"
-                notifyBody:  "Sesi akan dikunci."
+                notifyBody:  "Layar akan dikunci."
                 highlighted: root.focusedIndex === 0
                 onTriggered: root.closeRequested()
             }
@@ -133,9 +133,9 @@ PanelWindow {
                 icon: "󰒲"
                 label: "Suspend"
                 iconColor: Root.Colors.lavender
-                command: ["systemctl", "suspend"]
+                command: ["sh", "-c", "quickshell ipc call lockscreen lock && sleep 0.5 && systemctl suspend"]
                 notifyTitle: "Masuk mode tidur"
-                notifyBody:  "Sistem akan di-suspend."
+                notifyBody:  "Layar dikunci lalu sistem di-suspend."
                 highlighted: root.focusedIndex === 1
                 onTriggered: root.closeRequested()
             }
@@ -171,7 +171,7 @@ PanelWindow {
                 icon: "󰗼"
                 label: "Logout"
                 iconColor: Root.Colors.peach
-                command: ["hyprctl", "dispatch", "exit"]
+                command: ["hyprctl", "dispatch", "hl.dsp.exit()"]
                 notifyTitle: "Keluar dari sesi"
                 notifyBody:  "Sesi Hyprland akan diterminasi."
                 highlighted: root.focusedIndex === 3

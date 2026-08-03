@@ -14,8 +14,9 @@ ShellRoot {
     // Hyprland maupun dari klik di Bar.
     QtObject {
         id: shellStateObj
-        property bool dashboardOpen: false
-        property bool powerMenuOpen: false
+        property bool dashboardOpen:      false
+        property bool powerMenuOpen:      false
+        property bool wallpaperPanelOpen: false
     }
 
     // ── Global shortcut: Dashboard ─────────────────────────────────────────
@@ -40,6 +41,37 @@ ShellRoot {
         }
     }
 
+    // ── IPC call: Wallpaper Panel ──────────────────────────────────────────
+    // Dari hyprland.conf:
+    //   bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
+    //   bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+    IpcHandler {
+        target: "wallpaper"
+
+        function toggle(): void {
+            shellStateObj.wallpaperPanelOpen = !shellStateObj.wallpaperPanelOpen
+        }
+
+        function open(): void {
+            shellStateObj.wallpaperPanelOpen = true
+        }
+
+        function close(): void {
+            shellStateObj.wallpaperPanelOpen = false
+        }
+
+        function random(): void {
+            randomWallpaperProc.running = false
+            randomWallpaperProc.running = true
+        }
+    }
+
+    // Jalankan wallpicker --random untuk set wallpaper acak via IPC.
+    Process {
+        id: randomWallpaperProc
+        command: ["wallpicker", "--random"]
+    }
+
     // Satu Bar per monitor
     Variants {
         model: Quickshell.screens
@@ -50,6 +82,12 @@ ShellRoot {
             shellState: shellStateObj
         }
     }
+
+    // ── Lock Screen ───────────────────────────────────────────────────────
+    // WlSessionLock harus ada satu instance di root (bukan di dalam Bar),
+    // karena ia menutup SEMUA monitor sekaligus via ext_session_lock_v1.
+    // IpcHandler (target: "lockscreen") sudah ada di dalam LockScreen.qml.
+    Modules.LockScreen {}
 
     // ── Auto-pairing BlueZ agent (berjalan di background) ─────────────────
     // Menjawab "yes" pada prompt pair/confirm bluetooth sehingga perangkat

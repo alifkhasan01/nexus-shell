@@ -19,6 +19,7 @@ PanelWindow {
     property bool btPanelOpen: false
     property bool volumePanelOpen: false
     property bool updatePanelOpen: false
+    property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
 
     onWifiPanelOpenChanged: if (!wifiPanelOpen) netStatus.refresh()
     onBtPanelOpenChanged: if (!btPanelOpen) btStatus.refresh()
@@ -77,6 +78,7 @@ PanelWindow {
                         bar.btPanelOpen   = false
                         bar.volumePanelOpen = false
                         bar.updatePanelOpen = false
+                        bar.shellState.wallpaperPanelOpen = false
                     }
                     onRightClicked: controlCenterProcess.running = true
                 }
@@ -101,6 +103,7 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.updatePanelOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
                         }
                     }
 
@@ -113,6 +116,68 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.updatePanelOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
+                        }
+                    }
+
+                    // ── Wallpaper Button ──────────────────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: wpArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.wallpaperPanelOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰸉"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 16
+                            color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        // Tooltip
+                        Rectangle {
+                            visible: wpArea.containsMouse
+                            z: 10
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            anchors.bottom: parent.top
+                            anchors.bottomMargin: 6
+                            implicitWidth: wpTip.implicitWidth + 16
+                            height: 22
+                            radius: 6
+                            color: Root.Colors.surface2
+                            border.color: Root.Colors.surface1
+                            border.width: 1
+                            Text {
+                                id: wpTip
+                                anchors.centerIn: parent
+                                text: "Wallpaper"
+                                font.pixelSize: 11
+                                color: Root.Colors.text
+                            }
+                        }
+
+                        MouseArea {
+                            id: wpArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
+                                bar.wifiPanelOpen      = false
+                                bar.btPanelOpen        = false
+                                bar.volumePanelOpen    = false
+                                bar.updatePanelOpen    = false
+                                bar.shellState.dashboardOpen = false
+                            }
                         }
                     }
 
@@ -125,6 +190,7 @@ PanelWindow {
                             bar.btPanelOpen     = false
                             bar.volumePanelOpen = false
                             bar.shellState.dashboardOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
                         }
                     }
 
@@ -137,9 +203,11 @@ PanelWindow {
                             bar.btPanelOpen    = false
                             bar.shellState.dashboardOpen = false
                             bar.updatePanelOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
+
 
                     Brightness {
                         onOsdBrightness: value => osd.showBrightness(value)
@@ -153,6 +221,7 @@ PanelWindow {
                             bar.btPanelOpen      = false
                             bar.volumePanelOpen  = false
                             bar.updatePanelOpen  = false
+                            bar.shellState.wallpaperPanelOpen = false
                             bar.shellState.dashboardOpen = false
                         }
                     }
@@ -224,6 +293,16 @@ PanelWindow {
             pending: sysUpdate.pending
             packages: sysUpdate.packages
             onCloseRequested: bar.updatePanelOpen = false
+        }
+    }
+
+    // ── Wallpaper Panel ───────────────────────────────────────────────────
+    LazyLoader {
+        active: true
+
+        WallpaperPanel {
+            open: bar.wallpaperPanelOpen
+            onCloseRequested: bar.shellState.wallpaperPanelOpen = false
         }
     }
 

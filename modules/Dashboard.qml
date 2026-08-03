@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
@@ -37,9 +38,10 @@ PanelWindow {
     // ── Konstanta layout ──────────────────────────────────────────────────
     readonly property int _pad: 14
     readonly property int _gap: 12
-    readonly property int _cw:  860
-    readonly property int _lw:  420  // kolom kiri: overview + settings
-    readonly property int _rw:  _cw - 2 * _pad - _gap - _lw   // kolom kanan: media
+    readonly property int _lw:  420                 // kolom kiri: overview + settings
+    readonly property int _rw:  400                 // kolom tengah: media (ukuran tetap)
+    readonly property int _iw:  420                 // kolom kanan: system info — sama lebar dengan _lw
+    readonly property int _cw:  _pad + _lw + _gap + _rw + _gap + _iw + _pad  // = 14+420+12+400+12+420+14 = 1292
 
     // ── Kartu utama ───────────────────────────────────────────────────────
     Rectangle {
@@ -68,19 +70,85 @@ PanelWindow {
             width: root._lw
             spacing: 10
 
-            // Jam & tanggal
+            // Jam & tanggal + profile picture
             Rectangle {
                 width: parent.width; height: 76
                 radius: 14; color: Root.Colors.base
                 Behavior on color { ColorAnimation { duration: 200 } }
 
                 Item {
-                    anchors.fill: parent; anchors.margins: 16
+                    anchors.fill: parent; anchors.margins: 12
 
+                    // ── Foto profil (kiri) ─────────────────────────────
+                    Item {
+                        id: dashFaceItem
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.left: parent.left
+                        width: 48; height: 48
+
+                        // Border ring
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: width / 2
+                            color: "transparent"
+                            border.color: Root.Colors.lavender
+                            border.width: 2
+                            Behavior on border.color { ColorAnimation { duration: 200 } }
+                        }
+
+                        // Background fallback
+                        Rectangle {
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            radius: width / 2
+                            color: Root.Colors.surface1
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                        }
+
+                        // Gambar bulat via layer + MultiEffect mask
+                        Image {
+                            id: dashFaceImg
+                            anchors.fill: parent
+                            anchors.margins: 3
+                            source: "file:///home/youtta/.face"
+                            fillMode: Image.PreserveAspectCrop
+                            smooth: true
+                            mipmap: true
+                            visible: status === Image.Ready
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                maskEnabled: true
+                                maskSource: ShaderEffectSource {
+                                    sourceItem: Rectangle {
+                                        width: dashFaceImg.width
+                                        height: dashFaceImg.height
+                                        radius: width / 2
+                                        color: "white"
+                                        visible: false
+                                    }
+                                }
+                            }
+                        }
+
+                        // Fallback icon
+                        Text {
+                            anchors.centerIn: parent
+                            visible: dashFaceImg.status !== Image.Ready
+                            text: "󰀄"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 22
+                            color: Root.Colors.subtext
+                            Behavior on color { ColorAnimation { duration: 200 } }
+                        }
+                    }
+
+                    // ── Tanggal (tengah, anchored ke kiri foto) ────────
                     Column {
                         id: dateCol
                         anchors.verticalCenter: parent.verticalCenter
-                        anchors.left: parent.left
+                        anchors.left: dashFaceItem.right
+                        anchors.leftMargin: 10
                         spacing: 3
                         Text {
                             text: Qt.formatDateTime(new Date(), "dddd")
@@ -94,6 +162,7 @@ PanelWindow {
                         }
                     }
 
+                    // ── Jam (kanan) ────────────────────────────────────
                     Text {
                         id: clockText
                         anchors.verticalCenter: parent.verticalCenter
@@ -388,6 +457,19 @@ PanelWindow {
                         }
                     }
                 }
+            }
+        }
+
+        // ── Kolom ketiga — System Info ────────────────────────────────────
+        Item {
+            id: infoCol
+            x: root._pad + root._lw + root._gap + root._rw + root._gap
+            y: root._pad
+            width:  root._iw
+            height: leftCol.height
+
+            Dash.SystemInfo {
+                anchors.fill: parent
             }
         }
     }
