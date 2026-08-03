@@ -307,7 +307,7 @@ PanelWindow {
                         spacing: 8
 
                         Text {
-                            text: "\udb81\udc09  Wallpaper"
+                            text: "󰸉  Wallpaper"
                             font.pixelSize: 16; font.bold: true
                             font.family: root.nf
                             color: Root.Colors.text
@@ -350,7 +350,7 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Text {
                                 anchors.centerIn: parent
-                                text: "\udb81\udd75"; font.pixelSize: 15; font.family: root.nf
+                                text: ""; font.pixelSize: 15; font.family: root.nf
                                 color: Root.Colors.blue
                             }
                             MouseArea { id: randHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.pickRandom() }
@@ -363,7 +363,7 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Text {
                                 anchors.centerIn: parent
-                                text: "\udb80\udde3"; font.pixelSize: 15; font.family: root.nf
+                                text: ""; font.pixelSize: 15; font.family: root.nf
                                 color: root.scanning ? Root.Colors.blue : Root.Colors.subtext
                                 RotationAnimation on rotation {
                                     running: root.scanning; from: 0; to: 360
@@ -381,7 +381,7 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 120 } }
                             Text {
                                 anchors.centerIn: parent
-                                text: "\udb80\udde2"; font.pixelSize: 14; font.family: root.nf
+                                text: ""; font.pixelSize: 14; font.family: root.nf
                                 color: root.settingsOpen ? Root.Colors.base : Root.Colors.subtext
                             }
                             MouseArea { id: setHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.settingsOpen = !root.settingsOpen }
@@ -392,7 +392,7 @@ PanelWindow {
                             implicitWidth: 26; implicitHeight: 26; radius: 8
                             color: closeHov.containsMouse ? Root.Colors.surface1 : "transparent"
                             Behavior on color { ColorAnimation { duration: 120 } }
-                            Text { anchors.centerIn: parent; text: "✕"; font.pixelSize: 13; color: Root.Colors.subtext }
+                            Text { anchors.centerIn: parent; text: "󱎘"; font.pixelSize: 13; color: Root.Colors.subtext }
                             MouseArea { id: closeHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
                         }
                     }
@@ -435,7 +435,7 @@ PanelWindow {
                                     Behavior on color { ColorAnimation { duration: 120 } }
                                     RowLayout {
                                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 6
-                                        Text { text: "\udb80\uddbf"; font.pixelSize: 12; font.family: root.nf; color: Root.Colors.subtext }
+                                        Text { text: "󰉋"; font.pixelSize: 12; font.family: root.nf; color: Root.Colors.subtext }
                                         Text { Layout.fillWidth: true; text: root.wallpaperDir; font.pixelSize: 11; color: Root.Colors.text; elide: Text.ElideLeft }
                                     }
                                     MouseArea {
@@ -847,7 +847,7 @@ PanelWindow {
                         RowLayout {
                             anchors.centerIn: parent; spacing: 8
                             Text {
-                                text: "\udb81\udd75"; font.pixelSize: 14; font.family: root.nf
+                                text: ""; font.pixelSize: 14; font.family: root.nf
                                 color: Root.Colors.blue
                             }
                             Text { text: "Acak"; font.pixelSize: 12; color: Root.Colors.text }
