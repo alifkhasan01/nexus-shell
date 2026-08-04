@@ -4,7 +4,8 @@ import QtQml
 import QtQuick
 import Quickshell.Hyprland._GlobalShortcuts
 import Quickshell.Services.Pipewire
-import "./modules" as Modules
+import "./bar" as Bar
+import "./lockscreen" as Lock
 
 ShellRoot {
     id: root
@@ -73,7 +74,7 @@ ShellRoot {
     Variants {
         model: Quickshell.screens
 
-        Modules.Bar {
+        Bar.Bar {
             required property var modelData
             screen: modelData
             shellState: shellStateObj
@@ -84,26 +85,52 @@ ShellRoot {
     // WlSessionLock harus ada satu instance di root (bukan di dalam Bar),
     // karena ia menutup SEMUA monitor sekaligus via ext_session_lock_v1.
     // IpcHandler (target: "lockscreen") sudah ada di dalam LockScreen.qml.
-    Modules.LockScreen {}
+    Lock.LockScreen {}
 
     // ── Auto-pairing BlueZ agent (berjalan di background) ─────────────────
     // Menjawab "yes" pada prompt pair/confirm bluetooth sehingga perangkat
     // bisa connect langsung dari panel tanpa input terminal.
+    // Dijalankan sekali saat startup; jika crash, tidak direstart otomatis
+    // (bluetoothd biasanya sudah handle re-registration sendiri).
     Process {
         id: btAgent
-        command: ["bash", "modules/btagent.sh"]
+        command: ["bash", "scripts/btagent.sh"]
         running: true
+        // Restart sekali jika crash, dengan jeda 5 detik
+        onRunningChanged: {
+            if (!running) btAgentRestartTimer.restart()
+        }
+    }
+
+    Timer {
+        id: btAgentRestartTimer
+        interval: 5000
+        repeat: false
+        onTriggered: btAgent.running = true
     }
 
     // ── Cava audio visualizer feed ────────────────────────────────────────
-    // Menjalankan cava_feed.sh yang menulis bar data ke /tmp/qs-cava.out
-    // untuk dipakai oleh CavaService → CavaRingDank di tab Media dashboard.
+    // Hanya berjalan saat dashboard terbuka (tab Media butuh data cava).
+    // Hemat CPU & I/O saat dashboard tidak dipakai.
     Process {
         id: cavaFeed
-        command: ["bash", "modules/dashboard/cava_feed.sh"]
-        running: true
-        // restart otomatis kalau crash
-        onRunningChanged: if (!running) running = true
+        command: ["bash", "dashboard/cava_feed.sh"]
+        running: shellStateObj.dashboardOpen
+        onRunningChanged: {
+            // Restart otomatis hanya saat dashboard sedang terbuka
+            if (!running && shellStateObj.dashboardOpen) {
+                cavaFeedRestartTimer.restart()
+            }
+        }
+    }
+
+    Timer {
+        id: cavaFeedRestartTimer
+        interval: 1000
+        repeat: false
+        onTriggered: {
+            if (shellStateObj.dashboardOpen) cavaFeed.running = true
+        }
     }
 
     // ── Biasakan sink bluetooth jadi default ─────────────────────────────
