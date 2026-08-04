@@ -24,6 +24,23 @@ PanelWindow {
     property bool showPanel: false
     onOpenChanged: if (open) showPanel = true
 
+    // Mulai update dengan password sudo, lalu jalankan script update.sh
+    function startUpdate() {
+        if (passwordField.text.length === 0) return
+        root.logText = ""
+        root.updating = true
+        updateProc.command = [
+            "sh", "-c",
+            "askp=\"/tmp/quickshell-sudo-askpass\"; " +
+            "umask 077 && printf '%s\\n' '#!/bin/sh' 'printf %s \"$QSH_SUDO_PASS\"' > \"$askp\" && " +
+            "chmod +x \"$askp\" && " +
+            "export QSH_SUDO_PASS=\"$1\" && " +
+            "exec env SUDO_ASKPASS=\"$askp\" sudo -A ~/.local/bin/update.sh 2>&1",
+            passwordField.text
+        ]
+        updateProc.running = true
+    }
+
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.namespace: "quickshell-update"
@@ -52,7 +69,7 @@ PanelWindow {
 
         // ── Animasi muncul / hilang ────────────────────────────────────────
         opacity: 0
-        transform: Translate { id: cardTranslate; y: -20 }
+        transform: Translate { id: cardTranslate; y: -50 }
 
         states: State {
             name: "open"
@@ -173,6 +190,7 @@ PanelWindow {
                         onClicked: {
                             root.updateDone = false
                             root.logText = ""
+                            passwordField.text = ""
                             root.closeRequested()
                         }
                     }
@@ -461,8 +479,36 @@ PanelWindow {
                     onClicked: {
                         root.updateDone = false
                         root.logText = ""
+                        passwordField.text = ""
                         root.closeRequested()
                     }
+                }
+            }
+
+            // Input password sudo (muncul saat ada update)
+            TextField {
+                id: passwordField
+                visible: !root.updating && !root.updateDone && root.pending > 0
+                Layout.preferredWidth: 200
+                implicitHeight: 38
+                echoMode: TextInput.Password
+                placeholderText: "Password sudo"
+                placeholderTextColor: Root.Colors.subtext
+                font.pixelSize: 13
+                color: Root.Colors.text
+                selectByMouse: true
+                cursorVisible: true
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                background: Rectangle {
+                    radius: 10
+                    color: Root.Colors.surface0
+                    border.color: passwordField.activeFocus ? Root.Colors.blue : Root.Colors.surface2
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                }
+
+                onAccepted: {
+                    if (root.pending > 0) root.startUpdate()
                 }
             }
 
@@ -533,9 +579,7 @@ PanelWindow {
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        root.logText = ""
-                        root.updating = true
-                        updateProc.running = true
+                        root.startUpdate()
                     }
                 }
             }
@@ -604,7 +648,7 @@ PanelWindow {
     // ── Proses update ─────────────────────────────────────────────────────
     Process {
         id: updateProc
-        command: ["sh", "-c", "yay -Syu --noconfirm 2>&1 || paru -Syu --noconfirm 2>&1"]
+        command: ["sh", "-c", "~/.local/bin/update.sh 2>&1"]
         stdout: SplitParser {
             onRead: data => {
                 root.logText += data + "\n"

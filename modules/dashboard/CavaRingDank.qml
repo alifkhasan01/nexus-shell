@@ -121,8 +121,11 @@ Item {
             id: artImg
             anchors.fill: parent
             source: root.coverSource
+            sourceSize.width: width * Screen.devicePixelRatio
+            sourceSize.height: height * Screen.devicePixelRatio
             fillMode: Image.PreserveAspectCrop
             smooth: true
+            mipmap: true
             visible: false
         }
 

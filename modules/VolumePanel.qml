@@ -6,8 +6,9 @@ import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import "../" as Root
 
-// Panel volume: system output, output bluetooth, aplikasi per-stream,
-// dan mikrofon. Dibuka dengan klik kiri pada ikon volume di Bar.
+// Panel volume dua-tab (inspirasi KDE plasma-pa):
+//   Tab "Perangkat" : semua output + input hardware, radio pilih default
+//   Tab "Aplikasi"  : per-app audio streams
 PanelWindow {
     id: root
 
@@ -15,11 +16,9 @@ PanelWindow {
     signal closeRequested()
 
     anchors { top: true; left: true; right: true; bottom: true }
-
     color: "transparent"
     visible: showPanel
 
-    // Tetap visible selama animasi tutup belum selesai
     property bool showPanel: false
     onOpenChanged: if (open) showPanel = true
 
@@ -28,83 +27,125 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-volume"
     WlrLayershell.exclusiveZone: 0
 
-    // Klik di luar kartu untuk menutup
+    // ── Klik luar untuk tutup ──────────────────────────────────────────────
     MouseArea {
         anchors.fill: parent
         onClicked: root.closeRequested()
     }
 
-    // ── Sink / source aktif ────────────────────────────────────────────────
-    property var _defaultSink: Pipewire.defaultAudioSink
-    property var source: Pipewire.defaultAudioSource
+    // ── Pipewire data ──────────────────────────────────────────────────────
+    property var defaultSink:   Pipewire.defaultAudioSink
+    property var defaultSource: Pipewire.defaultAudioSource
 
-    // Bluetooth sink (hardware, bukan stream)
-    property var btSink: {
+    // Semua hardware output sink
+    property var outputDevices: {
+        const list = []
         const nodes = Pipewire.nodes.values
         for (let i = 0; i < nodes.length; i++) {
             const n = nodes[i]
-            if (!n || !n.audio || !n.isSink || n.isStream) continue
-            const props = n.properties || {}
-            if (props["device.api"] === "bluez5" ||
-                (n.name || "").startsWith("bluez_output."))
-                return n
+            if (n && n.audio && n.isSink && !n.isStream) list.push(n)
         }
         void Pipewire.defaultAudioSink
-        return null
+        return list
     }
 
-    // Sink aktif yang dikontrol slider SYSTEM:
-    // kalau BT sink ada dan sedang jadi default, pakai itu
-    property var sink: {
-        if (btSink && _defaultSink && btSink.id === _defaultSink.id)
-            return btSink
-        return _defaultSink
+    // Semua hardware input source
+    property var inputDevices: {
+        const list = []
+        const nodes = Pipewire.nodes.values
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i]
+            if (n && n.audio && !n.isSink && !n.isStream) list.push(n)
+        }
+        void Pipewire.defaultAudioSource
+        return list
     }
 
-    // Stream aplikasi (musik/video/diskusi, dst)
-    // Tidak pakai computed property supaya tidak timbul binding loop saat
-    // node PipeWire masuk/keluar registry (misal saat wf-recorder jalan).
-    // Filter dilakukan langsung di delegate Repeater.
+    // Per-app output streams (sink-input: isStream + isSink)
+    // Tidak pakai computed property reaktif supaya tidak timbul binding loop
+    // saat node masuk/keluar registry (contoh: wf-recorder mulai/berhenti).
+    // List di-refresh via onNodesChanged saja.
+    property var appOutputStreams: []
+    property var appInputStreams: []
 
-    Component.onCompleted: {
-        console.log("VP sink=" + (root.sink ? root.sink.name : "null")
-            + " bt=" + (root.btSink ? root.btSink.name : "null")
-            + " totalnodes=" + (Pipewire.nodes.values ? Pipewire.nodes.values.length : -1))
+    function _refreshAppStreams() {
+        const outList = []
+        const inList  = []
+        const nodes   = Pipewire.nodes.values
+        for (let i = 0; i < nodes.length; i++) {
+            const n = nodes[i]
+            if (!n || !n.audio || !n.isStream) continue
+            // Filter: jangan tampilkan monitor/loopback/virtual (biasanya nama mengandung "monitor")
+            const nm = (n.name || "").toLowerCase()
+            if (nm.includes("monitor") || nm.includes("loopback")) continue
+            if (n.isSink) outList.push(n)
+            else           inList.push(n)
+        }
+        appOutputStreams = outList
+        appInputStreams  = inList
     }
 
-    // Keep semua hardware sink + source tetap hidup
+    Connections {
+        target: Pipewire.nodes
+        function onValuesChanged() { root._refreshAppStreams() }
+    }
+
+    Component.onCompleted: root._refreshAppStreams()
+
+    // Track hardware devices — pisah dari stream agar tidak loop
+    // saat recorder masuk/keluar registry.
     PwObjectTracker {
         objects: {
-            const tracked = [root.source]
+            const tracked = []
             const nodes = Pipewire.nodes.values
             for (let i = 0; i < nodes.length; i++) {
                 const n = nodes[i]
-                if (n && n.isSink && !n.isStream && n.audio)
-                    tracked.push(n)
+                // Track hanya hardware nodes (bukan stream) agar tidak
+                // memicu re-bind setiap kali wf-recorder/OBS start/stop
+                if (n && n.audio && !n.isStream) tracked.push(n)
+            }
+            if (root.defaultSink)   tracked.push(root.defaultSink)
+            if (root.defaultSource) tracked.push(root.defaultSource)
+            return tracked
+        }
+    }
+
+    // Track stream nodes secara terpisah — re-bind lebih terisolasi
+    PwObjectTracker {
+        objects: {
+            const tracked = []
+            const nodes = Pipewire.nodes.values
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i]
+                if (n && n.audio && n.isStream) tracked.push(n)
             }
             return tracked
         }
     }
 
+    // ── Tab state ──────────────────────────────────────────────────────────
+    property int currentTab: 0  // 0 = Perangkat, 1 = Aplikasi
+
     // ── Kartu ──────────────────────────────────────────────────────────────
     Rectangle {
         id: card
+
         anchors.top: parent.top
         anchors.topMargin: 5
         anchors.right: parent.right
         anchors.rightMargin: 10
 
-        width: 460
-        implicitHeight: contentCol.implicitHeight + 28
+        width: 420
+        implicitHeight: Math.max(tabContent.implicitHeight + tabBar.height + 24 + 16, 80)
         height: implicitHeight
         radius: 16
         color: Root.Colors.mantle
         border.color: Root.Colors.surface2
         border.width: 2
 
-        // ── Animasi muncul / hilang ────────────────────────────────────────
+        // ── Animasi ────────────────────────────────────────────────────────
         opacity: 0
-        transform: Translate { id: cardTranslate; y: -20 }
+        transform: Translate { id: cardTranslate; y: -50 }
 
         states: State {
             name: "open"
@@ -116,27 +157,15 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation {
-                    target: cardTranslate; property: "y"
-                    duration: 220; easing.type: Easing.OutCubic
-                }
-                OpacityAnimator {
-                    target: card
-                    duration: 200; easing.type: Easing.OutCubic
-                }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation {
-                            target: cardTranslate; property: "y"
-                            duration: 160; easing.type: Easing.InCubic
-                        }
-                        OpacityAnimator {
-                            target: card
-                            duration: 150; easing.type: Easing.InCubic
-                        }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -145,22 +174,24 @@ PanelWindow {
 
         Behavior on color { ColorAnimation { duration: 150 } }
 
-        // Block klik di dalam kartu
+        // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {
-            id: contentCol
             anchors.fill: parent
             anchors.topMargin: 12
-            anchors.leftMargin: 12
-            anchors.rightMargin: 12
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
             anchors.bottomMargin: 12
-            spacing: 8
+            spacing: 0
 
-            // ── Header ─────────────────────────────────────────────────────
+            // ── Header + Tab bar ───────────────────────────────────────────
             RowLayout {
                 Layout.fillWidth: true
-                Layout.bottomMargin: 2
+                Layout.leftMargin: 16
+                Layout.rightMargin: 16
+                Layout.bottomMargin: 10
+                spacing: 0
 
                 Text {
                     text: "󰕾  Volume"
@@ -172,291 +203,583 @@ PanelWindow {
 
                 Item { Layout.fillWidth: true }
 
-                // Sink aktif
-                Text {
-                    text: root.sink
-                          ? (root.sink.nickname || root.sink.description || root.sink.name || "Output")
-                          : "Tidak ada output"
-                    font.pixelSize: 11
-                    color: Root.Colors.subtext
-                    elide: Text.ElideRight
+                // Tab bar kecil di pojok kanan header
+                Rectangle {
+                    id: tabBar
+                    width: tabRow.implicitWidth + 6
+                    height: 28
+                    radius: 8
+                    color: Root.Colors.surface0
                     Behavior on color { ColorAnimation { duration: 150 } }
-                }
-            }
 
-            // ── System output ──────────────────────────────────────────────
-            SectionLabel { text: "SYSTEM" }
+                    Row {
+                        id: tabRow
+                        anchors.centerIn: parent
+                        spacing: 2
 
-            VolumeRow {
-                node: root.sink
-                iconText: {
-                    if (!root.sink?.audio || root.sink.audio.muted) return "󰸈"
-                    const pct = Math.round((root.sink.audio.volume ?? 0) * 100)
-                    return pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
-                }
-                labelText: root.sink?.nickname || root.sink?.description ||
-                           root.sink?.name || "System"
-            }
+                        Repeater {
+                            model: ["Perangkat", "Aplikasi"]
 
-            // ── Output Bluetooth ───────────────────────────────────────────
-            // Muncul hanya kalau BT sink ada tapi bukan default sink
-            // (sehingga tidak duplikat dengan slider SYSTEM di atas)
-            VolumeRow {
-                visible: root.btSink != null && root.btSink.id !== (root._defaultSink?.id ?? -1)
-                node: root.btSink
-                iconText: "󰋋"
-                labelText: root.btSink?.nickname || root.btSink?.description ||
-                           root.btSink?.name || "Bluetooth"
-            }
+                            delegate: Rectangle {
+                                required property string modelData
+                                required property int index
 
-            // ── Aplikasi (per-stream) ──────────────────────────────────────
-            // Repeater filter langsung dari Pipewire.nodes tanpa intermediate
-            // property supaya tidak ada binding loop saat node masuk/keluar.
-            SectionLabel {
-                text: "APLIKASI"
-                visible: appStreamRepeater.count > 0
-            }
+                                width: tabLbl.implicitWidth + 16
+                                height: 22
+                                radius: 6
+                                color: root.currentTab === index
+                                    ? Root.Colors.surface2
+                                    : (tabMa.containsMouse ? Root.Colors.surface1 : "transparent")
+                                Behavior on color { ColorAnimation { duration: 100 } }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-                visible: appStreamRepeater.count > 0
+                                Text {
+                                    id: tabLbl
+                                    anchors.centerIn: parent
+                                    text: modelData
+                                    font.pixelSize: 11
+                                    font.bold: root.currentTab === index
+                                    color: root.currentTab === index ? Root.Colors.text : Root.Colors.subtext
+                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                }
 
-                Repeater {
-                    id: appStreamRepeater
-                    model: Pipewire.nodes
-
-                    delegate: VolumeRow {
-                        required property var modelData
-                        visible: isAppOutputStream(modelData)
-                        node: modelData
-                        iconText: appIcon(modelData)
-                        labelText: streamName(modelData)
-
-                        // Jangan makan layout space kalau invisible
-                        Layout.preferredHeight: visible ? 46 : 0
-                        implicitHeight: visible ? 46 : 0
+                                MouseArea {
+                                    id: tabMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: root.currentTab = index
+                                }
+                            }
+                        }
                     }
                 }
             }
 
-            Text {
-                visible: appStreamRepeater.count === 0
+            // ── Konten tab ─────────────────────────────────────────────────
+            Item {
+                id: tabContent
                 Layout.fillWidth: true
-                text: "Tidak ada aplikasi yang memutar audio"
-                font.pixelSize: 11
-                color: Root.Colors.subtext
-                horizontalAlignment: Text.AlignHCenter
-                topPadding: 2
-                bottomPadding: 2
-                Behavior on color { ColorAnimation { duration: 150 } }
-            }
+                implicitHeight: root.currentTab === 0 ? devicesCol.implicitHeight : appsCol.implicitHeight
 
-            // ── Mikrofon ──────────────────────────────────────────────────
-            SectionLabel { text: "MIKROFON" }
+                Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
 
-            VolumeRow {
-                node: root.source
-                iconText: {
-                    if (!root.source?.audio || root.source.audio.muted) return "󰍭"
-                    return "󰍬"
+                // ── TAB 0: PERANGKAT ──────────────────────────────────────
+                ColumnLayout {
+                    id: devicesCol
+                    width: parent.width
+                    spacing: 2
+                    opacity: root.currentTab === 0 ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                    // ── Output devices ────────────────────────────────────
+                    SectionLabel {
+                        text: "OUTPUT"
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.topMargin: 2
+                    }
+
+                    Repeater {
+                        model: root.outputDevices
+                        delegate: DeviceRow {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+
+                            node: modelData
+                            isDefault: root.defaultSink && modelData.id === root.defaultSink.id
+                            showRadio: root.outputDevices.length > 1
+                            onSetDefault: Pipewire.preferredDefaultAudioSink = modelData
+                            deviceIcon: {
+                                const nm = (modelData.nickname || modelData.description || modelData.name || "").toLowerCase()
+                                const props = modelData.properties || {}
+                                if (nm.includes("bluetooth") || nm.includes("a2dp") || props["device.api"] === "bluez5") return "󰋋"
+                                if (nm.includes("hdmi")) return "󰍹"
+                                if (nm.includes("usb")) return "󰻇"
+                                return "󰓃"
+                            }
+                        }
+                    }
+
+                    // placeholder kalau tidak ada output
+                    Text {
+                        visible: root.outputDevices.length === 0
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        text: "Tidak ada perangkat output"
+                        font.pixelSize: 11
+                        color: Root.Colors.subtext
+                        horizontalAlignment: Text.AlignHCenter
+                        topPadding: 4; bottomPadding: 4
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    // ── Divider ───────────────────────────────────────────
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.topMargin: 4
+                        Layout.bottomMargin: 4
+                        height: 1
+                        color: Root.Colors.surface1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    // ── Input devices ─────────────────────────────────────
+                    SectionLabel {
+                        text: "INPUT"
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                    }
+
+                    Repeater {
+                        model: root.inputDevices
+                        delegate: DeviceRow {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+
+                            node: modelData
+                            isDefault: root.defaultSource && modelData.id === root.defaultSource.id
+                            showRadio: root.inputDevices.length > 1
+                            onSetDefault: Pipewire.preferredDefaultAudioSource = modelData
+                            deviceIcon: "󰍬"
+                        }
+                    }
+
+                    // placeholder kalau tidak ada input
+                    Text {
+                        visible: root.inputDevices.length === 0
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        text: "Tidak ada perangkat input"
+                        font.pixelSize: 11
+                        color: Root.Colors.subtext
+                        horizontalAlignment: Text.AlignHCenter
+                        topPadding: 4; bottomPadding: 4
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    Item { Layout.preferredHeight: 2 }
                 }
-                labelText: root.source?.nickname || root.source?.description ||
-                           root.source?.name || "Mikrofon"
+
+                // ── TAB 1: APLIKASI ───────────────────────────────────────
+                ColumnLayout {
+                    id: appsCol
+                    width: parent.width
+                    spacing: 2
+                    opacity: root.currentTab === 1 ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                    // ── App output streams ────────────────────────────────
+                    SectionLabel {
+                        text: "MEMUTAR AUDIO"
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.topMargin: 2
+                        visible: root.appOutputStreams.length > 0 || root.appInputStreams.length === 0
+                    }
+
+                    Repeater {
+                        model: root.appOutputStreams
+                        delegate: AppStreamRow {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+                            node: modelData
+                        }
+                    }
+
+                    Text {
+                        visible: root.appOutputStreams.length === 0 && root.appInputStreams.length === 0
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.topMargin: 8
+                        Layout.bottomMargin: 8
+                        text: "Tidak ada aplikasi yang memutar audio"
+                        font.pixelSize: 11
+                        color: Root.Colors.subtext
+                        horizontalAlignment: Text.AlignHCenter
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    // ── Divider ───────────────────────────────────────────
+                    Rectangle {
+                        visible: root.appInputStreams.length > 0
+                        Layout.fillWidth: true
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        Layout.topMargin: 4
+                        Layout.bottomMargin: 4
+                        height: 1
+                        color: Root.Colors.surface1
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    // ── App input streams (recording) ─────────────────────
+                    SectionLabel {
+                        text: "MEREKAM AUDIO"
+                        Layout.leftMargin: 16
+                        Layout.rightMargin: 16
+                        visible: root.appInputStreams.length > 0
+                    }
+
+                    Repeater {
+                        model: root.appInputStreams
+                        delegate: AppStreamRow {
+                            required property var modelData
+                            required property int index
+
+                            Layout.fillWidth: true
+                            Layout.leftMargin: 8
+                            Layout.rightMargin: 8
+                            node: modelData
+                        }
+                    }
+
+                    Item { Layout.preferredHeight: 2 }
+                }
             }
         }
     }
 
-    // ── Helper ───────────────────────────────────────────────────────────
+    // ── Component: SectionLabel ────────────────────────────────────────────
     component SectionLabel: Text {
-        Layout.fillWidth: true
         font.pixelSize: 10
         font.bold: true
         font.letterSpacing: 0.8
         color: Root.Colors.subtext
         opacity: 0.7
-        leftPadding: 2
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 
-    // Baris volume: mute + ikon + nama + slider + persen
-    component VolumeRow: Rectangle {
-        id: row
+    // ── Component: DeviceRow ───────────────────────────────────────────────
+    // Satu baris device hardware: [radio/spacer] [icon] [nama + slider] [persen]
+    component DeviceRow: Rectangle {
+        id: devRow
 
         property var node: null
-        property string iconText: "󰕾"
-        property string labelText: "Unknown"
+        property bool isDefault: false
+        property bool showRadio: true
+        property string deviceIcon: "󰓃"
+        signal setDefault()
 
-        Layout.fillWidth: true
-        implicitHeight: 46
+        implicitHeight: devLayout.implicitHeight + 12
         radius: 10
-        color: rowHover.hovered ? Root.Colors.surface0 : "transparent"
+        color: devHover.hovered ? Root.Colors.surface0 : "transparent"
         Behavior on color { ColorAnimation { duration: 120 } }
 
-        readonly property bool muted:
-            row.node?.audio ? row.node.audio.muted : false
-        readonly property real volume:
-            row.node?.audio ? (row.node.audio.volume ?? 0) : 0
+        readonly property bool muted: node?.audio ? node.audio.muted : false
+        readonly property real volume: node?.audio ? (node.audio.volume ?? 0) : 0
 
         RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: 8
-            anchors.rightMargin: 8
+            id: devLayout
+            anchors {
+                left: parent.left; right: parent.right
+                verticalCenter: parent.verticalCenter
+                leftMargin: 8; rightMargin: 8
+            }
             spacing: 8
 
-            // Tombol mute
+            // Radio button — pilih sebagai default
             Rectangle {
-                width: 28
-                height: 28
+                width: 18
+                height: 18
+                radius: 9
+                visible: devRow.showRadio
+                color: "transparent"
+                border.width: 2
+                border.color: devRow.isDefault ? Root.Colors.blue : Root.Colors.overlay0
+                Behavior on border.color { ColorAnimation { duration: 120 } }
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: 8
+                    height: 8
+                    radius: 4
+                    color: Root.Colors.blue
+                    opacity: devRow.isDefault ? 1 : 0
+                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                }
+
+                MouseArea {
+                    anchors.fill: parent
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: devRow.setDefault()
+                }
+            }
+
+            // Spacer sebagai pengganti radio kalau cuma 1 device
+            Item {
+                width: 18
+                height: 18
+                visible: !devRow.showRadio
+            }
+
+            // Tombol mute + ikon
+            Rectangle {
+                width: 30
+                height: 30
                 radius: 8
-                color: row.muted
-                       ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.2)
-                       : (muteMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface0)
+                color: devRow.muted
+                    ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
+                    : (muteBtnMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1)
                 Behavior on color { ColorAnimation { duration: 120 } }
 
                 Text {
                     anchors.centerIn: parent
-                    text: row.muted ? "󰝟" : iconText
+                    text: devRow.muted ? "󰝟" : devRow.deviceIcon
                     font.pixelSize: 15
-                    color: row.muted ? Root.Colors.red : Root.Colors.subtext
+                    color: devRow.muted ? Root.Colors.red : Root.Colors.blue
                     Behavior on color { ColorAnimation { duration: 120 } }
                 }
 
                 MouseArea {
-                    id: muteMa
+                    id: muteBtnMa
                     anchors.fill: parent
+                    hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        if (row.node?.audio)
-                            row.node.audio.muted = !row.node.audio.muted
-                    }
+                    onClicked: { if (devRow.node?.audio) devRow.node.audio.muted = !devRow.node.audio.muted }
                 }
             }
 
-            // Nama stream/sink
-            Text {
-                Layout.preferredWidth: 130
-                Layout.maximumWidth: 130
-                text: row.labelText
-                font.pixelSize: 13
-                color: Root.Colors.text
-                elide: Text.ElideRight
-                Behavior on color { ColorAnimation { duration: 120 } }
-            }
-
-            // Slider volume
-            Slider {
-                id: slider
+            // Nama + slider dalam kolom
+            ColumnLayout {
                 Layout.fillWidth: true
-                from: 0
-                to: 1
+                spacing: 2
 
-                // Saat user tidak sedang drag, ikuti nilai dari Pipewire
-                // Saat sedang drag, jangan override posisi slider
-                property bool dragging: false
-                value: dragging ? slider.value : row.volume
+                // Nama device — klik untuk set default
+                Text {
+                    Layout.fillWidth: true
+                    text: devRow.node?.nickname || devRow.node?.description || devRow.node?.name || "Device"
+                    font.pixelSize: 12
+                    font.bold: devRow.isDefault
+                    color: devRow.isDefault ? Root.Colors.text : Root.Colors.subtext
+                    elide: Text.ElideRight
+                    Behavior on color { ColorAnimation { duration: 120 } }
 
-                // Tulis ke Pipewire setiap kali user geser slider
-                onMoved: {
-                    if (row.node?.audio)
-                        row.node.audio.volume = value
-                }
-                onPressedChanged: {
-                    dragging = pressed
-                    // Commit final saat dilepas
-                    if (!pressed && row.node?.audio)
-                        row.node.audio.volume = value
-                }
-
-                background: Rectangle {
-                    x: parent.leftPadding
-                    y: parent.topPadding + parent.availableHeight / 2 - height / 2
-                    width: parent.availableWidth
-                    height: 6
-                    radius: 3
-                    color: Root.Colors.surface0
-
-                    Rectangle {
-                        width: parent.width * (slider.visualPosition)
-                        height: parent.height
-                        radius: 3
-                        color: row.muted ? Root.Colors.red : Root.Colors.blue
+                    MouseArea {
+                        anchors.fill: parent
+                        cursorShape: devRow.showRadio ? Qt.PointingHandCursor : Qt.ArrowCursor
+                        onClicked: if (devRow.showRadio) devRow.setDefault()
                     }
                 }
 
-                handle: Rectangle {
-                    x: parent.leftPadding + parent.visualPosition * (parent.availableWidth - width)
-                    y: parent.topPadding + parent.availableHeight / 2 - height / 2
-                    width: 14
-                    height: 14
-                    radius: 7
-                    color: Root.Colors.text
+                // Slider volume
+                VolumeSlider {
+                    Layout.fillWidth: true
+                    node: devRow.node
+                    muted: devRow.muted
+                    currentVolume: devRow.volume
                 }
             }
 
             // Persen
             Text {
-                text: Math.round(row.volume * 100) + "%"
-                font.pixelSize: 12
+                text: Math.round(devRow.volume * 100) + "%"
+                font.pixelSize: 11
                 color: Root.Colors.subtext
+                Layout.minimumWidth: 34
+                horizontalAlignment: Text.AlignRight
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
         }
 
-        // Hover background
-        HoverHandler {
-            id: rowHover
-            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        }
+        HoverHandler { id: devHover; acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad }
 
-        // Scroll untuk ubah volume
         WheelHandler {
             target: null
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => {
-                if (!row.node?.audio) return
-                const step = 0.05
-                const delta = event.angleDelta.y > 0 ? step : -step
-                row.node.audio.volume = Math.max(0, Math.min(1, row.volume + delta))
+                if (!devRow.node?.audio) return
+                const delta = event.angleDelta.y > 0 ? 0.05 : -0.05
+                devRow.node.audio.volume = Math.max(0, Math.min(1, devRow.volume + delta))
             }
         }
     }
 
-    // ── Helper ikon / nama aplikasi ───────────────────────────────────────
-    function isAppOutputStream(n) {
-        if (!n || !n.audio) return false
-        const props = n.properties || {}
-        const mc = props["media.class"] || ""
-        const isOutputStream = n.isStream === true || mc === "Stream/Output/Audio"
-        if (!isOutputStream) return false
-        if (mc !== "" && mc !== "Stream/Output/Audio") return false
-        if (props["loopback"] === true || (n.name || "").includes("loopback")) return false
-        const name = n.name || ""
-        if (name.startsWith("alsa_output.") || name.startsWith("bluez_output.")) return false
-        return true
+    // ── Component: AppStreamRow ────────────────────────────────────────────
+    // Baris per-app stream: [mute] [nama app] [slider] [persen]
+    component AppStreamRow: Rectangle {
+        id: appRow
+
+        property var node: null
+
+        implicitHeight: appLayout.implicitHeight + 12
+        radius: 10
+        color: appHover.hovered ? Root.Colors.surface0 : "transparent"
+        Behavior on color { ColorAnimation { duration: 120 } }
+
+        readonly property bool muted: node?.audio ? node.audio.muted : false
+        readonly property real volume: node?.audio ? (node.audio.volume ?? 0) : 0
+        readonly property string appName: {
+            const props = node?.properties || {}
+            return props["application.name"]
+                || props["media.name"]
+                || node?.nickname
+                || node?.description
+                || node?.name
+                || "Aplikasi"
+        }
+        readonly property string appIcon: {
+            if (!node) return "󰝟"
+            const props = node.properties || {}
+            const name = (props["application.name"] || node.name || "").toLowerCase()
+            if (name.includes("firefox")) return "󰈹"
+            if (name.includes("chrome") || name.includes("chromium")) return ""
+            if (name.includes("spotify")) return "󰓇"
+            if (name.includes("mpv") || name.includes("vlc")) return "󰐈"
+            if (name.includes("discord")) return "󰙯"
+            if (name.includes("telegram")) return "󰔁"
+            if (appRow.muted || appRow.volume === 0) return "󰕿"
+            return appRow.volume < 0.5 ? "󰖀" : "󰕾"
+        }
+
+        RowLayout {
+            id: appLayout
+            anchors {
+                left: parent.left; right: parent.right
+                verticalCenter: parent.verticalCenter
+                leftMargin: 8; rightMargin: 8
+            }
+            spacing: 8
+
+            // Spacer sejajar dengan radio di DeviceRow
+            Item { width: 18; height: 1 }
+
+            // Tombol mute + ikon app
+            Rectangle {
+                width: 30
+                height: 30
+                radius: 8
+                color: appRow.muted
+                    ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
+                    : (appMuteMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1)
+                Behavior on color { ColorAnimation { duration: 120 } }
+
+                Text {
+                    anchors.centerIn: parent
+                    text: appRow.muted ? "󰝟" : appRow.appIcon
+                    font.pixelSize: 14
+                    color: appRow.muted ? Root.Colors.red : Root.Colors.overlay2
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                }
+
+                MouseArea {
+                    id: appMuteMa
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: { if (appRow.node?.audio) appRow.node.audio.muted = !appRow.node.audio.muted }
+                }
+            }
+
+            // Nama + slider
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Text {
+                    Layout.fillWidth: true
+                    text: appRow.appName
+                    font.pixelSize: 12
+                    color: Root.Colors.text
+                    elide: Text.ElideRight
+                    Behavior on color { ColorAnimation { duration: 120 } }
+                }
+
+                VolumeSlider {
+                    Layout.fillWidth: true
+                    node: appRow.node
+                    muted: appRow.muted
+                    currentVolume: appRow.volume
+                }
+            }
+
+            // Persen
+            Text {
+                text: Math.round(appRow.volume * 100) + "%"
+                font.pixelSize: 11
+                color: Root.Colors.subtext
+                Layout.minimumWidth: 34
+                horizontalAlignment: Text.AlignRight
+                Behavior on color { ColorAnimation { duration: 120 } }
+            }
+        }
+
+        HoverHandler { id: appHover; acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad }
+
+        WheelHandler {
+            target: null
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            onWheel: event => {
+                if (!appRow.node?.audio) return
+                const delta = event.angleDelta.y > 0 ? 0.05 : -0.05
+                appRow.node.audio.volume = Math.max(0, Math.min(1, appRow.volume + delta))
+            }
+        }
     }
 
-    function appIcon(node) {
-        const props = node.properties || {}
-        const app = (props["application.name"] ||
-                     props["application.process.binary"] ||
-                     node.name || "").toLowerCase()
-        if (app.includes("spotify"))    return "󰓇"
-        if (app.includes("discord"))    return "󰙯"
-        if (app.includes("firefox"))    return "󰈹"
-        if (app.includes("chrome") || app.includes("chromium")) return "󰊯"
-        if (app.includes("thunderbird")) return "󰴢"
-        if (app.includes("mpv")   || app.includes("vlc"))       return "󰎆"
-        if (app.includes("celluloid") || app.includes("youtube")) return "󰎆"
-        return "󰝚"
-    }
+    // ── Component: VolumeSlider ────────────────────────────────────────────
+    component VolumeSlider: Slider {
+        id: volSlider
 
-    function streamName(node) {
-        const props = node.properties || {}
-        return props["application.name"] ||
-               props["node.description"] ||
-               props["media.name"] ||
-               props["node.name"] ||
-               "Aplikasi"
+        property var node: null
+        property bool muted: false
+        property real currentVolume: 0
+
+        implicitHeight: 18
+        from: 0
+        to: 1
+
+        property bool dragging: false
+        value: dragging ? volSlider.value : currentVolume
+
+        onMoved: {
+            if (node?.audio) node.audio.volume = value
+        }
+        onPressedChanged: {
+            dragging = pressed
+            if (!pressed && node?.audio) node.audio.volume = value
+        }
+
+        background: Rectangle {
+            x: volSlider.leftPadding
+            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+            width: volSlider.availableWidth
+            height: 5
+            radius: 3
+            color: Root.Colors.surface1
+
+            Rectangle {
+                width: volSlider.visualPosition * parent.width
+                height: parent.height
+                radius: 3
+                color: volSlider.muted ? Root.Colors.red : Root.Colors.blue
+                Behavior on color { ColorAnimation { duration: 120 } }
+            }
+        }
+
+        handle: Rectangle {
+            x: volSlider.leftPadding + volSlider.visualPosition * (volSlider.availableWidth - width)
+            y: volSlider.topPadding + volSlider.availableHeight / 2 - height / 2
+            width: 14
+            height: 14
+            radius: 7
+            color: Root.Colors.text
+            Behavior on color { ColorAnimation { duration: 120 } }
+        }
     }
 }

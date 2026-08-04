@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell.Io
 import "../../" as Root
 
@@ -38,21 +39,21 @@ Item {
     // Forecast 3 hari: [{date, dayName, icon, maxC, minC, rain}]
     property var weatherForecast: []
 
-    // Map kondisi cuaca ke emoji/icon
+    // Map kondisi cuaca ke ikon Nerd Font (weather icons)
     function _weatherIcon(desc) {
         const d = desc.toLowerCase()
-        if (d.includes("thunder"))                   return "⛈"
-        if (d.includes("drizzle"))                   return "🌦"
-        if (d.includes("heavy rain"))                return "🌧"
-        if (d.includes("rain") || d.includes("shower")) return "🌦"
-        if (d.includes("snow"))                      return "🌨"
-        if (d.includes("fog") || d.includes("mist")) return "🌫"
-        if (d.includes("haze") || d.includes("smoky")) return "🌫"
-        if (d.includes("overcast"))                  return "☁"
-        if (d.includes("cloudy"))                    return "⛅"
-        if (d.includes("partly"))                    return "⛅"
-        if (d.includes("sunny") || d.includes("clear")) return "☀"
-        return "🌡"
+        if (d.includes("thunder"))                      return "󰌝"
+        if (d.includes("drizzle"))                      return "󰌛"
+        if (d.includes("heavy rain"))                   return "󰌘"
+        if (d.includes("rain") || d.includes("shower")) return "󰌙"
+        if (d.includes("snow"))                         return "󰌚"
+        if (d.includes("fog") || d.includes("mist"))    return "󰌓"
+        if (d.includes("haze") || d.includes("smoky"))  return "󰌓"
+        if (d.includes("overcast"))                     return "󰌒"
+        if (d.includes("partly"))                       return "󰌌"
+        if (d.includes("cloudy"))                       return "󰌒"
+        if (d.includes("sunny") || d.includes("clear")) return "󰌍"
+        return "󰌒"
     }
 
     // Nama hari singkat dari date string "YYYY-MM-DD"
@@ -218,22 +219,39 @@ Item {
                         border.width: 2
                     }
 
+                    // Isi avatar bulat via MultiEffect mask (Rectangle.clip tak ikut radius)
                     Rectangle {
+                        id: faceBg
                         anchors.fill: parent
                         anchors.margins: 3
                         radius: width / 2
-                        clip: true
                         color: Root.Colors.surface0
+                    }
 
-                        Image {
-                            id: faceImg
-                            anchors.fill: parent
-                            source: root.faceSource
-                            sourceSize.width: 200
-                            sourceSize.height: 200
-                            fillMode: Image.PreserveAspectCrop
-                            smooth: true; mipmap: true
-                            cache: false
+                    Image {
+                        id: faceImg
+                        anchors.fill: parent
+                        anchors.margins: 3
+                        source: root.faceSource
+                        sourceSize.width: 200
+                        sourceSize.height: 200
+                        fillMode: Image.PreserveAspectCrop
+                        smooth: true; mipmap: true
+                        cache: false
+                        visible: status === Image.Ready
+
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            maskEnabled: true
+                            maskSource: ShaderEffectSource {
+                                sourceItem: Rectangle {
+                                    width: faceImg.width
+                                    height: faceImg.height
+                                    radius: width / 2
+                                    color: "white"
+                                    visible: false
+                                }
+                            }
                         }
                     }
 
@@ -321,7 +339,7 @@ Item {
         // ── CPU card ──────────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: cpuCardCol.implicitHeight + 24
+            Layout.preferredHeight: 64
             radius: 14
             color: Root.Colors.base
             Behavior on color { ColorAnimation { duration: 200 } }
@@ -330,9 +348,9 @@ Item {
                 id: cpuCardCol
                 anchors {
                     top: parent.top; left: parent.left
-                    right: parent.right; margins: 12
+                    right: parent.right; margins: 10
                 }
-                spacing: 6
+                spacing: 4
 
                 // Header
                 RowLayout {
@@ -340,14 +358,14 @@ Item {
 
                     Text {
                         text: "󰻠  CPU"
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                         font.weight: Font.Medium
                         color: Root.Colors.blue
                     }
                     Item { Layout.fillWidth: true }
                     Text {
                         text: root.cpuTemp + "°C"
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                         color: root.cpuTemp > 85 ? Root.Colors.red
                              : root.cpuTemp > 70 ? Root.Colors.yellow
                              : Root.Colors.subtext
@@ -355,7 +373,7 @@ Item {
                     }
                     Text {
                         text: "  " + root.cpuUsage + "%"
-                        font.pixelSize: 12
+                        font.pixelSize: 11
                         font.weight: Font.SemiBold
                         color: Root.Colors.blue
                     }
@@ -364,8 +382,8 @@ Item {
                 // Usage bar
                 Rectangle {
                     Layout.fillWidth: true
-                    height: 6
-                    radius: 3
+                    height: 5
+                    radius: 2.5
                     color: Root.Colors.surface1
 
                     Rectangle {
@@ -384,8 +402,8 @@ Item {
                 Canvas {
                     id: sparkCanvas
                     Layout.fillWidth: true
-                    Layout.fillHeight: true   // spark mengisi sisa tinggi CPU card
-                    Layout.minimumHeight: 30
+                    Layout.preferredHeight: 12
+                    Layout.minimumHeight: 12
 
                     property var data: root.cpuHistory
 
@@ -514,32 +532,42 @@ Item {
         Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true          // ambil sisa ruang di bawah GPU
-            Layout.minimumHeight: weatherCol.implicitHeight + 20
+            Layout.minimumHeight: 130        // cukup kecil agar tak melebihi dashboard
             radius: 14
             color: Root.Colors.base
+            clip: true
             Behavior on color { ColorAnimation { duration: 200 } }
 
-            ColumnLayout {
-                id: weatherCol
-                anchors {
-                    top: parent.top; left: parent.left
-                    right: parent.right; margins: 12
-                }
-                spacing: 6
+            // Isi bisa discroll kalau kartu lebih pendek dari konten cuaca,
+            // sehingga tidak pernah meluber melewati batas dashboard.
+            Flickable {
+                id: weatherFlick
+                anchors.fill: parent
+                anchors.margins: 14
+                contentWidth: weatherFlick.width
+                contentHeight: Math.max(weatherCol.implicitHeight, weatherFlick.height)
+                clip: true
+                boundsBehavior: Flickable.StopAtBounds
+                flickableDirection: Flickable.VerticalFlick
+
+                ColumnLayout {
+                    id: weatherCol
+                    width: weatherFlick.width
+                    spacing: 10
 
                 // Header
                 RowLayout {
                     Layout.fillWidth: true
                     Text {
                         text: "󰖐  Cuaca"
-                        font.pixelSize: 12
+                        font.pixelSize: 14
                         font.weight: Font.Medium
                         color: Root.Colors.peach
                     }
                     Item { Layout.fillWidth: true }
                     Text {
                         text: root.weatherCity
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         color: Root.Colors.subtext
                         elide: Text.ElideRight
                     }
@@ -548,25 +576,28 @@ Item {
                 // Suhu besar + ikon kondisi
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 8
+                    spacing: 12
 
                     Text {
                         text: root.weatherIcon
-                        font.pixelSize: 28
+                        font.pixelSize: 36
+                        color: Root.Colors.peach
+                        Layout.preferredWidth: 44
+                        horizontalAlignment: Text.AlignHCenter
                     }
 
                     ColumnLayout {
-                        spacing: 1
+                        spacing: 2
                         Text {
                             text: root.weatherTemp !== "" ? root.weatherTemp + "°C" : "—"
-                            font.pixelSize: 24
+                            font.pixelSize: 30
                             font.weight: Font.Bold
                             color: Root.Colors.text
                             Behavior on color { ColorAnimation { duration: 200 } }
                         }
                         Text {
                             text: root.weatherDesc
-                            font.pixelSize: 11
+                            font.pixelSize: 13
                             color: Root.Colors.subtext
                             elide: Text.ElideRight
                         }
@@ -574,26 +605,26 @@ Item {
 
                     Item { Layout.fillWidth: true }
 
-                    // Feels like + humidity
+                    // Feels like + humidity + wind
                     ColumnLayout {
-                        spacing: 2
+                        spacing: 4
                         Text {
                             text: "Terasa " + (root.weatherFeels !== "" ? root.weatherFeels + "°C" : "—")
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                             color: Root.Colors.subtext
                             horizontalAlignment: Text.AlignRight
                             Layout.alignment: Qt.AlignRight
                         }
                         Text {
                             text: "󰖌 " + (root.weatherHumidity !== "" ? root.weatherHumidity + "%" : "—")
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                             color: Root.Colors.subtext
                             horizontalAlignment: Text.AlignRight
                             Layout.alignment: Qt.AlignRight
                         }
                         Text {
                             text: "󰞄 " + (root.weatherWind !== "" ? root.weatherWind + " km/h" : "—")
-                            font.pixelSize: 10
+                            font.pixelSize: 12
                             color: Root.Colors.subtext
                             horizontalAlignment: Text.AlignRight
                             Layout.alignment: Qt.AlignRight
@@ -604,10 +635,13 @@ Item {
                 // Last updated
                 Text {
                     text: root.weatherUpdated !== "" ? "Diperbarui: " + root.weatherUpdated : ""
-                    font.pixelSize: 9
+                    font.pixelSize: 10
                     color: Root.Colors.surface2
                     visible: root.weatherUpdated !== ""
                 }
+
+                // Spacer agar forecast duduk di bawah kartu
+                Item { Layout.fillHeight: true }
 
                 // ── Garis pemisah ─────────────────────────────────────
                 Rectangle {
@@ -631,7 +665,7 @@ Item {
                             required property int index
 
                             Layout.fillWidth: true
-                            height: forecastCol.implicitHeight + 10
+                            height: forecastCol.implicitHeight + 14
                             radius: 10
                             color: index === 0 ? Root.Colors.surface0 : "transparent"
                             Behavior on color { ColorAnimation { duration: 200 } }
@@ -642,8 +676,8 @@ Item {
                                 anchors.left: parent.left
                                 anchors.top: parent.top
                                 anchors.bottom: parent.bottom
-                                anchors.topMargin: 6
-                                anchors.bottomMargin: 6
+                                anchors.topMargin: 8
+                                anchors.bottomMargin: 8
                                 width: 1
                                 color: Root.Colors.surface1
                             }
@@ -657,7 +691,7 @@ Item {
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.dayName
-                                    font.pixelSize: 10
+                                    font.pixelSize: 11
                                     font.weight: index === 0 ? Font.SemiBold : Font.Normal
                                     color: index === 0 ? Root.Colors.peach : Root.Colors.subtext
                                 }
@@ -666,36 +700,38 @@ Item {
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.icon
-                                    font.pixelSize: 20
+                                    font.pixelSize: 24
+                                    color: Root.Colors.text
                                 }
 
                                 // Max / Min
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.maxC + "°"
-                                    font.pixelSize: 13
+                                    font.pixelSize: 15
                                     font.weight: Font.SemiBold
                                     color: Root.Colors.text
                                 }
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.minC + "°"
-                                    font.pixelSize: 11
+                                    font.pixelSize: 12
                                     color: Root.Colors.subtext
                                 }
 
                                 // Chance of rain
                                 RowLayout {
                                     Layout.alignment: Qt.AlignHCenter
-                                    spacing: 2
+                                    spacing: 3
                                     visible: parseInt(modelData.rain) > 0
                                     Text {
-                                        text: "💧"
-                                        font.pixelSize: 9
+                                        text: "󰖌"
+                                        font.pixelSize: 11
+                                        color: Root.Colors.blue
                                     }
                                     Text {
                                         text: modelData.rain + "%"
-                                        font.pixelSize: 9
+                                        font.pixelSize: 11
                                         color: Root.Colors.blue
                                     }
                                 }
@@ -704,6 +740,7 @@ Item {
                     }
                 }
             }
+        }
         }
 
         // Spacer kecil di bawah agar tidak mepet pinggir

@@ -115,25 +115,25 @@ GridLayout {
         radius: 14
 
         property bool recording: false
-        // apakah recording ini dimulai dengan mic (deteksi via cmdline)
-        property bool recordingWithMic: false
+        // apakah recording ini menangkap audio (device) — deteksi via cmdline
+        property bool recordingWithAudio: false
 
         color: recording
                ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.85)
                : (recArea.containsPress ? Root.Colors.blue : Root.Colors.surface0)
         Behavior on color { ColorAnimation { duration: 150 } }
 
-        // Poll apakah wf-recorder sedang berjalan + apakah dengan mic
+        // Poll apakah wf-recorder sedang berjalan + apakah dengan audio
         Process {
             id: recCheckProc
             command: ["sh", "-c",
                 "pgrep -x wf-recorder > /dev/null && echo yes || echo no; " +
-                "cat /proc/$(pgrep -x wf-recorder)/cmdline 2>/dev/null | tr '\\0' ' ' | grep -qE '(--audio=|\\-a[^-])' && echo mic || echo nomic"]
+                "cat /proc/$(pgrep -x wf-recorder)/cmdline 2>/dev/null | tr '\\0' ' ' | grep -qE '(--audio=|\\-a[^-])' && echo audio || echo noaudio"]
             stdout: StdioCollector {
                 onStreamFinished: {
                     const lines = text.trim().split("\n")
-                    recorderBtn.recording       = (lines[0] || "").trim() === "yes"
-                    recorderBtn.recordingWithMic = (lines[1] || "").trim() === "mic"
+                    recorderBtn.recording          = (lines[0] || "").trim() === "yes"
+                    recorderBtn.recordingWithAudio = (lines[1] || "").trim() === "audio"
                 }
             }
         }
@@ -182,19 +182,16 @@ GridLayout {
             }
         }
 
-        // Indikator mic di pojok kiri bawah
+        // Indikator audio di pojok kiri bawah
+        // Ikon speaker+mic = both mode, speaker saja = desktop-only
         Text {
-            visible: !recorderBtn.recording  // tunjukkan hint saat idle
-                     || recorderBtn.recordingWithMic
+            visible: recorderBtn.recording
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.margins: 6
-            text: "󰍬"
-            font.pixelSize: 10
-            color: recorderBtn.recording && recorderBtn.recordingWithMic
-                   ? Root.Colors.base
-                   : Root.Colors.subtext
-            opacity: recorderBtn.recording && recorderBtn.recordingWithMic ? 1.0 : 0.5
+            text: recorderBtn.recordingWithAudio ? "󰕾󰍬" : "󰕾"
+            font.pixelSize: 9
+            color: Root.Colors.base
             Behavior on color { ColorAnimation { duration: 100 } }
         }
 
@@ -207,13 +204,13 @@ GridLayout {
             onClicked: mouse => {
                 if (!quickTogglesRoot.dashboardRoot) return
                 if (recorderBtn.recording) {
-                    // stop — tidak peduli mode, tetap close dashboard
+                    // stop — mode apapun, panggil stop via script yang sama
                     quickTogglesRoot.dashboardRoot.recorderToggleRequested()
                 } else if (mouse.button === Qt.RightButton) {
-                    // start dengan mic
+                    // right click: desktop only (tanpa mic)
                     quickTogglesRoot.dashboardRoot.recorderMicToggleRequested()
                 } else {
-                    // start tanpa mic
+                    // left click: desktop + mic gabungan
                     quickTogglesRoot.dashboardRoot.recorderToggleRequested()
                 }
                 quickTogglesRoot.dashboardRoot.closeRequested()

@@ -16,11 +16,7 @@ PanelWindow {
 
     signal closeRequested()
 
-    anchors { top: true; right: true }
-    margins.top: 5
-    margins.right: 10
-    implicitWidth: card.width
-    implicitHeight: card.height
+    anchors { top: true; left: true; right: true; bottom: true }
     color: "transparent"
     visible: open
 
@@ -80,6 +76,8 @@ PanelWindow {
         id: card
         anchors.top: parent.top
         anchors.right: parent.right
+        anchors.topMargin: 5
+        anchors.rightMargin: 10
         width: 180
         height: col.implicitHeight + 16
         radius: 14

@@ -67,7 +67,7 @@ PanelWindow {
 
         // ── Animasi muncul / hilang ────────────────────────────────────────
         opacity: 0
-        transform: Translate { id: cardTranslate; y: -20 }
+        transform: Translate { id: cardTranslate; y: -50 }
 
         states: State {
             name: "open"

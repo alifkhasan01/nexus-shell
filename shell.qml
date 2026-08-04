@@ -17,6 +17,9 @@ ShellRoot {
         property bool dashboardOpen:      false
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
+        property bool dockVisible:        true   // dock on/off — toggle via IPC atau shortcut
+        property int randomWallpaperToken: 0
+        property bool randomWallpaperConsumed: false
     }
 
     // ── Global shortcut: Dashboard ─────────────────────────────────────────
@@ -61,15 +64,10 @@ ShellRoot {
         }
 
         function random(): void {
-            randomWallpaperProc.running = false
-            randomWallpaperProc.running = true
+            // Teruskan ke WallpaperPanel via token (bukan wallpicker).
+            shellStateObj.randomWallpaperConsumed = false
+            shellStateObj.randomWallpaperToken += 1
         }
-    }
-
-    // Jalankan wallpicker --random untuk set wallpaper acak via IPC.
-    Process {
-        id: randomWallpaperProc
-        command: ["wallpicker", "--random"]
     }
 
     // Satu Bar per monitor
@@ -81,6 +79,26 @@ ShellRoot {
             screen: modelData
             shellState: shellStateObj
         }
+    }
+
+    // ── Dock (satu per monitor) ────────────────────────────────────────────
+    // Toggle via: quickshell ipc call dock toggle
+    // Bind di hyprland.conf: bind = $mod, grave, exec, quickshell ipc call dock toggle
+    Variants {
+        model: Quickshell.screens
+
+        Modules.Dock {
+            required property var modelData
+            screen:  modelData
+            visible: shellStateObj.dockVisible
+        }
+    }
+
+    IpcHandler {
+        target: "dock"
+        function toggle(): void { shellStateObj.dockVisible = !shellStateObj.dockVisible }
+        function show(): void   { shellStateObj.dockVisible = true  }
+        function hide(): void   { shellStateObj.dockVisible = false }
     }
 
     // ── Lock Screen ───────────────────────────────────────────────────────

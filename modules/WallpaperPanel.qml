@@ -12,6 +12,10 @@ PanelWindow {
     property bool open: false
     signal closeRequested()
 
+    // Dibagikan dari shell.qml; dipakai untuk menerima trigger "random"
+    // dari IpcHandler wallpaper random (bind Hyprland) tanpa wallpicker.
+    property var shellState: null
+
     anchors { top: true; left: true; right: true; bottom: true }
     color: "transparent"
     visible: showPanel
@@ -52,7 +56,7 @@ PanelWindow {
     // ── Config ────────────────────────────────────────────────────────────
     Process {
         id: loadConfigProc
-        command: ["sh", "-c", "cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
+        command: ["sh", "-c", "cat ~/.config/quickshell/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -67,6 +71,7 @@ PanelWindow {
                     root.wallpaperDir = root._home() + "/Pictures/Wallpapers"
                 }
                 root.scanWallpapers()
+                if (root.slideshowEnabled) root.startSlideshow()
             }
         }
     }
@@ -99,7 +104,7 @@ PanelWindow {
         }
         const json = JSON.stringify(cfg, null, 2)
         saveConfigProc.command = ["sh", "-c",
-            "mkdir -p ~/.config/wallpicker && cat > ~/.config/wallpicker/config.json << 'EOCFG'\n" +
+            "mkdir -p ~/.config/quickshell && cat > ~/.config/quickshell/wallpaper.json << 'EOCFG'\n" +
             json + "\nEOCFG"]
         saveConfigProc.running = true
     }
@@ -215,29 +220,33 @@ PanelWindow {
     }
 
     // ── Slideshow ─────────────────────────────────────────────────────────
-    Process { id: startSlideshowProc }
-    Process { id: stopSlideshowProc }
+    Timer {
+        id: slideshowTimer
+        interval: 60000
+        repeat: true
+        onTriggered: root.pickRandom()
+    }
 
     function startSlideshow() {
-        stopSlideshowProc.command = ["sh", "-c",
-            "kill $(cat ~/.cache/wallpicker/slideshow.pid 2>/dev/null) 2>/dev/null; " +
-            "rm -f ~/.cache/wallpicker/slideshow.pid"]
-        stopSlideshowProc.running = true
-        startSlideshowProc.command = ["sh", "-c",
-            "mkdir -p ~/.cache/wallpicker && " +
-            "nohup wallpicker --slideshow-bg </dev/null >/dev/null 2>&1 & " +
-            "echo $! > ~/.cache/wallpicker/slideshow.pid"]
-        startSlideshowProc.running = true
+        slideshowTimer.interval = Math.max(1, root.slideshowMinutes) * 60000
+        slideshowTimer.restart()
     }
 
     function stopSlideshow() {
-        stopSlideshowProc.command = ["sh", "-c",
-            "kill $(cat ~/.cache/wallpicker/slideshow.pid 2>/dev/null) 2>/dev/null; " +
-            "rm -f ~/.cache/wallpicker/slideshow.pid"]
-        stopSlideshowProc.running = true
+        slideshowTimer.stop()
     }
 
     Component.onCompleted: loadConfigProc.running = true
+
+    // Trigger "random wallpaper" dari shell.qml (IpcHandler wallpaper random).
+    // Hanya satu panel yang mengeksekusi (yang pertama melihat token belum dikonsumsi).
+    readonly property int _lastRandomToken: root.shellState ? root.shellState.randomWallpaperToken : 0
+    on_LastRandomTokenChanged: {
+        if (root.shellState && !root.shellState.randomWallpaperConsumed) {
+            root.shellState.randomWallpaperConsumed = true
+            root.pickRandom()
+        }
+    }
 
     // ── Kartu utama ───────────────────────────────────────────────────────
     Rectangle {
@@ -251,7 +260,7 @@ PanelWindow {
         border.width: 2
 
         opacity: 0
-        transform: Translate { id: cardTranslate; y: -20 }
+        transform: Translate { id: cardTranslate; y: -50 }
 
         states: State {
             name: "open"; when: root.open

@@ -29,7 +29,10 @@ Rectangle {
             Image {
                 anchors.fill: parent
                 source: root.hasPlayer ? root.player.trackArtUrl : ""
+                sourceSize.width: width * Screen.devicePixelRatio
+                sourceSize.height: height * Screen.devicePixelRatio
                 fillMode: Image.PreserveAspectCrop
+                smooth: true; mipmap: true
                 visible: source !== ""
             }
 

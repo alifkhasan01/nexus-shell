@@ -25,9 +25,9 @@ PanelWindow {
     onBtPanelOpenChanged: if (!btPanelOpen) btStatus.refresh()
 
     anchors { top: true; left: true; right: true }
-    margins.top: 8
-    margins.left: 10
-    margins.right: 10
+    margins.top: 2
+    margins.left: 4
+    margins.right: 4
 
     implicitHeight: 45
     color: "transparent"
@@ -94,6 +94,43 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 14
 
+                    // ── Dock Toggle Button ────────────────────────────
+                    Item {
+                        width: 26
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: dockBtn.containsMouse
+                                 ? Root.Colors.surface1
+                                 : "transparent"
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: bar.shellState && bar.shellState.dockVisible ? "" : ""
+                            font.family: "JetBrainMono Nerd Font"
+                            font.pixelSize: 18
+                            color: bar.shellState && bar.shellState.dockVisible
+                                   ? Root.Colors.blue
+                                   : Root.Colors.subtext
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: dockBtn
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                if (bar.shellState)
+                                    bar.shellState.dockVisible = !bar.shellState.dockVisible
+                            }
+                        }
+                    }
+
                     NetworkStatus {
                         id: netStatus
                         panelOpen: bar.wifiPanelOpen
@@ -159,7 +196,7 @@ PanelWindow {
                             Text {
                                 id: wpTip
                                 anchors.centerIn: parent
-                                text: "Wallpaper"
+                                text: "Wallpaper  ·  klik kanan: acak"
                                 font.pixelSize: 11
                                 color: Root.Colors.text
                             }
@@ -170,13 +207,21 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
-                                bar.wifiPanelOpen      = false
-                                bar.btPanelOpen        = false
-                                bar.volumePanelOpen    = false
-                                bar.updatePanelOpen    = false
-                                bar.shellState.dashboardOpen = false
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton) {
+                                    // Klik kanan: wallpaper random langsung
+                                    bar.shellState.randomWallpaperConsumed = false
+                                    bar.shellState.randomWallpaperToken += 1
+                                } else {
+                                    // Klik kiri: toggle panel
+                                    bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
+                                    bar.wifiPanelOpen      = false
+                                    bar.btPanelOpen        = false
+                                    bar.volumePanelOpen    = false
+                                    bar.updatePanelOpen    = false
+                                    bar.shellState.dashboardOpen = false
+                                }
                             }
                         }
                     }
@@ -302,6 +347,7 @@ PanelWindow {
 
         WallpaperPanel {
             open: bar.wallpaperPanelOpen
+            shellState: bar.shellState
             onCloseRequested: bar.shellState.wallpaperPanelOpen = false
         }
     }
@@ -331,28 +377,23 @@ PanelWindow {
             "setsid -f sh -c 'sleep 0.3; grim ~/Pictures/Screenshots/$(date +%Y%m%d_%H%M%S).png' </dev/null >/dev/null 2>&1"]
     }
 
-    // wf-recorder tanpa mic
+    // wf-recorder — desktop + mic gabungan (default, left click)
+    // Script record.sh membuat PipeWire null-sink, loopback desktop monitor
+    // + mic ke dalamnya, lalu wf-recorder capture dari monitor null-sink.
+    // Saat dipanggil lagi (stop), script cleanup modul PipeWire yang dibuat.
     Process {
         id: recorderProc
         command: ["sh", "-c",
-            "pgrep -x wf-recorder > /dev/null && pkill -INT wf-recorder || " +
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "setsid -f wf-recorder -f ~/Videos/Recordings/$(date +%Y%m%d_%H%M%S).mp4 </dev/null >/dev/null 2>&1 &"]
+            "bash ~/.config/quickshell/modules/record.sh both"]
     }
 
-    // wf-recorder dengan mic — query default source dulu via pactl agar
-    // tidak bergantung pada auto-detect yang bisa gagal di child process.
-    // Pakai --audio-backend=pipewire + opus codec di mkv untuk menghindari
-    // suara kres di awal (AAC punya priming delay, opus tidak).
+    // wf-recorder — desktop only (right click, tanpa mic)
     Process {
         id: recorderMicProc
         command: ["sh", "-c",
-            "pgrep -x wf-recorder > /dev/null && pkill -INT wf-recorder || { " +
-            "DEV=$(XDG_RUNTIME_DIR=/run/user/$(id -u) pactl get-default-source 2>/dev/null); " +
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "setsid -f wf-recorder --audio-backend=pipewire --audio=${DEV:-default} " +
-            "-C libopus -R 48000 " +
-            "-f ~/Videos/Recordings/$(date +%Y%m%d_%H%M%S).mkv </dev/null >/dev/null 2>&1 & }"]
+            "bash ~/.config/quickshell/modules/record.sh desktop-only"]
     }
 
     function takeScreenshot()       { screenshotProc.running = true }
