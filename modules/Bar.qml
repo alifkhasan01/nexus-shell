@@ -94,43 +94,6 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 14
 
-                    // ── Dock Toggle Button ────────────────────────────
-                    Item {
-                        width: 26
-                        height: 26
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            color: dockBtn.containsMouse
-                                 ? Root.Colors.surface1
-                                 : "transparent"
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: bar.shellState && bar.shellState.dockVisible ? "" : ""
-                            font.family: "JetBrainMono Nerd Font"
-                            font.pixelSize: 18
-                            color: bar.shellState && bar.shellState.dockVisible
-                                   ? Root.Colors.blue
-                                   : Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
-                        }
-
-                        MouseArea {
-                            id: dockBtn
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                if (bar.shellState)
-                                    bar.shellState.dockVisible = !bar.shellState.dockVisible
-                            }
-                        }
-                    }
-
                     NetworkStatus {
                         id: netStatus
                         panelOpen: bar.wifiPanelOpen

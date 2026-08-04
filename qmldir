@@ -1,6 +1,5 @@
 module shell
 singleton Colors 1.0 Colors.qml
 singleton CavaService 1.0 CavaService.qml
-singleton DockConfig 1.0 modules/DockConfig.qml
 WallpaperPanel 1.0 modules/WallpaperPanel.qml
 WallpaperButton 1.0 modules/WallpaperButton.qml
