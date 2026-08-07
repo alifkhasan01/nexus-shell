@@ -17,6 +17,8 @@ PanelWindow {
     signal grimRequested()
     signal recorderToggleRequested()
     signal recorderMicToggleRequested()
+    signal setFaceRequested()
+    signal notifyRequested(string icon, string summary, string body)
 
     anchors { top: true; left: true; right: true }
     margins.top: 5
@@ -470,6 +472,7 @@ PanelWindow {
 
             Dash.SystemInfo {
                 anchors.fill: parent
+                onSetFaceRequested: root.setFaceRequested()
             }
         }
     }

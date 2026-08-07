@@ -23,6 +23,11 @@ Item {
     property string gpuName:  "AMD Radeon (iGPU)"
     property string faceSource: "file:///home/youtta/.face"
 
+    // Diteruskan ke Bar: Bar menutup dashboard lalu menjalankan file picker
+    // (agar window picker tidak tertutup dashboard), dan membuka dashboard
+    // lagi setelah selesai.
+    signal setFaceRequested()
+
     // Riwayat CPU usage untuk spark-line (20 titik)
     property var cpuHistory: []
 
@@ -39,21 +44,21 @@ Item {
     // Forecast 3 hari: [{date, dayName, icon, maxC, minC, rain}]
     property var weatherForecast: []
 
-    // Map kondisi cuaca ke ikon Nerd Font (weather icons)
+    // Map kondisi cuaca ke ikon Nerd Font weather (glyphnames.json, range U+E3xx)
     function _weatherIcon(desc) {
         const d = desc.toLowerCase()
-        if (d.includes("thunder"))                      return "󰌝"
-        if (d.includes("drizzle"))                      return "󰌛"
-        if (d.includes("heavy rain"))                   return "󰌘"
-        if (d.includes("rain") || d.includes("shower")) return "󰌙"
-        if (d.includes("snow"))                         return "󰌚"
-        if (d.includes("fog") || d.includes("mist"))    return "󰌓"
-        if (d.includes("haze") || d.includes("smoky"))  return "󰌓"
-        if (d.includes("overcast"))                     return "󰌒"
-        if (d.includes("partly"))                       return "󰌌"
-        if (d.includes("cloudy"))                       return "󰌒"
-        if (d.includes("sunny") || d.includes("clear")) return "󰌍"
-        return "󰌒"
+        if (d.includes("thunder"))                      return "\ue31d"   // weather-thunderstorm
+        if (d.includes("drizzle"))                      return "\ue31b"   // weather-sprinkle
+        if (d.includes("heavy rain"))                   return "\ue318"   // weather-rain
+        if (d.includes("rain") || d.includes("shower")) return "\ue319"   // weather-showers
+        if (d.includes("snow"))                         return "\ue31a"   // weather-snow
+        if (d.includes("fog") || d.includes("mist"))    return "\ue313"   // weather-fog
+        if (d.includes("haze") || d.includes("smoky"))  return "\ue3ae"   // weather-day_haze
+        if (d.includes("overcast"))                     return "\ue312"   // weather-cloudy
+        if (d.includes("partly"))                       return "\ue30c"   // weather-day_sunny_overcast
+        if (d.includes("cloudy"))                       return "\ue312"   // weather-cloudy
+        if (d.includes("sunny") || d.includes("clear")) return "\ue30d"   // weather-day_sunny
+        return "\ue312"
     }
 
     // Nama hari singkat dari date string "YYYY-MM-DD"
@@ -286,7 +291,7 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: facePickerProc.running = true
+                            onClicked: root.setFaceRequested()
                         }
                     }
                 }
@@ -580,6 +585,7 @@ Item {
 
                     Text {
                         text: root.weatherIcon
+                        font.family: "CaskaydiaCove Nerd Font"
                         font.pixelSize: 36
                         color: Root.Colors.peach
                         Layout.preferredWidth: 44
@@ -700,6 +706,7 @@ Item {
                                 Text {
                                     Layout.alignment: Qt.AlignHCenter
                                     text: modelData.icon
+                                    font.family: "CaskaydiaCove Nerd Font"
                                     font.pixelSize: 24
                                     color: Root.Colors.text
                                 }
@@ -747,30 +754,4 @@ Item {
         Item { Layout.preferredHeight: 0 }
     }
 
-    // ── Face picker process ───────────────────────────────────────────────
-    Process {
-        id: facePickerProc
-        command: ["sh", "-c",
-            "FILE=$(zenity --file-selection --title='Pilih foto profil' " +
-            "--file-filter='Gambar | *.png *.jpg *.jpeg *.webp' 2>/dev/null); " +
-            "[ -n \"$FILE\" ] && cp \"$FILE\" ~/.face && echo 'ok'"
-        ]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim() === "ok") {
-                    // Force reload dengan cache bust
-                    const tmp = root.faceSource
-                    root.faceSource = ""
-                    root.faceSource = tmp + "?t=" + Date.now()
-                    reloadFaceTimer.start()
-                }
-            }
-        }
-    }
-
-    Timer {
-        id: reloadFaceTimer
-        interval: 200
-        onTriggered: root.faceSource = "file:///home/youtta/.face?t=" + Date.now()
-    }
 }

@@ -19,6 +19,17 @@ Rectangle {
     property string managerCommand: ""
     property bool active: false
 
+    // Notifikasi setelah toggle — isi untuk aktifkan
+    property string notifIconOn: ""   // icon notify-send saat ON
+    property string notifIconOff: ""  // icon notify-send saat OFF
+    property string notifSummaryOn: ""
+    property string notifSummaryOff: ""
+    property string notifBodyOn: ""
+    property string notifBodyOff: ""
+
+    // Referensi ke dashboardRoot untuk emit sinyal notif ke atas
+    property var dashboardRoot: null
+
     implicitWidth: 84
     implicitHeight: 60
     radius: 14
@@ -73,13 +84,19 @@ Rectangle {
                 return
             }
             // klik kiri: toggle on/off
+            const willBeOn = !root.active
             toggleProc.command = ["sh", "-c", root.active ? root.offCommand : root.onCommand]
             toggleProc.running = true
-            // update optimis — tunda poll selama 2 detik agar tidak
-            // di-overwrite sebelum proses on/off sempat berjalan
-            root.active = !root.active
+            // update optimis
+            root.active = willBeOn
             root._debouncing = true
             debounceTimer.restart()
+            // kirim notifikasi jika diisi
+            if (willBeOn && root.notifSummaryOn !== "" && root.dashboardRoot) {
+                root.dashboardRoot.notifyRequested(root.notifIconOn, root.notifSummaryOn, root.notifBodyOn)
+            } else if (!willBeOn && root.notifSummaryOff !== "" && root.dashboardRoot) {
+                root.dashboardRoot.notifyRequested(root.notifIconOff, root.notifSummaryOff, root.notifBodyOff)
+            }
         }
 
         onPressAndHold: {

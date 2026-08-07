@@ -1,82 +1,220 @@
-# Quickshell Bar
+# Quickshell Config
 
-Bar minimal buat Hyprland: menu + workspace (kiri), clock (tengah), volume + brightness + battery + power (kanan).
+Shell desktop berbasis [Quickshell](https://quickshell.outfoxxed.me) untuk Hyprland.
+Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — semua dalam satu config QML.
+
+## Tampilan
+
+- **Bar** — panel atas dengan workspace, clock, status network/bluetooth/volume/brightness/battery
+- **Dashboard** — dropdown dari clock: media player, quick toggles, system stats, settings
+- **Panel Wi-Fi & Bluetooth** — panel popup dengan daftar jaringan & perangkat
+- **Volume Panel** — mixer per-aplikasi + device selector
+- **Power Menu** — shutdown, reboot, suspend, logout, lock
+- **Notifikasi** — popup notifikasi native + OSD untuk volume & brightness
+- **Lock Screen** — via `hyprlock`
+- **Tema** — 4 flavor Catppuccin (Latte, Frappé, Macchiato, Mocha), bisa ganti live dari dashboard
+
+---
 
 ## Struktur
 
 ```
-quickshell-bar/
-├── shell.qml              # entry point, spawn Bar di tiap monitor
-├── Colors.qml              # singleton warna (Catppuccin Mocha)
-├── qmldir                  # registrasi singleton Colors
-└── modules/
-    ├── Bar.qml              # PanelWindow + layout 3 kolom
-    ├── MenuButton.qml        # tombol buka app launcher
-    ├── Workspaces.qml        # indikator workspace via Hyprland IPC
-    ├── Clock.qml              # klik = toggle Dashboard
-    ├── Volume.qml            # via Pipewire (scroll = ubah volume, klik kanan = mute)
-    ├── Brightness.qml        # via brightnessctl (scroll = ubah brightness)
-    ├── Battery.qml           # via UPower
-    ├── PowerButton.qml        # buka popup power menu
-    ├── PowerMenuItem.qml
-    ├── Dashboard.qml          # panel dashboard ala Caelestia, dibuka dari Clock
-    └── dashboard/
-        ├── MediaCard.qml       # media player via MPRIS + cava visualizer
-        ├── QuickToggles.qml    # baris toggle WiFi/Bluetooth/DND/Night Light
-        ├── QuickToggle.qml     # komponen pill toggle generik
-        ├── SliderRow.qml       # slider generik (dipakai volume & brightness)
-        ├── SystemStats.qml     # CPU / RAM / uptime
-        └── cava_feed.sh        # feed data cava ke /tmp/qs-cava.out untuk visualizer
+~/.config/quickshell/
+├── shell.qml                    # Entry point — spawn Bar, LockScreen, NotificationPopup
+├── qmldir                       # Registrasi singleton (Colors, CavaService)
+├── theme                        # File teks: nama tema aktif saat ini
+├── wallpaper.json               # Daftar wallpaper untuk randomizer
+│
+├── services/
+│   ├── Colors.qml               # Singleton palette Catppuccin (4 flavor)
+│   └── CavaService.qml          # Singleton data visualizer cava
+│
+├── bar/
+│   ├── Bar.qml                  # PanelWindow bar atas
+│   └── widgets/
+│       ├── Battery.qml          # Status baterai + notif 30% / 90%
+│       ├── BluetoothStatus.qml  # Toggle BT (klik kiri) + buka panel (klik kanan)
+│       ├── Brightness.qml       # Brightness via brightnessctl + OSD
+│       ├── Clock.qml            # Jam — klik buka/tutup dashboard
+│       ├── MenuButton.qml       # Tombol app launcher (fuzzel)
+│       ├── NetworkStatus.qml    # Toggle WiFi (klik kiri) + buka panel (klik kanan)
+│       ├── PowerButton.qml      # Buka power menu
+│       ├── Volume.qml           # Volume via Pipewire + OSD
+│       ├── WallpaperRandom.qml  # Randomizer wallpaper
+│       └── Workspaces.qml       # Indikator workspace Hyprland
+│
+├── dashboard/
+│   ├── Dashboard.qml            # Panel dropdown dashboard
+│   ├── CavaRingDank.qml         # Visualizer cava cincin di media card
+│   ├── MediaCard.qml            # Media player via MPRIS
+│   ├── QuickToggle.qml          # Komponen pill toggle generik (dengan notifikasi)
+│   ├── QuickToggles.qml         # Grid toggle: idle, screenshot, recorder, DND, night
+│   ├── SettingsTab.qml          # Tab settings (slider volume/brightness, theme)
+│   ├── SliderRow.qml            # Komponen slider generik
+│   ├── SystemInfo.qml           # Info sistem (CPU, RAM, disk, uptime, profil)
+│   ├── SystemStats.qml          # Bar stats ringkas di dashboard
+│   ├── ThemeSelector.qml        # Selector 4 flavor Catppuccin
+│   └── cava_feed.sh             # Script feed data cava ke named pipe
+│
+├── panels/
+│   ├── ConnectPanel.qml         # Panel Wi-Fi + Bluetooth (dua tab)
+│   ├── VolumePanel.qml          # Mixer volume per-aplikasi + device
+│   ├── WallpaperButton.qml      # Tombol wallpaper di panel
+│   └── WallpaperPanel.qml       # Panel pilih wallpaper
+│
+├── notifications/
+│   ├── NotificationPopup.qml    # Popup notifikasi (NotificationServer Quickshell)
+│   └── Osd.qml                  # OSD volume & brightness
+│
+├── power/
+│   ├── PowerMenu.qml            # Menu power (shutdown/reboot/suspend/logout/lock)
+│   └── PowerMenuItem.qml        # Item menu power
+│
+├── lockscreen/
+│   └── LockScreen.qml           # Lock screen via hyprlock
+│
+├── overview/                    # (placeholder)
+│
+└── scripts/
+    ├── btagent.sh               # BlueZ agent — auto-accept pairing bluetooth
+    ├── record.sh                # Toggle recording via wf-recorder
+    └── screenshot.sh            # Helper screenshot
 ```
 
-## Dashboard
+---
 
-Klik jam di tengah bar buat buka/tutup dashboard (dropdown dari atas, mirip dashboard Caelestia). Isinya:
+## Fitur Detail
 
-- **Media player** — MPRIS (`Quickshell.Services.Mpris`): cover art, judul/artis, play/pause/next/prev; dilengkapi **cava visualizer** 16 bar animasi di bagian bawah card
-- **Quick toggles** — WiFi (`nmcli`), Bluetooth (`bluetoothctl`), DND (`dunstctl`), Night Light (`hyprsunset`)
-- **Slider** — volume (Pipewire) & brightness (`brightnessctl`), langsung drag
-- **System stats** — CPU, RAM (dari `/proc/stat` & `free`), uptime
+### Bar
+
+| Widget | Fungsi |
+|---|---|
+| Menu Button | Buka app launcher (`fuzzel`) |
+| Workspaces | Indikator workspace aktif via Hyprland IPC |
+| Clock | Klik = toggle dashboard |
+| Network | Klik kiri = toggle WiFi on/off · Klik kanan = buka ConnectPanel |
+| Bluetooth | Klik kiri = toggle BT on/off · Klik kanan = buka ConnectPanel |
+| Volume | Scroll = ubah volume · Klik = buka VolumePanel · Klik kanan = mute |
+| Brightness | Scroll = ubah brightness |
+| Battery | Indikator baterai — notif saat ≤30% (warning) dan ≥90% charging (hampir penuh) |
+| Power | Buka power menu |
+
+### Dashboard
+
+Buka dengan klik jam atau shortcut `$mod + D` (bind di hyprland.conf).
+
+**Kolom kiri — Overview & Settings:**
+- Foto profil (dari `~/.face`), tanggal, jam
+- Quick toggles (lihat bawah)
+- System stats (CPU, RAM, uptime)
+- Settings: slider volume & brightness, theme selector
+
+**Quick Toggles:**
+| Tombol | Klik Kiri | Klik Kanan | Notifikasi |
+|---|---|---|---|
+| Idle | Toggle hypridle on/off | — | Ya |
+| Screenshot Select | Capture area pilihan | — | Setelah tersimpan |
+| Screenshot Full | Capture layar penuh | — | Setelah tersimpan |
+| Recorder | Start/stop wf-recorder (desktop audio) | Start dengan mic | Setelah file tersimpan |
+| DND | Toggle Do Not Disturb | — | Ya |
+| Night Light | Toggle hyprsunset | — | Ya |
+
+**Kolom tengah — Media:**
+- Cover art, judul, artis, album
+- Visualizer cava berbentuk cincin di belakang cover
+- Seek bar, play/pause/next/prev, shuffle, loop
+- Kontrol via MPRIS (otomatis detect player yang sedang aktif)
+
+**Kolom kanan — System Info:**
+- Statistik CPU, RAM, disk
+- Informasi sistem
+
+### Recording
+
+`record.sh` menggunakan `wf-recorder`:
+- **Klik kiri** → rekam layar + audio desktop saja
+- **Klik kanan** → rekam layar + audio desktop + mic (via PipeWire null-sink mixer)
+- Output disimpan ke `~/Videos/Recordings/` dalam format `.mp4`
+- Klik tombol lagi untuk stop — notif muncul setelah file tersimpan
+
+### Tema
+
+4 flavor Catppuccin tersedia dan bisa diganti live dari dashboard (tanpa restart):
+
+| Flavor | Jenis |
+|---|---|
+| Latte | Light |
+| Frappé | Dark medium |
+| Macchiato | Dark |
+| Mocha | Dark (default) |
+
+Ganti tema juga memicu `matugen` untuk sinkronkan warna ke GTK, Qt, foot, dan Hyprland (jika `matugen` terinstall).
+
+---
 
 ## Dependencies
 
-- `quickshell` (git terbaru, dengan module `Quickshell.Hyprland`, `Quickshell.Services.Pipewire`, `Quickshell.Services.UPower`, `Quickshell.Services.Mpris`)
-- `brightnessctl` (untuk brightness)
-- `cava` — untuk audio visualizer di MediaCard. Jalankan `cava_feed.sh` di background sebelum/bersamaan dengan quickshell
-- `nmcli`, `bluetoothctl`, `dunstctl`, `hyprsunset` untuk quick toggles di dashboard — **ganti command-nya** di `modules/dashboard/QuickToggles.qml` kalau tooling kamu beda (mis. `iwctl` untuk WiFi, `mako` bukan `dunst`, `wlsunset` bukan `hyprsunset`)
-- Nerd Font (icon di Text pakai glyph nerd font, ganti kalau font kamu beda)
-- App launcher pilihan kamu (default dipanggil: `fuzzel`, ganti di `MenuButton.qml`)
+### Wajib
+- [`quickshell`](https://quickshell.outfoxxed.me) — build terbaru dengan module:
+  - `Quickshell.Wayland` / `Quickshell.Hyprland`
+  - `Quickshell.Services.Pipewire`
+  - `Quickshell.Services.UPower`
+  - `Quickshell.Services.Mpris`
+  - `Quickshell.Services.Notifications`
+- `hyprland` — compositor
+- `hyprlock` — lock screen
+- Nerd Font — semua ikon pakai glyph Nerd Font (direkomendasikan: CaskaydiaCove Nerd Font)
 
-## Menjalankan
+### Fitur Tambahan
+| Package | Dipakai untuk |
+|---|---|
+| `brightnessctl` | Kontrol brightness |
+| `nmcli` (NetworkManager) | Toggle & daftar jaringan WiFi |
+| `bluetoothctl` (bluez) | Toggle & daftar perangkat bluetooth |
+| `wf-recorder` | Screen recording |
+| `grimblast` | Screenshot |
+| `pipewire` / `pactl` | Audio mixing untuk recorder |
+| `cava` | Visualizer audio di media card |
+| `hypridle` | Idle monitor management |
+| `hyprsunset` | Night light / color temperature |
+| `swaync-client` | Do Not Disturb toggle |
+| `fuzzel` | App launcher (bisa diganti) |
+| `matugen` | Sinkronisasi tema ke app lain (opsional) |
+| `zenity` | Picker foto profil di dashboard |
+
+---
+
+## Instalasi
 
 ```bash
-# taruh folder ini di ~/.config/quickshell/, lalu:
-qs -c quickshell-bar
+git clone <repo> ~/.config/quickshell
+qs
 ```
 
-atau langsung:
+Tambahkan ke `hyprland.conf` untuk autostart:
 
-```bash
-qs -p /path/ke/quickshell-bar
+```ini
+exec-once = qs
 ```
 
-Tambahkan ke `hyprland.conf` biar auto-start:
+Untuk shortcut dashboard:
 
-```
-exec-once = qs -c quickshell-bar
-```
-
-Untuk mengaktifkan **cava visualizer** di MediaCard, jalankan juga `cava_feed.sh`:
-
-```
-exec-once = bash ~/.config/quickshell/modules/dashboard/cava_feed.sh
+```ini
+bind = $mod, D, global, quickshell:dashboard
 ```
 
-## Yang perlu disesuaikan
+---
 
-- **Jumlah workspace**: `Workspaces.qml` → `workspaceCount` (default 5).
-- **Launcher command**: `MenuButton.qml` → `launcherCommand` (default `fuzzel`).
-- **Icon font**: semua glyph di `Text.text` pakai Nerd Font Unicode private-use area — kalau icon muncul kotak, cek font family di Hyprland/GTK sudah Nerd Font.
-- **Lock command**: `PowerButton.qml` → item "Lock" pakai `hyprlock`, ganti kalau pakai `swaylock` dll.
-- **Warna**: `Colors.qml`, tinggal ganti hex value-nya kalau mau tema lain selain Catppuccin Mocha.
-- **Tinggi bar / exclusive zone**: `Bar.qml` → `implicitHeight`.
+## Kustomisasi
+
+| Yang ingin diubah | File |
+|---|---|
+| Warna / tema | `services/Colors.qml` |
+| App launcher | `bar/widgets/MenuButton.qml` |
+| Jumlah workspace | `bar/widgets/Workspaces.qml` |
+| Command toggle idle/night/DND | `dashboard/QuickToggles.qml` |
+| Output folder screenshot | `bar/Bar.qml` — `screenshotProc` / `grimProc` |
+| Output folder recording | `scripts/record.sh` — `OUTDIR` |
+| Threshold notif baterai | `bar/widgets/Battery.qml` |
+| Foto profil | `~/.face` (file gambar, bisa diubah dari tombol di dashboard) |
+| Daftar wallpaper | `wallpaper.json` |

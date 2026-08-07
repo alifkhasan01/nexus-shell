@@ -10,7 +10,10 @@ Item {
 
     // dikontrol dari Bar.qml
     property bool panelOpen: false
-    signal togglePanel()
+    signal togglePanel()   // right click — buka ConnectPanel
+    signal toggleWifi()    // left click  — on/off wifi
+
+    onToggleWifi: doToggleWifi()
 
     property string connType: "none"
     property int wifiStrength: 0
@@ -44,7 +47,28 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.togglePanel()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton)
+                root.togglePanel()
+            else
+                root.toggleWifi()
+        }
+    }
+
+    // Toggle wifi on/off langsung dari bar (left click)
+    property bool wifiEnabled: connType !== "none"
+
+    Process {
+        id: wifiToggleProc
+        // command diisi saat dipanggil
+    }
+
+    function doToggleWifi() {
+        const cmd = wifiEnabled ? "nmcli radio wifi off" : "nmcli radio wifi on"
+        wifiToggleProc.command = ["sh", "-c", cmd]
+        wifiToggleProc.running = true
+        Qt.callLater(() => pollProc.running = true)
     }
 
     Process {

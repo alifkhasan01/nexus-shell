@@ -11,7 +11,7 @@ import "../" as Root
 PanelWindow {
     id: root
 
-    anchors { top: true; left: true; right: true }
+    anchors { bottom: true; left: true; right: true }
     // tepat di bawah bar (bar height 45 + margin top 8 + gap 6)
     margins.top: 10
 
@@ -97,21 +97,20 @@ PanelWindow {
         ParallelAnimation {
             id: exitAnim
             running: false
-            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: 180; easing.type: Easing.InCubic }
-            NumberAnimation { target: slideT; property: "y";       to: -14; duration: 180; easing.type: Easing.InCubic }
+            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: 120; easing.type: Easing.InCubic }
+            NumberAnimation { target: slideT; property: "y";       to: -10; duration: 120; easing.type: Easing.InCubic }
             onFinished: card.dismissed()
         }
 
         Component.onCompleted: enterAnim.start()
 
         // ── Auto-dismiss ──────────────────────────────────────────────────
-        // Normal: 5 detik, Critical: 8 detik, expire timeout dari notif
-        // diprioritaskan tapi tidak lebih dari 8 detik.
+        // Normal: 2.5 detik, Critical: 5 detik
         readonly property int timeoutMs: {
-            if (!notification) return 5000
+            if (!notification) return 2500
             const t = notification.expireTimeout
-            if (t > 0) return Math.min(t * 1000, 8000)
-            return notification.urgency === NotificationUrgency.Critical ? 8000 : 5000
+            if (t > 0) return Math.min(t * 1000, 5000)
+            return notification.urgency === NotificationUrgency.Critical ? 5000 : 2500
         }
 
         Timer {

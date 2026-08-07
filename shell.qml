@@ -5,10 +5,18 @@ import QtQuick
 import Quickshell.Hyprland._GlobalShortcuts
 import Quickshell.Services.Pipewire
 import "./bar" as Bar
+import "./bar/widgets" as Widgets
 import "./lockscreen" as Lock
+import "./notifications" as Notif
 
 ShellRoot {
     id: root
+
+    // Handler wallpaper acak yang selalu hidup; dipakai oleh IpcHandler dan
+    // klik kanan tombol wallpaper di Bar, tanpa bergantung pada panel.
+    Widgets.WallpaperRandom {
+        id: wpRandom
+    }
 
     // ── State global (dibagikan antar Bar) ────────────────────────────────
     // Sumber kebenaran untuk panel-panel yang bisa di-toggle dari shortcut
@@ -18,8 +26,7 @@ ShellRoot {
         property bool dashboardOpen:      false
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
-        property int randomWallpaperToken: 0
-        property bool randomWallpaperConsumed: false
+        property var wallpaperRandom: wpRandom
     }
 
     // ── Global shortcut: Dashboard ─────────────────────────────────────────
@@ -44,10 +51,12 @@ ShellRoot {
         }
     }
 
-    // ── IPC call: Wallpaper Panel ──────────────────────────────────────────
+    // ── IPC call: Wallpaper Panel & Random ────────────────────────────────
     // Dari hyprland.conf:
     //   bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
     //   bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+    // `random` selalu aktif via WallpaperRandom (background), jadi bisa
+    // dipanggil tanpa membuka panel.
     IpcHandler {
         target: "wallpaper"
 
@@ -64,9 +73,7 @@ ShellRoot {
         }
 
         function random(): void {
-            // Teruskan ke WallpaperPanel via token (bukan wallpicker).
-            shellStateObj.randomWallpaperConsumed = false
-            shellStateObj.randomWallpaperToken += 1
+            wpRandom.pickRandom()
         }
     }
 
@@ -86,6 +93,11 @@ ShellRoot {
     // karena ia menutup SEMUA monitor sekaligus via ext_session_lock_v1.
     // IpcHandler (target: "lockscreen") sudah ada di dalam LockScreen.qml.
     Lock.LockScreen {}
+
+    // ── Notification Popup — root level agar selalu di atas semua ────────
+    // Diletakkan di sini (bukan di dalam Bar) supaya render di atas
+    // dashboard, panel, dan komponen overlay lainnya.
+    Notif.NotificationPopup {}
 
     // ── Auto-pairing BlueZ agent (berjalan di background) ─────────────────
     // Menjawab "yes" pada prompt pair/confirm bluetooth sehingga perangkat

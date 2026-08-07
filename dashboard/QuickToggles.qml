@@ -15,16 +15,23 @@ GridLayout {
     // ── Hypridle toggle ───────────────────────────────────────────────────
     QuickToggle {
         Layout.fillWidth: true
-        label: "IDLE MONITOR"
+        label: "IDLE"
         icon: "󰒲"
+        dashboardRoot: quickTogglesRoot.dashboardRoot
         checkCommand: "pgrep -x hypridle > /dev/null && echo yes || echo no"
         checkMatch: "yes"
         onCommand:  "nohup hypridle </dev/null >/dev/null 2>&1 &"
         offCommand: "pkill -x hypridle"
         managerCommand: ""
+        notifIconOn:  "display"
+        notifIconOff: "display"
+        notifSummaryOn:  "Idle Monitor Aktif"
+        notifSummaryOff: "Idle Monitor Nonaktif"
+        notifBodyOn:  "Monitor akan otomatis mati saat idle."
+        notifBodyOff: "Monitor tidak akan mati saat idle."
     }
 
-    // ── Screenshot button ─────────────────────────────────────────────────
+    // ── Screenshot select ─────────────────────────────────────────────────
     Rectangle {
         Layout.fillWidth: true
         implicitWidth: 84
@@ -45,7 +52,7 @@ GridLayout {
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "SCRENSHOT SELECT"
+                text: "SS SELECT"
                 font.pixelSize: 11
                 color: ssArea.containsPress ? Root.Colors.base : Root.Colors.subtext
                 Behavior on color { ColorAnimation { duration: 100 } }
@@ -57,15 +64,14 @@ GridLayout {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (quickTogglesRoot.dashboardRoot) {
-                    quickTogglesRoot.dashboardRoot.screenshotRequested()
-                    quickTogglesRoot.dashboardRoot.closeRequested()
-                }
+                if (!quickTogglesRoot.dashboardRoot) return
+                quickTogglesRoot.dashboardRoot.screenshotRequested()
+                quickTogglesRoot.dashboardRoot.closeRequested()
             }
         }
     }
 
-    // ── Grim full-screen screenshot ───────────────────────────────────────
+    // ── Screenshot full ───────────────────────────────────────────────────
     Rectangle {
         Layout.fillWidth: true
         implicitWidth: 84
@@ -86,7 +92,7 @@ GridLayout {
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: "SCRENSHOT FULL"
+                text: "SS FULL"
                 font.pixelSize: 11
                 color: grimArea.containsPress ? Root.Colors.base : Root.Colors.subtext
                 Behavior on color { ColorAnimation { duration: 100 } }
@@ -98,15 +104,16 @@ GridLayout {
             anchors.fill: parent
             cursorShape: Qt.PointingHandCursor
             onClicked: {
-                if (quickTogglesRoot.dashboardRoot) {
-                    quickTogglesRoot.dashboardRoot.grimRequested()
-                    quickTogglesRoot.dashboardRoot.closeRequested()
-                }
+                if (!quickTogglesRoot.dashboardRoot) return
+                quickTogglesRoot.dashboardRoot.grimRequested()
+                quickTogglesRoot.dashboardRoot.closeRequested()
             }
         }
     }
 
     // ── wf-recorder toggle ────────────────────────────────────────────────
+    // Left click  = desktop audio saja (default)
+    // Right click = desktop + mic
     Rectangle {
         id: recorderBtn
         Layout.fillWidth: true
@@ -115,25 +122,23 @@ GridLayout {
         radius: 14
 
         property bool recording: false
-        // apakah recording ini menangkap audio (device) — deteksi via cmdline
-        property bool recordingWithAudio: false
+        property bool recordingWithMic: false
 
         color: recording
                ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.85)
                : (recArea.containsPress ? Root.Colors.blue : Root.Colors.surface0)
         Behavior on color { ColorAnimation { duration: 150 } }
 
-        // Poll apakah wf-recorder sedang berjalan + apakah dengan audio
         Process {
             id: recCheckProc
             command: ["sh", "-c",
                 "pgrep -x wf-recorder > /dev/null && echo yes || echo no; " +
-                "cat /proc/$(pgrep -x wf-recorder)/cmdline 2>/dev/null | tr '\\0' ' ' | grep -qE '(--audio=|\\-a[^-])' && echo audio || echo noaudio"]
+                "cat /proc/$(pgrep -x wf-recorder)/cmdline 2>/dev/null | tr '\\0' ' ' | grep -q 'qs_rec_mix' && echo mic || echo nomic"]
             stdout: StdioCollector {
                 onStreamFinished: {
                     const lines = text.trim().split("\n")
-                    recorderBtn.recording          = (lines[0] || "").trim() === "yes"
-                    recorderBtn.recordingWithAudio = (lines[1] || "").trim() === "audio"
+                    recorderBtn.recording        = (lines[0] || "").trim() === "yes"
+                    recorderBtn.recordingWithMic = (lines[1] || "").trim() === "mic"
                 }
             }
         }
@@ -157,7 +162,7 @@ GridLayout {
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                text: recorderBtn.recording ? "STOP" : "START"
+                text: recorderBtn.recording ? "STOP" : "RECORD"
                 font.pixelSize: 11
                 color: recorderBtn.recording ? Root.Colors.base : (recArea.containsPress ? Root.Colors.base : Root.Colors.subtext)
                 Behavior on color { ColorAnimation { duration: 100 } }
@@ -170,9 +175,7 @@ GridLayout {
             anchors.top: parent.top
             anchors.right: parent.right
             anchors.margins: 7
-            width: 7
-            height: 7
-            radius: 4
+            width: 7; height: 7; radius: 4
             color: Root.Colors.base
             SequentialAnimation on opacity {
                 running: recorderBtn.recording
@@ -182,17 +185,15 @@ GridLayout {
             }
         }
 
-        // Indikator audio di pojok kiri bawah
-        // Ikon speaker+mic = both mode, speaker saja = desktop-only
+        // Indikator mic di pojok kiri bawah
         Text {
             visible: recorderBtn.recording
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.margins: 6
-            text: recorderBtn.recordingWithAudio ? "󰕾󰍬" : "󰕾"
+            text: recorderBtn.recordingWithMic ? "󰕾󰍬" : "󰕾"
             font.pixelSize: 9
             color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 100 } }
         }
 
         MouseArea {
@@ -204,13 +205,10 @@ GridLayout {
             onClicked: mouse => {
                 if (!quickTogglesRoot.dashboardRoot) return
                 if (recorderBtn.recording) {
-                    // stop — mode apapun, panggil stop via script yang sama
                     quickTogglesRoot.dashboardRoot.recorderToggleRequested()
                 } else if (mouse.button === Qt.RightButton) {
-                    // right click: desktop only (tanpa mic)
                     quickTogglesRoot.dashboardRoot.recorderMicToggleRequested()
                 } else {
-                    // left click: desktop + mic gabungan
                     quickTogglesRoot.dashboardRoot.recorderToggleRequested()
                 }
                 quickTogglesRoot.dashboardRoot.closeRequested()
@@ -223,11 +221,18 @@ GridLayout {
         Layout.fillWidth: true
         label: "DND"
         icon: "󰂛"
+        dashboardRoot: quickTogglesRoot.dashboardRoot
         checkCommand: "swaync-client -D"
         checkMatch: "true"
         onCommand: "swaync-client -dn"
         offCommand: "swaync-client -df"
         managerCommand: ""
+        notifIconOn:  "notifications-disabled"
+        notifIconOff: "notification"
+        notifSummaryOn:  "Do Not Disturb Aktif"
+        notifSummaryOff: "Do Not Disturb Nonaktif"
+        notifBodyOn:  "Notifikasi dinonaktifkan."
+        notifBodyOff: "Notifikasi diaktifkan kembali."
     }
 
     // ── Night toggle ──────────────────────────────────────────────────────
@@ -235,10 +240,17 @@ GridLayout {
         Layout.fillWidth: true
         label: "NIGHT"
         icon: "󰌵"
+        dashboardRoot: quickTogglesRoot.dashboardRoot
         checkCommand: "pgrep -x hyprsunset > /dev/null && echo yes || echo no"
         checkMatch: "yes"
         onCommand: "nohup hyprsunset -t 4500 </dev/null >/dev/null 2>&1 &"
         offCommand: "pkill -x hyprsunset"
         managerCommand: ""
+        notifIconOn:  "night-light"
+        notifIconOff: "display-brightness"
+        notifSummaryOn:  "Night Light Aktif"
+        notifSummaryOff: "Night Light Nonaktif"
+        notifBodyOn:  "Suhu warna diset ke 4500K."
+        notifBodyOff: "Suhu warna dikembalikan normal."
     }
 }

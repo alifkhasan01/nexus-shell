@@ -20,24 +20,26 @@ PanelWindow {
     // powerMenuOpen dibaca dari shellState sehingga GlobalShortcut Hyprland
     // (quickshell:powermenu) dan klik tombol di Bar keduanya sinkron.
     property bool powerMenuOpen: shellState ? shellState.powerMenuOpen : false
-    property bool wifiPanelOpen: false
-    property bool btPanelOpen: false
+    // Satu panel gabungan Wi-Fi + Bluetooth (tag dipilih via connectTab).
+    property bool connectPanelOpen: false
+    property int connectTab: 0  // 0 = Wi-Fi, 1 = Bluetooth
     property bool volumePanelOpen: false
-    property bool updatePanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
 
-    onWifiPanelOpenChanged: {
-        if (!wifiPanelOpen) wifiCloseTimer.restart()
-        if (!wifiPanelOpen) netStatus.refresh()
-    }
-    onBtPanelOpenChanged: {
-        if (!btPanelOpen) btCloseTimer.restart()
-        if (!btPanelOpen) btStatus.refresh()
+    onConnectPanelOpenChanged: {
+        if (!connectPanelOpen) connectCloseTimer.restart()
+        if (!connectPanelOpen) netStatus.refresh()
+        if (!connectPanelOpen) btStatus.refresh()
     }
     onVolumePanelOpenChanged:    if (!volumePanelOpen)    volumeCloseTimer.restart()
-    onUpdatePanelOpenChanged:    if (!updatePanelOpen)    updateCloseTimer.restart()
     onWallpaperPanelOpenChanged: if (!wallpaperPanelOpen) wallpaperCloseTimer.restart()
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
+
+    // ── Close timers — di root agar selalu tersedia ───────────────────────
+    Timer { id: powerCloseTimer;    interval: 300; repeat: false }
+    Timer { id: connectCloseTimer;  interval: 300; repeat: false }
+    Timer { id: volumeCloseTimer;   interval: 300; repeat: false }
+    Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
 
     anchors { top: true; left: true; right: true }
     margins.top: 2
@@ -89,10 +91,8 @@ PanelWindow {
                     anchors.centerIn: parent
                     onClicked: {
                         bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
-                        bar.wifiPanelOpen = false
-                        bar.btPanelOpen   = false
+                        bar.connectPanelOpen = false
                         bar.volumePanelOpen = false
-                        bar.updatePanelOpen = false
                         bar.shellState.wallpaperPanelOpen = false
                     }
                     onRightClicked: controlCenterProcess.running = true
@@ -111,28 +111,28 @@ PanelWindow {
 
                     NetworkStatus {
                         id: netStatus
-                        panelOpen: bar.wifiPanelOpen
+                        panelOpen: bar.connectPanelOpen && bar.connectTab === 0
                         onTogglePanel: {
-                            bar.wifiPanelOpen = !bar.wifiPanelOpen
-                            bar.btPanelOpen   = false
+                            bar.connectTab = 0
+                            bar.connectPanelOpen = !bar.connectPanelOpen
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
-                            bar.updatePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                         }
+                        onToggleWifi: {} // handled inside NetworkStatus widget
                     }
 
                     BluetoothStatus {
                         id: btStatus
-                        panelOpen: bar.btPanelOpen
+                        panelOpen: bar.connectPanelOpen && bar.connectTab === 1
                         onTogglePanel: {
-                            bar.btPanelOpen   = !bar.btPanelOpen
-                            bar.wifiPanelOpen = false
+                            bar.connectTab = 1
+                            bar.connectPanelOpen = !bar.connectPanelOpen
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
-                            bar.updatePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                         }
+                        onToggleBt: {} // handled inside BluetoothStatus widget
                     }
 
                     // ── Wallpaper Button ──────────────────────────────────
@@ -188,30 +188,14 @@ PanelWindow {
                             acceptedButtons: Qt.LeftButton | Qt.RightButton
                             onClicked: (mouse) => {
                                 if (mouse.button === Qt.RightButton) {
-                                    bar.shellState.randomWallpaperConsumed = false
-                                    bar.shellState.randomWallpaperToken += 1
+                                    bar.shellState.wallpaperRandom.pickRandom()
                                 } else {
                                     bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
-                                    bar.wifiPanelOpen      = false
-                                    bar.btPanelOpen        = false
+                                    bar.connectPanelOpen   = false
                                     bar.volumePanelOpen    = false
-                                    bar.updatePanelOpen    = false
                                     bar.shellState.dashboardOpen = false
                                 }
                             }
-                        }
-                    }
-
-                    SystemUpdate {
-                        id: sysUpdate
-                        panelOpen: bar.updatePanelOpen
-                        onTogglePanel: {
-                            bar.updatePanelOpen = !bar.updatePanelOpen
-                            bar.wifiPanelOpen   = false
-                            bar.btPanelOpen     = false
-                            bar.volumePanelOpen = false
-                            bar.shellState.dashboardOpen = false
-                            bar.shellState.wallpaperPanelOpen = false
                         }
                     }
 
@@ -220,10 +204,8 @@ PanelWindow {
                         panelOpen: bar.volumePanelOpen
                         onTogglePanel: {
                             bar.volumePanelOpen = !bar.volumePanelOpen
-                            bar.wifiPanelOpen  = false
-                            bar.btPanelOpen    = false
+                            bar.connectPanelOpen = false
                             bar.shellState.dashboardOpen = false
-                            bar.updatePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
@@ -237,10 +219,8 @@ PanelWindow {
                         menuOpen: bar.powerMenuOpen
                         onToggleMenu: {
                             bar.shellState.powerMenuOpen = !bar.shellState.powerMenuOpen
-                            bar.wifiPanelOpen    = false
-                            bar.btPanelOpen      = false
+                            bar.connectPanelOpen  = false
                             bar.volumePanelOpen  = false
-                            bar.updatePanelOpen  = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.shellState.dashboardOpen = false
                         }
@@ -254,12 +234,6 @@ PanelWindow {
     LazyLoader {
         id: powerLoader
         active: bar.powerMenuOpen || powerCloseTimer.running
-
-        Timer {
-            id: powerCloseTimer
-            interval: 300
-            repeat: false
-        }
 
         PowerMenu {
             open: bar.powerMenuOpen
@@ -278,40 +252,20 @@ PanelWindow {
             onGrimRequested: bar.takeGrim()
             onRecorderToggleRequested: bar.toggleRecorder()
             onRecorderMicToggleRequested: bar.toggleRecorderMic()
+            onSetFaceRequested: bar.startFacePicker()
+            onNotifyRequested: (icon, summary, body) => bar.sendNotif(icon, summary, body)
         }
     }
 
-    // ── WiFi Panel ────────────────────────────────────────────────────────
+    // ── Connect Panel (Wi-Fi + Bluetooth) ─────────────────────────────────
     LazyLoader {
-        id: wifiLoader
-        active: bar.wifiPanelOpen || wifiCloseTimer.running
+        id: connectLoader
+        active: bar.connectPanelOpen || connectCloseTimer.running
 
-        Timer {
-            id: wifiCloseTimer
-            interval: 300
-            repeat: false
-        }
-
-        WifiPanel {
-            open: bar.wifiPanelOpen
-            onCloseRequested: bar.wifiPanelOpen = false
-        }
-    }
-
-    // ── Bluetooth Panel ───────────────────────────────────────────────────
-    LazyLoader {
-        id: btLoader
-        active: bar.btPanelOpen || btCloseTimer.running
-
-        Timer {
-            id: btCloseTimer
-            interval: 300
-            repeat: false
-        }
-
-        BluetoothPanel {
-            open: bar.btPanelOpen
-            onCloseRequested: bar.btPanelOpen = false
+        ConnectPanel {
+            open: bar.connectPanelOpen
+            requestedTab: bar.connectTab
+            onCloseRequested: bar.connectPanelOpen = false
         }
     }
 
@@ -320,34 +274,9 @@ PanelWindow {
         id: volumeLoader
         active: bar.volumePanelOpen || volumeCloseTimer.running
 
-        Timer {
-            id: volumeCloseTimer
-            interval: 300
-            repeat: false
-        }
-
         VolumePanel {
             open: bar.volumePanelOpen
             onCloseRequested: bar.volumePanelOpen = false
-        }
-    }
-
-    // ── Update Panel ──────────────────────────────────────────────────────
-    LazyLoader {
-        id: updateLoader
-        active: bar.updatePanelOpen || updateCloseTimer.running
-
-        Timer {
-            id: updateCloseTimer
-            interval: 300
-            repeat: false
-        }
-
-        UpdatePanel {
-            open: bar.updatePanelOpen
-            pending: sysUpdate.pending
-            packages: sysUpdate.packages
-            onCloseRequested: bar.updatePanelOpen = false
         }
     }
 
@@ -356,21 +285,14 @@ PanelWindow {
         id: wallpaperLoader
         active: bar.wallpaperPanelOpen || wallpaperCloseTimer.running
 
-        Timer {
-            id: wallpaperCloseTimer
-            interval: 300
-            repeat: false
-        }
-
         WallpaperPanel {
             open: bar.wallpaperPanelOpen
-            shellState: bar.shellState
             onCloseRequested: bar.shellState.wallpaperPanelOpen = false
         }
     }
 
     // ── Notification Popup ────────────────────────────────────────────────
-    NotificationPopup {}
+    // Dipindahkan ke shell.qml agar render di atas semua komponen lain
 
     // ── OSD (Volume & Brightness) ─────────────────────────────────────────
     Osd { id: osd }
@@ -380,37 +302,115 @@ PanelWindow {
         command: ["control-center"]
     }
 
-    // Screenshot — di-detach via setsid supaya tidak ikut mati saat reload.
+    // Screenshot select (area) — grimblast tanpa detach agar bisa notif setelah selesai
     Process {
         id: screenshotProc
-        command: ["sh", "-c", "setsid -f bash ~/.config/quickshell/scripts/screenshot.sh </dev/null >/dev/null 2>&1"]
+        command: ["sh", "-c",
+            "mkdir -p ~/Pictures/Screenshots && " +
+            "grimblast save area ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png 2>/dev/null"]
+        onRunningChanged: {
+            if (!running && exitCode === 0)
+                bar.sendNotif("camera-photo", "Screenshot Tersimpan",
+                    "Disimpan di ~/Pictures/Screenshots")
+        }
     }
 
-    // Grim full-screen screenshot
+    // Screenshot full — grimblast tanpa detach, delay via timer agar dashboard hilang dulu
     Process {
         id: grimProc
         command: ["sh", "-c",
-            "setsid -f sh -c 'sleep 0.3; grim ~/Pictures/Screenshots/$(date +%Y%m%d_%H%M%S).png' </dev/null >/dev/null 2>&1"]
+            "mkdir -p ~/Pictures/Screenshots && " +
+            "grimblast save screen ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png 2>/dev/null"]
+        onRunningChanged: {
+            if (!running && exitCode === 0)
+                bar.sendNotif("camera-photo", "Screenshot Tersimpan",
+                    "Disimpan di ~/Pictures/Screenshots")
+        }
     }
 
-    // wf-recorder — desktop + mic gabungan
+    Timer {
+        id: grimDelayTimer
+        interval: 500
+        repeat: false
+        onTriggered: grimProc.running = true
+    }
+
+    // wf-recorder — desktop only (left click, default)
     Process {
         id: recorderProc
         command: ["sh", "-c",
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "bash ~/.config/quickshell/scripts/record.sh both"]
+            "bash ~/.config/quickshell/scripts/record.sh desktop-only"]
+        onRunningChanged: {
+            if (!running) {
+                // Script selesai — cek apakah ini stop (wf-recorder sudah tidak jalan)
+                recNotifCheckProc.running = true
+            }
+        }
     }
 
-    // wf-recorder — desktop only
+    // wf-recorder — desktop + mic gabungan (right click)
     Process {
         id: recorderMicProc
         command: ["sh", "-c",
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "bash ~/.config/quickshell/scripts/record.sh desktop-only"]
+            "bash ~/.config/quickshell/scripts/record.sh both"]
+        onRunningChanged: {
+            if (!running) {
+                recNotifCheckProc.running = true
+            }
+        }
+    }
+
+    // Cek apakah wf-recorder masih jalan setelah script selesai
+    // Kalau tidak jalan = baru saja stop → kirim notif file tersimpan
+    Process {
+        id: recNotifCheckProc
+        command: ["sh", "-c", "pgrep -x wf-recorder > /dev/null && echo running || echo stopped"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                if (text.trim() === "stopped")
+                    bar.sendNotif("media-record", "Recording Tersimpan",
+                        "File disimpan di ~/Videos/Recordings")
+            }
+        }
     }
 
     function takeScreenshot()    { screenshotProc.running = true }
-    function takeGrim()          { grimProc.running = true }
+    function takeGrim()          { bar.shellState.dashboardOpen = false; grimDelayTimer.restart() }
     function toggleRecorder()    { recorderProc.running = true }
     function toggleRecorderMic() { recorderMicProc.running = true }
+
+    // Kirim notifikasi via notify-send (dipanggil dari dashboard)
+    Process {
+        id: notifProc
+    }
+    function sendNotif(icon, summary, body) {
+        const args = ["notify-send", "--app-name=Quickshell", "--expire-time=4000"]
+        if (icon !== "") args.push("--icon=" + icon)
+        args.push(summary)
+        if (body !== "") args.push(body)
+        notifProc.command = args
+        notifProc.running = true
+    }
+
+    // ── Face picker (jalankan di level Bar agar tidak ikut mati saat
+    //    dashboard ditutup; dashboard ditutup dulu supaya window zenity
+    //    tidak tertutup dashboard, lalu dibuka lagi setelah selesai).
+    function startFacePicker() {
+        bar.shellState.dashboardOpen = false
+        facePickerProc.running = true
+    }
+
+    Process {
+        id: facePickerProc
+        command: ["sh", "-c",
+            "FILE=$(zenity --file-selection --title='Pilih foto profil' " +
+            "--file-filter='Gambar | *.png *.jpg *.jpeg *.webp' 2>/dev/null); " +
+            "[ -n \"$FILE\" ] && cp \"$FILE\" ~/.face && echo 'ok'"
+        ]
+        onRunningChanged: {
+            if (!running) bar.shellState.dashboardOpen = true
+        }
+    }
 }

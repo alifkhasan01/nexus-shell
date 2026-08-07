@@ -2,18 +2,22 @@ import QtQuick
 import QtQuick.Layouts
 import "../" as Root
 
-// Baris 2 tombol tema (Catppuccin Dark/Light) — klik untuk ganti tema aktif.
-// Tombol aktif ditandai dengan background biru + teks terang.
+// Grid 2×2 tombol tema Catppuccin — klik untuk ganti tema aktif.
+// Tombol aktif ditandai dengan background aksen + teks terang.
 // Selain warna shell, ganti tema juga memicu matugen untuk sinkron ke GTK,
 // Qt, foot, hyprland, dan gsettings (lihat Colors.qml).
-RowLayout {
+GridLayout {
     id: root
-    spacing: 8
+    columns: 2
+    rowSpacing: 8
+    columnSpacing: 8
     Layout.fillWidth: true
 
     readonly property var themes: [
-        { id: "catppuccin-mocha", label: "Dark"  },
-        { id: "catppuccin-latte", label: "Light" }
+        { id: "catppuccin-latte",     label: "Latte",     dot: "#1e66f5" },
+        { id: "catppuccin-frappe",    label: "Frappé",    dot: "#8caaee" },
+        { id: "catppuccin-macchiato", label: "Macchiato", dot: "#8aadf4" },
+        { id: "catppuccin-mocha",     label: "Mocha",     dot: "#89b4fa" }
     ]
 
     Repeater {
@@ -21,7 +25,6 @@ RowLayout {
 
         delegate: Rectangle {
             readonly property bool isActive: Root.Colors.currentTheme === modelData.id
-            readonly property color accentDot: Root.Colors.themeAccents[modelData.id] ?? Root.Colors.blue
 
             Layout.fillWidth: true
             implicitHeight: 36
@@ -30,7 +33,7 @@ RowLayout {
 
             Behavior on color { ColorAnimation { duration: 160 } }
 
-            // dot warna aksen tema (kiri)
+            // dot warna aksen flavor (kiri)
             Rectangle {
                 anchors.left: parent.left
                 anchors.leftMargin: 10
@@ -38,7 +41,7 @@ RowLayout {
                 width: 8
                 height: 8
                 radius: 4
-                color: isActive ? Root.Colors.base : parent.accentDot
+                color: isActive ? Root.Colors.base : modelData.dot
                 Behavior on color { ColorAnimation { duration: 160 } }
             }
 

@@ -10,7 +10,10 @@ Item {
 
     // dikontrol dari Bar.qml
     property bool panelOpen: false
-    signal togglePanel()
+    signal togglePanel()   // right click — buka ConnectPanel
+    signal toggleBt()      // left click  — on/off bluetooth
+
+    onToggleBt: doToggleBt()
 
     property bool powered: false
     property bool connected: false
@@ -37,7 +40,25 @@ Item {
     MouseArea {
         anchors.fill: parent
         cursorShape: Qt.PointingHandCursor
-        onClicked: root.togglePanel()
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
+        onClicked: mouse => {
+            if (mouse.button === Qt.RightButton)
+                root.togglePanel()
+            else
+                root.toggleBt()
+        }
+    }
+
+    // Toggle bluetooth on/off langsung dari bar (left click)
+    Process {
+        id: btToggleProc
+    }
+
+    function doToggleBt() {
+        const cmd = root.powered ? "bluetoothctl power off" : "bluetoothctl power on"
+        btToggleProc.command = ["sh", "-c", cmd]
+        btToggleProc.running = true
+        Qt.callLater(() => pollProc.running = true)
     }
 
     Process {

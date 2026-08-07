@@ -12,10 +12,6 @@ PanelWindow {
     property bool open: false
     signal closeRequested()
 
-    // Dibagikan dari shell.qml; dipakai untuk menerima trigger "random"
-    // dari IpcHandler wallpaper random (bind Hyprland) tanpa wallpicker.
-    property var shellState: null
-
     anchors { top: true; left: true; right: true; bottom: true }
     color: "transparent"
     visible: showPanel
@@ -237,16 +233,6 @@ PanelWindow {
     }
 
     Component.onCompleted: loadConfigProc.running = true
-
-    // Trigger "random wallpaper" dari shell.qml (IpcHandler wallpaper random).
-    // Hanya satu panel yang mengeksekusi (yang pertama melihat token belum dikonsumsi).
-    readonly property int _lastRandomToken: root.shellState ? root.shellState.randomWallpaperToken : 0
-    on_LastRandomTokenChanged: {
-        if (root.shellState && !root.shellState.randomWallpaperConsumed) {
-            root.shellState.randomWallpaperConsumed = true
-            root.pickRandom()
-        }
-    }
 
     // ── Kartu utama ───────────────────────────────────────────────────────
     Rectangle {
@@ -568,10 +554,12 @@ PanelWindow {
                     Layout.bottomMargin: 4
                     clip: true
 
-                    // kolom adaptif: min lebar thumb ~180px, muat sebanyak mungkin
+                    // kolom adaptif: muat sebanyak mungkin (target ~180px + gap)
                     readonly property int pad: 8
                     readonly property int cols: Math.max(1, Math.floor((width + pad) / (180 + pad)))
-                    readonly property int thumbW: Math.max(1, Math.floor((width - pad * (cols - 1)) / cols))
+                    // thumbW dihitung agar cols*(thumbW+pad) == width (isi penuh tanpa
+                    // sisa kosong / overflow di sebelah kanan)
+                    readonly property int thumbW: Math.max(1, Math.floor((width - pad * cols) / cols))
                     readonly property int thumbH: Math.round(thumbW * 9 / 16)
 
                     cellWidth:  thumbW + pad
@@ -590,6 +578,7 @@ PanelWindow {
                         required property int    index
 
                         readonly property int labelH: 16  // tinggi area label bawah (fixed)
+                        readonly property int pad2: grid.pad / 2
 
                         width:  grid.cellWidth
                         height: grid.cellHeight
@@ -608,8 +597,8 @@ PanelWindow {
                             id: thumbCard
                             anchors {
                                 top: parent.top; topMargin: 4
-                                left: parent.left; leftMargin: 4
-                                right: parent.right; rightMargin: grid.pad
+                                left: parent.left; leftMargin: pad2
+                                right: parent.right; rightMargin: pad2
                                 bottom: thumbLabel.top; bottomMargin: 3
                             }
                             radius: 8; color: Root.Colors.surface0; clip: true
