@@ -16,7 +16,7 @@ PanelWindow {
 
     anchors { bottom: true; left: true; right: true }
     // tepat di bawah bar (bar height 45 + margin top 8 + gap 6)
-    margins.top: 10
+    margins.bottom: 10
 
     // Tinggi window = tinggi semua kartu aktif, atau minimal 1 px
     implicitHeight: Math.max(1, stack.implicitHeight)

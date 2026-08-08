@@ -131,11 +131,15 @@ PanelWindow {
                 icon: "󰒲"
                 label: "Suspend"
                 iconColor: Root.Colors.lavender
-                command: ["sh", "-c", "quickshell ipc call lockscreen lock && sleep 0.5 && systemctl suspend"]
+                // command dikosongkan — aksi dihandle manual oleh suspendProc
+                command: []
                 notifyTitle: "Masuk mode tidur"
                 notifyBody:  "Layar dikunci lalu sistem di-suspend."
                 highlighted: root.focusedIndex === 1
-                onTriggered: root.closeRequested()
+                onTriggered: {
+                    root.closeRequested()
+                    suspendLockProc.running = true
+                }
             }
 
             PowerMenuItem {
@@ -144,7 +148,7 @@ PanelWindow {
                 icon: "󰑙"
                 label: "Reboot"
                 iconColor: Root.Colors.yellow
-                command: ["reboot"]
+                command: ["systemctl", "reboot"]
                 notifyTitle: "Merestart sistem"
                 notifyBody:  "Sistem akan di-restart sekarang."
                 highlighted: root.focusedIndex === 2
@@ -182,12 +186,26 @@ PanelWindow {
                 icon: "󰐥"
                 label: "Shutdown"
                 iconColor: Root.Colors.red
-                command: ["shutdown", "-h", "now"]
+                command: ["systemctl", "poweroff"]
                 notifyTitle: "Mematikan sistem"
                 notifyBody:  "Sistem akan dimatikan sekarang."
                 highlighted: root.focusedIndex === 4
                 onTriggered: root.closeRequested()
             }
         }
+    }
+
+    // ── Suspend: lock via IPC lalu langsung suspend ───────────────────────
+    Process {
+        id: suspendLockProc
+        command: ["quickshell", "ipc", "call", "lockscreen", "lock"]
+        onRunningChanged: {
+            if (!running) suspendProc.running = true
+        }
+    }
+
+    Process {
+        id: suspendProc
+        command: ["systemctl", "suspend"]
     }
 }

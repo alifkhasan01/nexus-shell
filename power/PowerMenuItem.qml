@@ -56,7 +56,13 @@ Rectangle {
     }
 
     Process { id: proc;        command: root.command }
-    Process { id: notifyProc;  onExited: proc.running = true }
+    Process {
+        id: notifyProc
+        onExited: {
+            if (root.command.length > 0)
+                proc.running = true
+        }
+    }
 
     function _doActivate() {
         root.triggered()
