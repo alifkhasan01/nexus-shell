@@ -24,6 +24,7 @@ PanelWindow {
     property bool connectPanelOpen: false
     property int connectTab: 0  // 0 = Wi-Fi, 1 = Bluetooth
     property bool volumePanelOpen: false
+    property bool batteryPanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
 
     onConnectPanelOpenChanged: {
@@ -32,6 +33,7 @@ PanelWindow {
         if (!connectPanelOpen) btStatus.refresh()
     }
     onVolumePanelOpenChanged:    if (!volumePanelOpen)    volumeCloseTimer.restart()
+    onBatteryPanelOpenChanged:   if (!batteryPanelOpen)   batteryCloseTimer.restart()
     onWallpaperPanelOpenChanged: if (!wallpaperPanelOpen) wallpaperCloseTimer.restart()
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
 
@@ -39,6 +41,7 @@ PanelWindow {
     Timer { id: powerCloseTimer;    interval: 300; repeat: false }
     Timer { id: connectCloseTimer;  interval: 300; repeat: false }
     Timer { id: volumeCloseTimer;   interval: 300; repeat: false }
+    Timer { id: batteryCloseTimer;  interval: 300; repeat: false }
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
 
     anchors { top: true; left: true; right: true }
@@ -93,6 +96,7 @@ PanelWindow {
                         bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
                         bar.connectPanelOpen = false
                         bar.volumePanelOpen = false
+                        bar.batteryPanelOpen = false
                         bar.shellState.wallpaperPanelOpen = false
                     }
                     onRightClicked: controlCenterProcess.running = true
@@ -192,7 +196,16 @@ PanelWindow {
                     Brightness {
                         onOsdBrightness: value => osd.showBrightness(value)
                     }
-                    Battery {}
+                    Battery {
+                        panelOpen: bar.batteryPanelOpen
+                        onTogglePanel: {
+                            bar.batteryPanelOpen = !bar.batteryPanelOpen
+                            bar.connectPanelOpen = false
+                            bar.volumePanelOpen = false
+                            bar.shellState.dashboardOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
+                        }
+                    }
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
                         onToggleMenu: {
@@ -273,6 +286,17 @@ PanelWindow {
         VolumePanel {
             open: bar.volumePanelOpen
             onCloseRequested: bar.volumePanelOpen = false
+        }
+    }
+
+    // ── Battery Panel ─────────────────────────────────────────────────────
+    LazyLoader {
+        id: batteryLoader
+        active: bar.batteryPanelOpen || batteryCloseTimer.running
+
+        BatteryPanel {
+            open: bar.batteryPanelOpen
+            onCloseRequested: bar.batteryPanelOpen = false
         }
     }
 

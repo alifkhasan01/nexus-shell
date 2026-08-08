@@ -5,8 +5,12 @@ import "../../" as Root
 
 Item {
     id: root
-    width: label.width
-    height: 20
+    width: row.implicitWidth + 8
+    height: 26
+
+    // ── Panel toggle ──────────────────────────────────────────────────────
+    property bool panelOpen: false
+    signal togglePanel()
 
     property var device: UPower.displayDevice
     property int percent: device?.percentage ? Math.round(device.percentage * 100) : 0
@@ -76,26 +80,49 @@ Item {
     }
 
     // ── Ikon + label ──────────────────────────────────────────────────────
-    Text {
-        id: label
-        anchors.centerIn: parent
-        color: {
-            if (root.charging)        return Root.Colors.yellow
-            if (root.percent <= 20)   return Root.Colors.red
-            if (root.percent <= 30)   return Root.Colors.peach
-            return Root.Colors.text
-        }
+    Rectangle {
+        anchors.fill: parent
+        radius: 6
+        color: batteryMa.containsMouse
+               ? Root.Colors.surface1
+               : (root.panelOpen ? Root.Colors.surface0 : "transparent")
         Behavior on color { ColorAnimation { duration: 150 } }
-        font.pixelSize: 14
-        text: {
-            let icon
-            if (root.charging) icon = "󰂄"
-            else if (root.percent >= 90) icon = "󰁹"
-            else if (root.percent >= 60) icon = "󰂀"
-            else if (root.percent >= 35) icon = "󰁾"
-            else if (root.percent >= 15) icon = "󰁻"
-            else icon = "󰂃"
-            return icon + " " + root.percent + "%"
+    }
+
+    Row {
+        id: row
+        anchors.centerIn: parent
+        spacing: 0
+
+        Text {
+            id: label
+            color: {
+                if (root.panelOpen)           return Root.Colors.blue
+                if (root.charging)            return Root.Colors.yellow
+                if (root.percent <= 20)       return Root.Colors.red
+                if (root.percent <= 30)       return Root.Colors.peach
+                return Root.Colors.text
+            }
+            Behavior on color { ColorAnimation { duration: 150 } }
+            font.pixelSize: 14
+            text: {
+                let icon
+                if (root.charging) icon = "󰂄"
+                else if (root.percent >= 90) icon = "󰁹"
+                else if (root.percent >= 60) icon = "󰂀"
+                else if (root.percent >= 35) icon = "󰁾"
+                else if (root.percent >= 15) icon = "󰁻"
+                else icon = "󰂃"
+                return icon + " " + root.percent + "%"
+            }
         }
+    }
+
+    MouseArea {
+        id: batteryMa
+        anchors.fill: parent
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+        onClicked: root.togglePanel()
     }
 }
