@@ -43,6 +43,10 @@ PanelWindow {
     property string connectedSsid: ""
     property var wifiNetworks: []   // [{ssid, signal, secured, connected}]
 
+    // Input password inline
+    property string pendingSsid: ""      // SSID yang sedang menunggu password
+    property string pendingPassword: ""  // Password sementara yang diketik
+
     // ── State Bluetooth ────────────────────────────────────────────────────
     property bool btEnabled: false
     property bool btScanning: false
@@ -328,18 +332,29 @@ PanelWindow {
                                 model: root.wifiNetworks
 
                                 delegate: Rectangle {
+                                    id: netItem
                                     Layout.fillWidth: true
-                                    implicitHeight: 52
+                                    // tinggi normal 52, melebar saat input password muncul
+                                    implicitHeight: pwRow.visible ? 52 + pwRow.implicitHeight + 8 : 52
+                                    Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+
+                                    readonly property bool isPending: root.pendingSsid === modelData.ssid
+
                                     radius: 12
                                     color: modelData.connected
                                            ? Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.15)
                                            : (hoverMa.containsMouse ? Root.Colors.surface0 : "transparent")
                                     Behavior on color { ColorAnimation { duration: 120 } }
 
+                                    // ── Baris utama ───────────────────────────────
                                     RowLayout {
-                                        anchors.fill: parent
+                                        id: mainRow
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.top: parent.top
                                         anchors.leftMargin: 10
                                         anchors.rightMargin: 10
+                                        height: 52
                                         spacing: 10
 
                                         // Ikon sinyal
@@ -387,21 +402,25 @@ PanelWindow {
                                             Behavior on color { ColorAnimation { duration: 150 } }
                                         }
 
-                                        // Tombol connect / disconnect
+                                        // Tombol connect / disconnect / batal
                                         Rectangle {
-                                            visible: hoverMa.containsMouse || modelData.connected
+                                            visible: hoverMa.containsMouse || modelData.connected || netItem.isPending
                                             implicitWidth: connTxt.implicitWidth + 20
                                             implicitHeight: 28
                                             radius: 8
-                                            color: modelData.connected ? Root.Colors.surface1 : Root.Colors.blue
+                                            color: (modelData.connected || netItem.isPending)
+                                                   ? Root.Colors.surface1 : Root.Colors.blue
                                             Behavior on color { ColorAnimation { duration: 120 } }
 
                                             Text {
                                                 id: connTxt
                                                 anchors.centerIn: parent
-                                                text: modelData.connected ? "Putus" : "Hubung"
+                                                text: modelData.connected ? "Putus"
+                                                    : netItem.isPending    ? "Batal"
+                                                    : "Hubung"
                                                 font.pixelSize: 12
-                                                color: modelData.connected ? Root.Colors.text : Root.Colors.base
+                                                color: (modelData.connected || netItem.isPending)
+                                                       ? Root.Colors.text : Root.Colors.base
                                                 Behavior on color { ColorAnimation { duration: 120 } }
                                             }
 
@@ -410,18 +429,148 @@ PanelWindow {
                                                 cursorShape: Qt.PointingHandCursor
                                                 onClicked: {
                                                     if (modelData.connected) {
+                                                        // Putuskan koneksi
                                                         wifiDisconnectProc.command = ["sh", "-c",
                                                             "nmcli con down id '" + modelData.ssid + "'"
                                                         ]
                                                         wifiDisconnectProc.running = true
+                                                        Qt.callLater(() => { wifiListProc.running = true })
+                                                    } else if (netItem.isPending) {
+                                                        // Batalkan input password
+                                                        root.pendingSsid = ""
+                                                        root.pendingPassword = ""
+                                                    } else if (modelData.secured) {
+                                                        // Jaringan ber-password: buka input inline
+                                                        root.pendingSsid = modelData.ssid
+                                                        root.pendingPassword = ""
+                                                        Qt.callLater(() => pwField.forceActiveFocus())
                                                     } else {
-                                                        wifiConnectProc.command = ["sh", "-c",
-                                                            "nmcli dev wifi connect '" + modelData.ssid + "'"
-                                                        ]
-                                                        wifiConnectProc.running = true
+                                                        // Jaringan terbuka: langsung konek
+                                                        wifiConnectProc.connectTo(modelData.ssid, "")
                                                     }
-                                                    Qt.callLater(() => { wifiListProc.running = true })
                                                 }
+                                            }
+                                        }
+                                    }
+
+                                    // ── Baris input password (inline) ─────────────
+                                    RowLayout {
+                                        id: pwRow
+                                        visible: netItem.isPending
+                                        opacity: netItem.isPending ? 1 : 0
+                                        Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                                        anchors.left: parent.left
+                                        anchors.right: parent.right
+                                        anchors.top: mainRow.bottom
+                                        anchors.leftMargin: 10
+                                        anchors.rightMargin: 10
+                                        anchors.topMargin: 0
+                                        implicitHeight: 40
+                                        spacing: 6
+
+                                        // Field password
+                                        Rectangle {
+                                            Layout.fillWidth: true
+                                            height: 32
+                                            radius: 8
+                                            color: Root.Colors.surface0
+                                            border.color: pwField.activeFocus ? Root.Colors.blue : Root.Colors.surface2
+                                            border.width: 1
+                                            Behavior on border.color { ColorAnimation { duration: 120 } }
+                                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                                            RowLayout {
+                                                anchors.fill: parent
+                                                anchors.leftMargin: 10
+                                                anchors.rightMargin: 6
+                                                spacing: 6
+
+                                                TextInput {
+                                                    id: pwField
+                                                    Layout.fillWidth: true
+                                                    echoMode: showPw ? TextInput.Normal : TextInput.Password
+                                                    color: Root.Colors.text
+                                                    font.pixelSize: 13
+                                                    verticalAlignment: TextInput.AlignVCenter
+                                                    clip: true
+                                                    selectByMouse: true
+
+                                                    property bool showPw: false
+
+                                                    // Sync ke pendingPassword
+                                                    onTextChanged: root.pendingPassword = text
+
+                                                    // Enter = sambung
+                                                    Keys.onReturnPressed:  connectBtn.doConnect()
+                                                    Keys.onEnterPressed:   connectBtn.doConnect()
+                                                    // Escape = batal
+                                                    Keys.onEscapePressed: {
+                                                        root.pendingSsid = ""
+                                                        root.pendingPassword = ""
+                                                    }
+
+                                                    // placeholder
+                                                    Text {
+                                                        visible: pwField.text.length === 0 && !pwField.activeFocus
+                                                        anchors.fill: parent
+                                                        text: "Kata sandi…"
+                                                        font.pixelSize: 13
+                                                        color: Root.Colors.overlay0
+                                                        verticalAlignment: Text.AlignVCenter
+                                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                                    }
+
+                                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                                }
+
+                                                // Toggle tampilkan/sembunyikan password
+                                                Text {
+                                                    text: pwField.showPw ? "󰛑" : "󰛐"
+                                                    font.pixelSize: 14
+                                                    color: Root.Colors.subtext
+                                                    Behavior on color { ColorAnimation { duration: 150 } }
+
+                                                    MouseArea {
+                                                        anchors.fill: parent
+                                                        cursorShape: Qt.PointingHandCursor
+                                                        onClicked: pwField.showPw = !pwField.showPw
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        // Tombol sambung
+                                        Rectangle {
+                                            id: connectBtn
+                                            implicitWidth: sambTxt.implicitWidth + 20
+                                            height: 32
+                                            radius: 8
+                                            color: root.pendingPassword.length >= 8
+                                                   ? Root.Colors.blue : Root.Colors.surface1
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+
+                                            function doConnect() {
+                                                if (root.pendingPassword.length < 1) return
+                                                wifiConnectProc.connectTo(root.pendingSsid, root.pendingPassword)
+                                                root.pendingSsid = ""
+                                                root.pendingPassword = ""
+                                            }
+
+                                            Text {
+                                                id: sambTxt
+                                                anchors.centerIn: parent
+                                                text: "Sambung"
+                                                font.pixelSize: 12
+                                                color: root.pendingPassword.length >= 8
+                                                       ? Root.Colors.base : Root.Colors.subtext
+                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                            }
+
+                                            MouseArea {
+                                                anchors.fill: parent
+                                                cursorShape: Qt.PointingHandCursor
+                                                onClicked: connectBtn.doConnect()
                                             }
                                         }
                                     }
@@ -787,7 +936,25 @@ PanelWindow {
 
     // ── Proses Wi-Fi ──────────────────────────────────────────────────────
     Process { id: wifiToggleProc }
-    Process { id: wifiConnectProc;    onRunningChanged: if (!running) wifiListProc.running = true }
+
+    Process {
+        id: wifiConnectProc
+        // Hubungkan ke SSID dengan atau tanpa password
+        function connectTo(ssid, password) {
+            if (password.length > 0) {
+                command = ["sh", "-c",
+                    "nmcli dev wifi connect '" + ssid + "' password '" + password + "' 2>/dev/null"
+                ]
+            } else {
+                command = ["sh", "-c",
+                    "nmcli dev wifi connect '" + ssid + "' 2>/dev/null"
+                ]
+            }
+            running = true
+        }
+        onRunningChanged: if (!running) wifiListProc.running = true
+    }
+
     Process { id: wifiDisconnectProc; onRunningChanged: if (!running) wifiListProc.running = true }
 
     Process {
@@ -1001,6 +1168,10 @@ PanelWindow {
             wifiListProc.running = true
             btStatusProc.running = true
             btListProc.running = true
+        } else {
+            // Reset state password saat panel ditutup
+            root.pendingSsid = ""
+            root.pendingPassword = ""
         }
     }
 

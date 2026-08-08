@@ -11,7 +11,7 @@ import "./" as Dash
 PanelWindow {
     id: root
 
-    property alias open: card.visible
+    property bool open: false
     signal closeRequested()
     signal screenshotRequested()
     signal grimRequested()
@@ -27,8 +27,11 @@ PanelWindow {
     anchors { top: true; left: true; right: true }
     margins.top: 5
     color: "transparent"
-    visible: open
+    visible: showPanel
     implicitHeight: card.height + 16
+
+    property bool showPanel: false
+    onOpenChanged: if (open) showPanel = true
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
@@ -62,6 +65,49 @@ PanelWindow {
         border.color: Root.Colors.surface2
         border.width: 2
         clip: true
+
+        // ── Animasi slide dari atas + fade ─────────────────────────────
+        opacity: 0
+        transform: Translate { id: cardSlide; y: -30 }
+
+        states: State {
+            name: "open"
+            when: root.open
+            PropertyChanges { target: card;      opacity: 1 }
+            PropertyChanges { target: cardSlide; y: 0 }
+        }
+
+        transitions: [
+            Transition {
+                from: ""; to: "open"
+                ParallelAnimation {
+                    NumberAnimation {
+                        target: cardSlide; property: "y"
+                        duration: 260; easing.type: Easing.OutCubic
+                    }
+                    OpacityAnimator {
+                        target: card
+                        duration: 220; easing.type: Easing.OutCubic
+                    }
+                }
+            },
+            Transition {
+                from: "open"; to: ""
+                SequentialAnimation {
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: cardSlide; property: "y"
+                            duration: 180; easing.type: Easing.InCubic
+                        }
+                        OpacityAnimator {
+                            target: card
+                            duration: 160; easing.type: Easing.InCubic
+                        }
+                    }
+                    ScriptAction { script: root.showPanel = false }
+                }
+            }
+        ]
 
         Behavior on color        { ColorAnimation { duration: 200 } }
         Behavior on border.color { ColorAnimation { duration: 200 } }

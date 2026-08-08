@@ -42,9 +42,9 @@ PanelWindow {
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
 
     anchors { top: true; left: true; right: true }
-    margins.top: 2
-    margins.left: 4
-    margins.right: 4
+    margins.top: 10
+    margins.left: 16
+    margins.right: 16
 
     implicitHeight: 45
     color: "transparent"
@@ -242,8 +242,15 @@ PanelWindow {
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────
+    Timer {
+        id: dashCloseTimer
+        interval: 300   // sedikit lebih lama dari durasi animasi (180ms)
+        running: false
+        repeat: false
+    }
+
     LazyLoader {
-        active: bar.dashboardOpen
+        active: bar.dashboardOpen || dashCloseTimer.running
 
         Dash.Dashboard {
             open: bar.dashboardOpen
@@ -261,6 +268,9 @@ PanelWindow {
                     bar.sendNotif("notifications-disabled", "Do Not Disturb Aktif", "Notifikasi dinonaktifkan.")
                 else
                     bar.sendNotif("notification", "Do Not Disturb Nonaktif", "Notifikasi diaktifkan kembali.")
+            }
+            onOpenChanged: {
+                if (!open) dashCloseTimer.restart()
             }
         }
     }
