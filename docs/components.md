@@ -1,0 +1,352 @@
+# Components
+
+Dokumentasi semua komponen QML di config Quickshell ini.
+
+---
+
+## Entry Point
+
+### `shell.qml`
+
+Root dari seluruh shell. Bertanggung jawab untuk:
+
+- Meng-spawn `Bar` per monitor via `Variants { model: Quickshell.screens }`
+- Menyimpan **state global** (`shellStateObj`) yang dibagikan ke semua Bar
+- Mendefinisikan semua **GlobalShortcut** dan **IpcHandler**
+- Menjalankan proses background: `btAgent`, `cavaFeed`
+- Me-render `LockScreen` dan `NotificationPopup` di level root (agar selalu di atas semua overlay)
+- Auto-promote sink Bluetooth sebagai default audio saat perangkat connect
+
+**State global (`shellStateObj`):**
+
+| Property | Tipe | Fungsi |
+|---|---|---|
+| `dashboardOpen` | `bool` | Buka/tutup dashboard |
+| `powerMenuOpen` | `bool` | Buka/tutup power menu |
+| `wallpaperPanelOpen` | `bool` | Buka/tutup wallpaper panel |
+| `dnd` | `bool` | Status Do Not Disturb |
+| `wallpaperRandom` | `var` | Referensi ke instance WallpaperRandom |
+
+---
+
+## Services (Singleton)
+
+### `services/Colors.qml`
+
+Singleton palette warna. Diakses dari semua komponen via `Root.Colors.*`.
+
+Mendukung 4 flavor Catppuccin yang bisa diganti live:
+
+| Property | Nilai tersedia |
+|---|---|
+| `currentTheme` | `"catppuccin-latte"` / `"catppuccin-frappe"` / `"catppuccin-macchiato"` / `"catppuccin-mocha"` |
+
+Tema aktif disimpan ke `~/.config/quickshell/theme` dan di-load saat startup.
+
+Saat tema berubah, `Colors.qml` juga menjalankan:
+- `matugen color hex <seed> -m <mode>` — sinkronisasi warna ke GTK, foot, btop, Hyprland
+- `gsettings set ... color-scheme` — toggle GTK dark/light mode
+- `gsettings set ... gtk-theme` — set theme `adw-gtk3` / `adw-gtk3-dark`
+
+**Warna yang diexpose:**
+
+`base`, `mantle`, `surface0`, `surface1`, `surface2`, `text`, `subtext`, `blue`, `lavender`, `green`, `yellow`, `peach`, `red`, `mauve`
+
+### `services/CavaService.qml`
+
+Singleton yang membaca data dari named pipe output `cava_feed.sh`. Dipakai oleh `CavaRingDank.qml` untuk visualizer cincin di media card. Hanya aktif saat dashboard terbuka.
+
+---
+
+## Bar
+
+### `bar/Bar.qml`
+
+`PanelWindow` utama yang ditempatkan di atas setiap monitor. Berisi semua widget dan semua panel sebagai `LazyLoader`.
+
+**Panel yang di-host di Bar:**
+
+| Panel | LazyLoader aktif saat |
+|---|---|
+| `PowerMenu` | `powerMenuOpen` atau `powerCloseTimer` running |
+| `Dashboard` | `dashboardOpen` atau `dashCloseTimer` running |
+| `ConnectPanel` | `connectPanelOpen` atau `connectCloseTimer` running |
+| `VolumePanel` | `volumePanelOpen` atau `volumeCloseTimer` running |
+| `WallpaperPanel` | `wallpaperPanelOpen` atau `wallpaperCloseTimer` running |
+
+**Proses yang dijalankan dari Bar:**
+
+| Process ID | Fungsi |
+|---|---|
+| `screenshotProc` | `grimblast copysave area` — screenshot area pilihan |
+| `grimProc` | `grimblast copysave screen` — screenshot layar penuh |
+| `recorderProc` | `scripts/record.sh desktop-only` — record tanpa mic |
+| `recorderMicProc` | `scripts/record.sh both` — record dengan mic |
+| `facePickerProc` | `zenity --file-selection` — ganti foto profil |
+| `controlCenterProcess` | `control-center` — buka GNOME Control Center |
+
+Semua screenshot disimpan ke `~/Pictures/Screenshots/` dengan nama `screenshot-YYYYMMDD-HHMMSS.png`.
+Semua recording disimpan ke `~/Videos/Recordings/` dengan nama `YYYYMMDD_HHMMSS.mp4`.
+
+---
+
+## Bar Widgets
+
+### `Battery.qml`
+
+Menampilkan ikon baterai + persentase. Menggunakan `Quickshell.Services.UPower`.
+
+- Notif saat level ≤ 30% (warning)
+- Notif saat level ≥ 90% dan sedang charging (hampir penuh)
+
+### `BluetoothStatus.qml`
+
+- Klik kiri → toggle Bluetooth on/off via `bluetoothctl power on/off`
+- Klik kanan → buka ConnectPanel tab Bluetooth
+- Menampilkan ikon berbeda saat BT off / on / ada perangkat terhubung
+
+### `Brightness.qml`
+
+- Scroll up/down → ubah brightness ±5% via `brightnessctl set +5%/-5%`
+- Setiap perubahan trigger OSD brightness
+
+### `Clock.qml`
+
+- Menampilkan jam `HH:mm`
+- Klik kiri → toggle dashboard
+- Klik kanan → buka `control-center`
+
+### `MenuButton.qml`
+
+- Klik → launch app launcher (`walker`)
+- Ganti ke launcher lain dengan ubah command di file ini
+
+### `NetworkStatus.qml`
+
+- Menampilkan ikon status koneksi + nama SSID aktif
+- Klik kiri → toggle WiFi on/off via `nmcli radio wifi`
+- Klik kanan → buka ConnectPanel tab Wi-Fi
+- Auto-refresh status setiap beberapa detik
+
+### `PowerButton.qml`
+
+- Klik → toggle power menu
+- Ikon berubah saat menu terbuka
+
+### `Volume.qml`
+
+- Menampilkan ikon + persentase volume default sink (Pipewire)
+- Scroll up/down → ubah volume ±5%
+- Klik kiri → toggle VolumePanel
+- Klik kanan → mute/unmute
+- Setiap perubahan trigger OSD volume
+
+### `WallpaperRandom.qml`
+
+Instance yang selalu hidup di background (`shell.qml`). Membaca daftar wallpaper dari `wallpaper.json`, memilih satu secara acak, dan menjalankan `swww img` dengan parameter transisi dari config.
+
+Dipanggil dari:
+- Klik kanan tombol wallpaper di Bar
+- IPC: `quickshell ipc call wallpaper random`
+
+### `Workspaces.qml`
+
+Menampilkan indikator workspace Hyprland via `Quickshell.Hyprland`. Klik pada workspace → pindah ke workspace tersebut.
+
+---
+
+## Dashboard
+
+### `dashboard/Dashboard.qml`
+
+`PanelWindow` dropdown yang muncul di bawah bar. Terdiri dari tiga kolom:
+
+| Kolom | Konten |
+|---|---|
+| Kiri | Foto profil, tanggal, jam, quick toggles, system stats, settings |
+| Tengah | Media card (MPRIS) + visualizer cava |
+| Kanan | System info detail (CPU, RAM, disk, uptime) |
+
+Signal yang dikirim ke Bar:
+
+| Signal | Efek |
+|---|---|
+| `screenshotRequested` | Jalankan `screenshotProc` |
+| `grimRequested` | Jalankan `grimProc` |
+| `recorderToggleRequested` | Jalankan `recorderProc` |
+| `recorderMicToggleRequested` | Jalankan `recorderMicProc` |
+| `setFaceRequested` | Jalankan `facePickerProc` |
+| `dndToggleRequested` | Toggle `shellState.dnd` |
+
+### `dashboard/MediaCard.qml`
+
+Menampilkan informasi track aktif via `Quickshell.Services.Mpris`:
+- Cover art (128×128 sourceSize, 64×64 display)
+- Judul, artis
+- Tombol previous / play-pause / next
+
+Otomatis detect player MPRIS pertama yang aktif.
+
+### `dashboard/QuickToggles.qml`
+
+Grid 3 kolom berisi tombol-tombol aksi cepat:
+
+| Tombol | Klik Kiri | Klik Kanan |
+|---|---|---|
+| IDLE | Toggle `hypridle` on/off | — |
+| SS SELECT | Screenshot area (grimblast) | — |
+| SS FULL | Screenshot fullscreen (grimblast) | — |
+| RECORD | Toggle `wf-recorder` (desktop audio) | Toggle dengan mic |
+| DND | Toggle Do Not Disturb | — |
+| NIGHT | Toggle `hyprsunset` | — |
+
+Tombol RECORD menampilkan dot merah berkedip saat recording aktif, dan indikator mic di pojok kiri bawah.
+
+### `dashboard/QuickToggle.qml`
+
+Komponen pill toggle generik yang dipakai IDLE dan NIGHT. Fitur:
+- `checkCommand` — shell command untuk cek state aktif/nonaktif
+- `onCommand` / `offCommand` — command saat toggle
+- Notifikasi otomatis via `notify-send` saat state berubah
+
+### `dashboard/CavaRingDank.qml`
+
+Visualizer audio berbentuk cincin yang mengelilingi cover art di media card. Membaca data dari `CavaService` (named pipe output `cava_feed.sh`). Hanya berjalan saat dashboard terbuka.
+
+### `dashboard/SettingsTab.qml`
+
+Tab settings di kolom kiri dashboard:
+- Slider volume (Pipewire default sink)
+- Slider brightness (brightnessctl)
+- Theme selector (4 flavor Catppuccin)
+- Tombol ganti foto profil
+
+### `dashboard/ThemeSelector.qml`
+
+4 pill tombol flavor Catppuccin. Klik → ubah `Colors.currentTheme` → seluruh shell re-render dengan palette baru.
+
+### `dashboard/SystemInfo.qml` & `SystemStats.qml`
+
+Menampilkan statistik sistem real-time: CPU usage, RAM usage, disk usage, uptime. Dibaca via `Process` yang menjalankan perintah shell (`top`, `free`, `df`, dll).
+
+---
+
+## Panels
+
+### `panels/ConnectPanel.qml`
+
+Panel dua tab: **Wi-Fi** dan **Bluetooth**.
+
+- Tab Wi-Fi: daftar SSID dari `nmcli`, klik untuk connect/disconnect
+- Tab Bluetooth: daftar perangkat dari `bluetoothctl`, klik untuk pair/connect/disconnect
+
+### `panels/VolumePanel.qml`
+
+Mixer volume per-aplikasi menggunakan `Quickshell.Services.Pipewire`:
+- Slider untuk setiap sink input (aplikasi yang sedang main audio)
+- Selector output device (speaker, headphone, bluetooth)
+
+### `panels/WallpaperPanel.qml`
+
+Panel full-screen (centered overlay) untuk memilih wallpaper:
+
+- **Grid thumbnail** — scan folder `wallpaper_dir` secara rekursif, format jpg/jpeg/png/webp/bmp
+- **Preview kolom kanan** — hover thumbnail untuk preview, klik untuk set
+- **Search** — filter nama file secara realtime
+- **Settings collapsible** — folder, jenis transisi, durasi, FPS, slideshow
+- **Slideshow** — ganti wallpaper otomatis tiap N menit
+
+Set wallpaper menggunakan `swww img` dengan parameter transisi dari config. Path wallpaper aktif disimpan ke `~/.cache/wallpaper/current`. Symlink `~/.cache/wallpaper/hyprlock-bg` dibuat untuk dipakai sebagai background hyprlock.
+
+### `panels/WallpaperButton.qml`
+
+Tombol kecil di bar untuk membuka/menutup WallpaperPanel. Klik kanan langsung memilih wallpaper acak.
+
+---
+
+## Notifications
+
+### `notifications/NotificationPopup.qml`
+
+Popup notifikasi menggunakan `Quickshell.Services.Notifications` (NotificationServer). Muncul di pojok kanan atas, auto-dismiss setelah timeout.
+
+Saat `dnd = true`, notifikasi tidak ditampilkan (tapi tetap diterima server).
+
+### `notifications/Osd.qml`
+
+OSD (On-Screen Display) untuk volume dan brightness. Muncul di tengah bawah layar, auto-hide setelah beberapa detik. Dipanggil dari widget `Volume` dan `Brightness`.
+
+---
+
+## Power Menu
+
+### `power/PowerMenu.qml`
+
+`PanelWindow` overlay yang muncul di pojok kanan atas. Navigasi keyboard: `↑`/`↓` untuk pilih item, `Enter` untuk eksekusi, `Escape` untuk tutup.
+
+### `power/PowerMenuItem.qml`
+
+Komponen item generik dalam power menu. Tiap item punya:
+- `icon` — Nerd Font glyph
+- `label` — teks label
+- `command` — array command yang dijalankan saat diklik/dienter
+- `notifyTitle` / `notifyBody` — notifikasi sebelum eksekusi
+
+---
+
+## Lock Screen
+
+### `lockscreen/LockScreen.qml`
+
+Lock screen via `WlSessionLock` (protokol `ext_session_lock_v1`). Menutup semua monitor sekaligus.
+
+**Visual:**
+- Background: blur screencopy layar aktif via `ScreencopyView` + `MultiEffect`
+- Overlay gelap semi-transparan
+- Jam dua warna besar (lavender : text : blue)
+- Tanggal
+- Foto profil bulat dari `~/.face` (dengan mask MultiEffect)
+- Username
+- Input pill password dengan PS-button icons (○×△□) per karakter
+- Animasi shake saat password salah
+
+**Autentikasi:**
+- Menggunakan `Quickshell.Services.Pam` dengan config `system-auth`
+- Ikon kunci berputar saat sedang checking
+- Pesan error muncul 3 detik lalu hilang
+
+**Trigger:**
+```bash
+quickshell ipc call lockscreen lock
+```
+
+---
+
+## Scripts
+
+### `scripts/btagent.sh`
+
+BlueZ agent yang menjawab otomatis prompt pair/confirm Bluetooth. Dijalankan di background saat startup, restart otomatis dengan jeda 5 detik jika crash.
+
+### `scripts/record.sh`
+
+Toggle screen recording via `wf-recorder`:
+
+```
+record.sh [desktop-only|both]
+```
+
+- `desktop-only` (default) — rekam audio dari `<default-sink>.monitor`
+- `both` — buat PulseAudio null-sink, loopback desktop + mic ke null-sink, rekam null-sink
+
+Jika `wf-recorder` sudah berjalan → stop dan cleanup modul PulseAudio yang dibuat.
+
+Output: `~/Videos/Recordings/YYYYMMDD_HHMMSS.mp4`
+
+### `scripts/screenshot.sh`
+
+Helper screenshot (dipanggil secara opsional). Screenshot utama dijalankan langsung dari `Bar.qml` via `grimblast`.
+
+### `dashboard/cava_feed.sh`
+
+Menjalankan `cava` dengan output ke named pipe yang dibaca `CavaService.qml`. Hanya aktif saat dashboard terbuka (`shell.qml` mengontrol proses ini).

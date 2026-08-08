@@ -9,9 +9,10 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 - **Dashboard** — dropdown dari clock: media player, quick toggles, system stats, settings
 - **Panel Wi-Fi & Bluetooth** — panel popup dengan daftar jaringan & perangkat
 - **Volume Panel** — mixer per-aplikasi + device selector
+- **Wallpaper Panel** — grid thumbnail, preview, slideshow, transisi via `swww`
 - **Power Menu** — shutdown, reboot, suspend, logout, lock
 - **Notifikasi** — popup notifikasi native + OSD untuk volume & brightness
-- **Lock Screen** — via `hyprlock`
+- **Lock Screen** — blur screencopy background, jam besar, input PAM
 - **Tema** — 4 flavor Catppuccin (Latte, Frappé, Macchiato, Mocha), bisa ganti live dari dashboard
 
 ---
@@ -23,7 +24,7 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 ├── shell.qml                    # Entry point — spawn Bar, LockScreen, NotificationPopup
 ├── qmldir                       # Registrasi singleton (Colors, CavaService)
 ├── theme                        # File teks: nama tema aktif saat ini
-├── wallpaper.json               # Daftar wallpaper untuk randomizer
+├── wallpaper.json               # Konfigurasi wallpaper (folder, transisi, slideshow)
 │
 ├── services/
 │   ├── Colors.qml               # Singleton palette Catppuccin (4 flavor)
@@ -36,11 +37,11 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 │       ├── BluetoothStatus.qml  # Toggle BT (klik kiri) + buka panel (klik kanan)
 │       ├── Brightness.qml       # Brightness via brightnessctl + OSD
 │       ├── Clock.qml            # Jam — klik buka/tutup dashboard
-│       ├── MenuButton.qml       # Tombol app launcher (fuzzel)
+│       ├── MenuButton.qml       # Tombol app launcher (walker/fuzzel)
 │       ├── NetworkStatus.qml    # Toggle WiFi (klik kiri) + buka panel (klik kanan)
 │       ├── PowerButton.qml      # Buka power menu
 │       ├── Volume.qml           # Volume via Pipewire + OSD
-│       ├── WallpaperRandom.qml  # Randomizer wallpaper
+│       ├── WallpaperRandom.qml  # Randomizer wallpaper (selalu aktif di background)
 │       └── Workspaces.qml       # Indikator workspace Hyprland
 │
 ├── dashboard/
@@ -60,7 +61,7 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 │   ├── ConnectPanel.qml         # Panel Wi-Fi + Bluetooth (dua tab)
 │   ├── VolumePanel.qml          # Mixer volume per-aplikasi + device
 │   ├── WallpaperButton.qml      # Tombol wallpaper di panel
-│   └── WallpaperPanel.qml       # Panel pilih wallpaper
+│   └── WallpaperPanel.qml       # Panel pilih wallpaper (grid + preview + slideshow)
 │
 ├── notifications/
 │   ├── NotificationPopup.qml    # Popup notifikasi (NotificationServer Quickshell)
@@ -71,116 +72,18 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 │   └── PowerMenuItem.qml        # Item menu power
 │
 ├── lockscreen/
-│   └── LockScreen.qml           # Lock screen via hyprlock
+│   └── LockScreen.qml           # Lock screen via PAM + blur screencopy
 │
-├── overview/                    # (placeholder)
+├── scripts/
+│   ├── btagent.sh               # BlueZ agent — auto-accept pairing bluetooth
+│   ├── record.sh                # Toggle recording via wf-recorder
+│   └── screenshot.sh            # Helper screenshot
 │
-└── scripts/
-    ├── btagent.sh               # BlueZ agent — auto-accept pairing bluetooth
-    ├── record.sh                # Toggle recording via wf-recorder
-    └── screenshot.sh            # Helper screenshot
+└── docs/
+    ├── hyprland-integration.md  # Panduan keybinding & IPC Hyprland
+    ├── components.md            # Dokumentasi semua komponen QML
+    └── configuration.md        # Panduan kustomisasi & wallpaper.json
 ```
-
----
-
-## Fitur Detail
-
-### Bar
-
-| Widget | Fungsi |
-|---|---|
-| Menu Button | Buka app launcher (`fuzzel`) |
-| Workspaces | Indikator workspace aktif via Hyprland IPC |
-| Clock | Klik = toggle dashboard |
-| Network | Klik kiri = toggle WiFi on/off · Klik kanan = buka ConnectPanel |
-| Bluetooth | Klik kiri = toggle BT on/off · Klik kanan = buka ConnectPanel |
-| Volume | Scroll = ubah volume · Klik = buka VolumePanel · Klik kanan = mute |
-| Brightness | Scroll = ubah brightness |
-| Battery | Indikator baterai — notif saat ≤30% (warning) dan ≥90% charging (hampir penuh) |
-| Power | Buka power menu |
-
-### Dashboard
-
-Buka dengan klik jam atau shortcut `$mod + D` (bind di hyprland.conf).
-
-**Kolom kiri — Overview & Settings:**
-- Foto profil (dari `~/.face`), tanggal, jam
-- Quick toggles (lihat bawah)
-- System stats (CPU, RAM, uptime)
-- Settings: slider volume & brightness, theme selector
-
-**Quick Toggles:**
-| Tombol | Klik Kiri | Klik Kanan | Notifikasi |
-|---|---|---|---|
-| Idle | Toggle hypridle on/off | — | Ya |
-| Screenshot Select | Capture area pilihan | — | Setelah tersimpan |
-| Screenshot Full | Capture layar penuh | — | Setelah tersimpan |
-| Recorder | Start/stop wf-recorder (desktop audio) | Start dengan mic | Setelah file tersimpan |
-| DND | Toggle Do Not Disturb | — | Ya |
-| Night Light | Toggle hyprsunset | — | Ya |
-
-**Kolom tengah — Media:**
-- Cover art, judul, artis, album
-- Visualizer cava berbentuk cincin di belakang cover
-- Seek bar, play/pause/next/prev, shuffle, loop
-- Kontrol via MPRIS (otomatis detect player yang sedang aktif)
-
-**Kolom kanan — System Info:**
-- Statistik CPU, RAM, disk
-- Informasi sistem
-
-### Recording
-
-`record.sh` menggunakan `wf-recorder`:
-- **Klik kiri** → rekam layar + audio desktop saja
-- **Klik kanan** → rekam layar + audio desktop + mic (via PipeWire null-sink mixer)
-- Output disimpan ke `~/Videos/Recordings/` dalam format `.mp4`
-- Klik tombol lagi untuk stop — notif muncul setelah file tersimpan
-
-### Tema
-
-4 flavor Catppuccin tersedia dan bisa diganti live dari dashboard (tanpa restart):
-
-| Flavor | Jenis |
-|---|---|
-| Latte | Light |
-| Frappé | Dark medium |
-| Macchiato | Dark |
-| Mocha | Dark (default) |
-
-Ganti tema juga memicu `matugen` untuk sinkronkan warna ke GTK, Qt, foot, dan Hyprland (jika `matugen` terinstall).
-
----
-
-## Dependencies
-
-### Wajib
-- [`quickshell`](https://quickshell.outfoxxed.me) — build terbaru dengan module:
-  - `Quickshell.Wayland` / `Quickshell.Hyprland`
-  - `Quickshell.Services.Pipewire`
-  - `Quickshell.Services.UPower`
-  - `Quickshell.Services.Mpris`
-  - `Quickshell.Services.Notifications`
-- `hyprland` — compositor
-- `hyprlock` — lock screen
-- Nerd Font — semua ikon pakai glyph Nerd Font (direkomendasikan: CaskaydiaCove Nerd Font)
-
-### Fitur Tambahan
-| Package | Dipakai untuk |
-|---|---|
-| `brightnessctl` | Kontrol brightness |
-| `nmcli` (NetworkManager) | Toggle & daftar jaringan WiFi |
-| `bluetoothctl` (bluez) | Toggle & daftar perangkat bluetooth |
-| `wf-recorder` | Screen recording |
-| `grimblast` | Screenshot |
-| `pipewire` / `pactl` | Audio mixing untuk recorder |
-| `cava` | Visualizer audio di media card |
-| `hypridle` | Idle monitor management |
-| `hyprsunset` | Night light / color temperature |
-| `notif-quickshell` | Do Not Disturb toggle |
-| `walker` | App launcher (bisa diganti) |
-| `matugen` | Sinkronisasi tema ke app lain (opsional) |
-| `zenity` | Picker foto profil di dashboard |
 
 ---
 
@@ -197,11 +100,60 @@ Tambahkan ke `hyprland.conf` untuk autostart:
 exec-once = qs
 ```
 
-Untuk shortcut dashboard:
+Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk panduan lengkap keybinding.
 
+---
+
+## Hyprland Integration
+
+Quickshell berkomunikasi dengan Hyprland lewat dua mekanisme:
+
+**GlobalShortcut** (diregistrasi ke Hyprland compositor):
 ```ini
 bind = $mod, D, global, quickshell:dashboard
 ```
+
+**IPC call** (dipanggil via `exec`):
+```ini
+bind = $mod, L,       exec, quickshell ipc call lockscreen lock
+bind = $mod, P,       exec, quickshell ipc call powermenu toggle
+bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
+bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+```
+
+Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk referensi lengkap.
+
+---
+
+## Dependencies
+
+### Wajib
+- [`quickshell`](https://quickshell.outfoxxed.me) — build terbaru dengan module:
+  - `Quickshell.Wayland` / `Quickshell.Hyprland`
+  - `Quickshell.Services.Pipewire`
+  - `Quickshell.Services.UPower`
+  - `Quickshell.Services.Mpris`
+  - `Quickshell.Services.Notifications`
+  - `Quickshell.Services.Pam`
+- `hyprland` — compositor
+- Nerd Font — semua ikon pakai glyph Nerd Font (direkomendasikan: CaskaydiaCove Nerd Font)
+
+### Fitur Tambahan
+| Package | Dipakai untuk |
+|---|---|
+| `brightnessctl` | Kontrol brightness |
+| `nmcli` (NetworkManager) | Toggle & daftar jaringan WiFi |
+| `bluetoothctl` (bluez) | Toggle & daftar perangkat bluetooth |
+| `wf-recorder` | Screen recording |
+| `grimblast` | Screenshot |
+| `swww` | Set wallpaper dengan transisi (`awww` / `awww-daemon`) |
+| `pipewire` / `pactl` | Audio mixing untuk recorder |
+| `cava` | Visualizer audio di media card |
+| `hypridle` | Idle monitor management |
+| `hyprsunset` | Night light / color temperature |
+| `walker` | App launcher (bisa diganti fuzzel, dll) |
+| `matugen` | Sinkronisasi tema ke app lain (opsional) |
+| `zenity` | Picker foto profil & folder wallpaper |
 
 ---
 
@@ -216,5 +168,15 @@ bind = $mod, D, global, quickshell:dashboard
 | Output folder screenshot | `bar/Bar.qml` — `screenshotProc` / `grimProc` |
 | Output folder recording | `scripts/record.sh` — `OUTDIR` |
 | Threshold notif baterai | `bar/widgets/Battery.qml` |
-| Foto profil | `~/.face` (file gambar, bisa diubah dari tombol di dashboard) |
-| Daftar wallpaper | `wallpaper.json` |
+| Foto profil | `~/.face` (bisa diubah dari tombol di dashboard) |
+| Folder & config wallpaper | `wallpaper.json` |
+
+Lihat [docs/configuration.md](docs/configuration.md) untuk detail lengkap.
+
+---
+
+## Dokumentasi
+
+- [docs/hyprland-integration.md](docs/hyprland-integration.md) — keybinding, IPC, GlobalShortcut
+- [docs/components.md](docs/components.md) — semua komponen QML dan cara kerjanya
+- [docs/configuration.md](docs/configuration.md) — kustomisasi, wallpaper.json, tema
