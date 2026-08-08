@@ -19,6 +19,10 @@ PanelWindow {
     signal recorderMicToggleRequested()
     signal setFaceRequested()
     signal notifyRequested(string icon, string summary, string body)
+    signal dndToggleRequested()
+
+    // State DND yang bisa dibaca QuickToggles tanpa perlu poll swaync
+    property bool dndActive: false
 
     anchors { top: true; left: true; right: true }
     margins.top: 5
@@ -112,7 +116,7 @@ PanelWindow {
                             id: dashFaceImg
                             anchors.fill: parent
                             anchors.margins: 3
-                            source: "file:///home/youtta/.face"
+                            source: "file:///home/xans/.face"
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
                             mipmap: true

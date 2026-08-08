@@ -37,7 +37,7 @@ Item {
         }
     }
 
-    function _home() { return "/home/youtta" }
+    function _home() { return "/home/xans" }
 
     // ── Scan folder wallpaper ─────────────────────────────────────────────
     function scanWallpapers() {

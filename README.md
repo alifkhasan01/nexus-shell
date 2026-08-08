@@ -177,8 +177,8 @@ Ganti tema juga memicu `matugen` untuk sinkronkan warna ke GTK, Qt, foot, dan Hy
 | `cava` | Visualizer audio di media card |
 | `hypridle` | Idle monitor management |
 | `hyprsunset` | Night light / color temperature |
-| `swaync-client` | Do Not Disturb toggle |
-| `fuzzel` | App launcher (bisa diganti) |
+| `notif-quickshell` | Do Not Disturb toggle |
+| `walker` | App launcher (bisa diganti) |
 | `matugen` | Sinkronisasi tema ke app lain (opsional) |
 | `zenity` | Picker foto profil di dashboard |
 

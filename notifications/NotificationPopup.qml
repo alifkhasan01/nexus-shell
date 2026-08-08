@@ -11,6 +11,9 @@ import "../" as Root
 PanelWindow {
     id: root
 
+    // DND: saat true, notif masuk tetap di-track tapi popup tidak ditampilkan
+    property bool dnd: false
+
     anchors { bottom: true; left: true; right: true }
     // tepat di bawah bar (bar height 45 + margin top 8 + gap 6)
     margins.top: 10
@@ -36,6 +39,8 @@ PanelWindow {
 
         onNotification: notif => {
             notif.tracked = true
+            // DND: blokir popup kecuali notif Critical
+            if (root.dnd && notif.urgency !== NotificationUrgency.Critical) return
             notifModel.append({ "notif": notif })
         }
     }

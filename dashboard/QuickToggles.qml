@@ -217,22 +217,47 @@ GridLayout {
     }
 
     // ── DND toggle ────────────────────────────────────────────────────────
-    QuickToggle {
+    // Baca state dari dashboardRoot.dndActive (shellState.dnd) — bukan swaync.
+    Rectangle {
         Layout.fillWidth: true
-        label: "DND"
-        icon: "󰂛"
-        dashboardRoot: quickTogglesRoot.dashboardRoot
-        checkCommand: "swaync-client -D"
-        checkMatch: "true"
-        onCommand: "swaync-client -dn"
-        offCommand: "swaync-client -df"
-        managerCommand: ""
-        notifIconOn:  "notifications-disabled"
-        notifIconOff: "notification"
-        notifSummaryOn:  "Do Not Disturb Aktif"
-        notifSummaryOff: "Do Not Disturb Nonaktif"
-        notifBodyOn:  "Notifikasi dinonaktifkan."
-        notifBodyOff: "Notifikasi diaktifkan kembali."
+        implicitWidth: 84
+        implicitHeight: 60
+        radius: 14
+
+        readonly property bool dndOn: quickTogglesRoot.dashboardRoot
+                                      ? quickTogglesRoot.dashboardRoot.dndActive
+                                      : false
+
+        color: dndOn ? Root.Colors.blue : Root.Colors.surface0
+        Behavior on color { ColorAnimation { duration: 150 } }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 4
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "󰂛"
+                font.pixelSize: 18
+                color: parent.parent.dndOn ? Root.Colors.base : Root.Colors.text
+                Behavior on color { ColorAnimation { duration: 100 } }
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "DND"
+                font.pixelSize: 11
+                color: parent.parent.dndOn ? Root.Colors.base : Root.Colors.subtext
+                Behavior on color { ColorAnimation { duration: 100 } }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                if (!quickTogglesRoot.dashboardRoot) return
+                quickTogglesRoot.dashboardRoot.dndToggleRequested()
+            }
+        }
     }
 
     // ── Night toggle ──────────────────────────────────────────────────────

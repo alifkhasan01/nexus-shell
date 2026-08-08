@@ -247,6 +247,7 @@ PanelWindow {
 
         Dash.Dashboard {
             open: bar.dashboardOpen
+            dndActive: bar.shellState ? bar.shellState.dnd : false
             onCloseRequested: bar.shellState.dashboardOpen = false
             onScreenshotRequested: bar.takeScreenshot()
             onGrimRequested: bar.takeGrim()
@@ -254,6 +255,13 @@ PanelWindow {
             onRecorderMicToggleRequested: bar.toggleRecorderMic()
             onSetFaceRequested: bar.startFacePicker()
             onNotifyRequested: (icon, summary, body) => bar.sendNotif(icon, summary, body)
+            onDndToggleRequested: {
+                bar.shellState.dnd = !bar.shellState.dnd
+                if (bar.shellState.dnd)
+                    bar.sendNotif("notifications-disabled", "Do Not Disturb Aktif", "Notifikasi dinonaktifkan.")
+                else
+                    bar.sendNotif("notification", "Do Not Disturb Nonaktif", "Notifikasi diaktifkan kembali.")
+            }
         }
     }
 
@@ -302,35 +310,51 @@ PanelWindow {
         command: ["control-center"]
     }
 
-    // Screenshot select (area) — grimblast tanpa detach agar bisa notif setelah selesai
+    // Screenshot select (area) — grimblast copysave, notif setelah selesai via stdout
     Process {
         id: screenshotProc
         command: ["sh", "-c",
-            "mkdir -p ~/Pictures/Screenshots && " +
-            "grimblast save area ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png 2>/dev/null"]
-        onRunningChanged: {
-            if (!running && exitCode === 0)
-                bar.sendNotif("camera-photo", "Screenshot Tersimpan",
-                    "Disimpan di ~/Pictures/Screenshots")
+            "DIR=~/Pictures/Screenshots; " +
+            "mkdir -p \"$DIR\"; " +
+            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
+            "grimblast copysave area \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const file = text.trim()
+                if (file !== "")
+                    bar.sendNotif("camera-photo", "Screenshot Tersimpan",
+                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard")
+                else
+                    bar.sendNotif("dialog-error", "Screenshot Dibatalkan",
+                        "Area tidak dipilih atau gagal menyimpan.")
+            }
         }
     }
 
-    // Screenshot full — grimblast tanpa detach, delay via timer agar dashboard hilang dulu
+    // Screenshot full — grimblast copysave, delay 400ms agar dashboard hilang dulu
     Process {
         id: grimProc
         command: ["sh", "-c",
-            "mkdir -p ~/Pictures/Screenshots && " +
-            "grimblast save screen ~/Pictures/Screenshots/screenshot-$(date +%Y%m%d-%H%M%S).png 2>/dev/null"]
-        onRunningChanged: {
-            if (!running && exitCode === 0)
-                bar.sendNotif("camera-photo", "Screenshot Tersimpan",
-                    "Disimpan di ~/Pictures/Screenshots")
+            "DIR=~/Pictures/Screenshots; " +
+            "mkdir -p \"$DIR\"; " +
+            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
+            "grimblast copysave screen \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const file = text.trim()
+                if (file !== "")
+                    bar.sendNotif("camera-photo", "Screenshot Tersimpan",
+                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard")
+                else
+                    bar.sendNotif("dialog-error", "Screenshot Gagal",
+                        "Tidak dapat mengambil screenshot.")
+            }
         }
     }
 
     Timer {
         id: grimDelayTimer
-        interval: 500
+        interval: 400
         repeat: false
         onTriggered: grimProc.running = true
     }

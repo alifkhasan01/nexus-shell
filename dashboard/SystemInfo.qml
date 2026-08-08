@@ -21,7 +21,7 @@ Item {
     property string ramText:  "—"
     property string cpuName:  "AMD Ryzen 5 7530U"
     property string gpuName:  "AMD Radeon (iGPU)"
-    property string faceSource: "file:///home/youtta/.face"
+    property string faceSource: "file:///home/xans/.face"
 
     // Diteruskan ke Bar: Bar menutup dashboard lalu menjalankan file picker
     // (agar window picker tidak tertutup dashboard), dan membuka dashboard

@@ -239,7 +239,7 @@ Scope {
                                 id: faceImg
                                 anchors.fill: parent
                                 anchors.margins: 3
-                                source: "file:///home/youtta/.face"
+                                source: "file:///home/xans/.face"
                                 fillMode: Image.PreserveAspectCrop
                                 smooth: true
                                 mipmap: true
@@ -278,7 +278,7 @@ Scope {
                             font.pixelSize: 14
                             font.weight: Font.Medium
                             color: Root.Colors.text
-                            text: "youtta"
+                            text: "xans"
                         }
 
                         Item { Layout.preferredHeight: 20 }

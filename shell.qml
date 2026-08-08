@@ -26,6 +26,7 @@ ShellRoot {
         property bool dashboardOpen:      false
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
+        property bool dnd:               false
         property var wallpaperRandom: wpRandom
     }
 
@@ -97,7 +98,9 @@ ShellRoot {
     // ── Notification Popup — root level agar selalu di atas semua ────────
     // Diletakkan di sini (bukan di dalam Bar) supaya render di atas
     // dashboard, panel, dan komponen overlay lainnya.
-    Notif.NotificationPopup {}
+    Notif.NotificationPopup {
+        dnd: shellStateObj.dnd
+    }
 
     // ── Auto-pairing BlueZ agent (berjalan di background) ─────────────────
     // Menjawab "yes" pada prompt pair/confirm bluetooth sehingga perangkat
