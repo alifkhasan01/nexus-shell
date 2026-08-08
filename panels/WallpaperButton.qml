@@ -79,25 +79,6 @@ Item {
         }
     }
 
-    // ── Tooltip ───────────────────────────────────────────────────────────
-    Rectangle {
-        visible: btnArea.containsMouse
-        z: 10
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.top
-        anchors.bottomMargin: 6
-        implicitWidth: tipTxt.implicitWidth + 16; height: 22; radius: 6
-        color: Root.Colors.surface2
-        border.color: Root.Colors.surface1; border.width: 1
-
-        Text {
-            id: tipTxt
-            anchors.centerIn: parent
-            font.pixelSize: 11; color: Root.Colors.text
-            text: "Wallpaper"
-        }
-    }
-
     MouseArea {
         id: btnArea
         anchors.fill: parent

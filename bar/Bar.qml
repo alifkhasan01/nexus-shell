@@ -158,28 +158,6 @@ PanelWindow {
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
-                        // Tooltip
-                        Rectangle {
-                            visible: wpArea.containsMouse
-                            z: 10
-                            anchors.horizontalCenter: parent.horizontalCenter
-                            anchors.bottom: parent.top
-                            anchors.bottomMargin: 6
-                            implicitWidth: wpTip.implicitWidth + 16
-                            height: 22
-                            radius: 6
-                            color: Root.Colors.surface2
-                            border.color: Root.Colors.surface1
-                            border.width: 1
-                            Text {
-                                id: wpTip
-                                anchors.centerIn: parent
-                                text: "Wallpaper  ·  klik kanan: acak"
-                                font.pixelSize: 11
-                                color: Root.Colors.text
-                            }
-                        }
-
                         MouseArea {
                             id: wpArea
                             anchors.fill: parent

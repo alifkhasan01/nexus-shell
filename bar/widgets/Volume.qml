@@ -38,6 +38,14 @@ Item {
         objects: [root._defaultSink, root._btSink].filter(n => n != null)
     }
 
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -4
+        radius: 6
+        color: volMa.containsMouse ? Root.Colors.surface1 : "transparent"
+        Behavior on color { ColorAnimation { duration: 150 } }
+    }
+
     Text {
         id: label
         anchors.centerIn: parent
@@ -58,8 +66,10 @@ Item {
     signal osdVolume(real value, bool muted)
 
     MouseArea {
+        id: volMa
         anchors.fill: parent
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
 
         onClicked: mouse => {

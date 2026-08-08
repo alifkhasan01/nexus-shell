@@ -32,6 +32,14 @@ Item {
         return "󰤭"
     }
 
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -4
+        radius: 6
+        color: netMa.containsMouse ? Root.Colors.surface1 : "transparent"
+        Behavior on color { ColorAnimation { duration: 150 } }
+    }
+
     Text {
         anchors.centerIn: parent
         text: root.iconText
@@ -45,7 +53,9 @@ Item {
     }
 
     MouseArea {
+        id: netMa
         anchors.fill: parent
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {

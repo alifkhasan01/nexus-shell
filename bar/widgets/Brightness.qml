@@ -35,6 +35,14 @@ Item {
     }
 
     // ── Label ─────────────────────────────────────────────────────────────
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -4
+        radius: 6
+        color: brightMa.containsMouse ? Root.Colors.surface1 : "transparent"
+        Behavior on color { ColorAnimation { duration: 150 } }
+    }
+
     Text {
         id: label
         anchors.centerIn: parent
@@ -53,7 +61,9 @@ Item {
 
     // ── Scroll untuk ubah brightness ──────────────────────────────────────
     MouseArea {
+        id: brightMa
         anchors.fill: parent
+        hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onWheel: wheel => {
             const step = 5

@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Pipewire
 import "../" as Root
@@ -45,7 +46,16 @@ PanelWindow {
             const n = nodes[i]
             if (n && n.audio && n.isSink && !n.isStream) list.push(n)
         }
+        // Reaktif terhadap perubahan node (Bluetooth masuk/keluar)
+        void Pipewire.nodes.values
         void Pipewire.defaultAudioSink
+        // Default di atas
+        list.sort((a, b) => {
+            const aDefault = root.defaultSink && a.id === root.defaultSink.id
+            const bDefault = root.defaultSink && b.id === root.defaultSink.id
+            if (aDefault !== bDefault) return aDefault ? -1 : 1
+            return (a.description || a.name || "").localeCompare(b.description || b.name || "")
+        })
         return list
     }
 
@@ -57,7 +67,14 @@ PanelWindow {
             const n = nodes[i]
             if (n && n.audio && !n.isSink && !n.isStream) list.push(n)
         }
+        void Pipewire.nodes.values
         void Pipewire.defaultAudioSource
+        list.sort((a, b) => {
+            const aDefault = root.defaultSource && a.id === root.defaultSource.id
+            const bDefault = root.defaultSource && b.id === root.defaultSource.id
+            if (aDefault !== bDefault) return aDefault ? -1 : 1
+            return (a.description || a.name || "").localeCompare(b.description || b.name || "")
+        })
         return list
     }
 
@@ -100,12 +117,12 @@ PanelWindow {
             const nodes = Pipewire.nodes.values
             for (let i = 0; i < nodes.length; i++) {
                 const n = nodes[i]
-                // Track hanya hardware nodes (bukan stream) agar tidak
-                // memicu re-bind setiap kali wf-recorder/OBS start/stop
                 if (n && n.audio && !n.isStream) tracked.push(n)
             }
             if (root.defaultSink)   tracked.push(root.defaultSink)
             if (root.defaultSource) tracked.push(root.defaultSource)
+            // Reaktif: re-track saat node baru masuk (misal BT connect)
+            void Pipewire.nodes.values
             return tracked
         }
     }
@@ -455,6 +472,31 @@ PanelWindow {
         }
     }
 
+    // ── Process pool untuk wpctl (hardware devices) ───────────────────────
+    // Dipakai DeviceRow agar perubahan volume/mute benar-benar sampai ke hardware.
+    Process {
+        id: wpctlVolProc
+        running: false
+    }
+    Process {
+        id: wpctlMuteProc
+        running: false
+    }
+
+    // Helper: set volume device lewat wpctl (0.0 – 1.5)
+    function deviceSetVolume(nodeId, value) {
+        wpctlVolProc.command = ["wpctl", "set-volume", String(nodeId),
+                                value.toFixed(3)]
+        wpctlVolProc.running = true
+    }
+
+    // Helper: set mute device lewat wpctl
+    function deviceSetMute(nodeId, muted) {
+        wpctlMuteProc.command = ["wpctl", "set-mute", String(nodeId),
+                                 muted ? "1" : "0"]
+        wpctlMuteProc.running = true
+    }
+
     // ── Component: SectionLabel ────────────────────────────────────────────
     component SectionLabel: Text {
         font.pixelSize: 10
@@ -551,7 +593,10 @@ PanelWindow {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: { if (devRow.node?.audio) devRow.node.audio.muted = !devRow.node.audio.muted }
+                    onClicked: {
+                        if (!devRow.node) return
+                        root.deviceSetMute(devRow.node.id, !devRow.muted)
+                    }
                 }
             }
 
@@ -583,6 +628,7 @@ PanelWindow {
                     node: devRow.node
                     muted: devRow.muted
                     currentVolume: devRow.volume
+                    onCommitVolume: v => root.deviceSetVolume(devRow.node.id, v)
                 }
             }
 
@@ -603,9 +649,10 @@ PanelWindow {
             target: null
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             onWheel: event => {
-                if (!devRow.node?.audio) return
+                if (!devRow.node) return
                 const delta = event.angleDelta.y > 0 ? 0.05 : -0.05
-                devRow.node.audio.volume = Math.max(0, Math.min(1, devRow.volume + delta))
+                const newVol = Math.max(0, Math.min(1, devRow.volume + delta))
+                root.deviceSetVolume(devRow.node.id, newVol)
             }
         }
     }
@@ -740,6 +787,11 @@ PanelWindow {
         property bool muted: false
         property real currentVolume: 0
 
+        // Callback opsional — kalau di-set, dipanggil saat nilai berubah
+        // dan node.audio.volume TIDAK di-set langsung.
+        // Kalau null, fallback ke Pipewire binding langsung (untuk app streams).
+        property var onCommitVolume: null
+
         implicitHeight: 18
         from: 0
         to: 1
@@ -747,12 +799,18 @@ PanelWindow {
         property bool dragging: false
         value: dragging ? volSlider.value : currentVolume
 
-        onMoved: {
-            if (node?.audio) node.audio.volume = value
+        function _commit(v) {
+            if (typeof onCommitVolume === "function") {
+                onCommitVolume(v)
+            } else if (node?.audio) {
+                node.audio.volume = v
+            }
         }
+
+        onMoved: _commit(value)
         onPressedChanged: {
             dragging = pressed
-            if (!pressed && node?.audio) node.audio.volume = value
+            if (!pressed) _commit(value)
         }
 
         background: Rectangle {
