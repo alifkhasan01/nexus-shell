@@ -19,9 +19,19 @@ Item {
     property real  gpuTemp:   0      // °C
     property real  gpuUsage:  0      // 0–100 (AMDGPU)
     property string ramText:  "—"
+    property real  ramUsage:  0      // 0–100 untuk bar
     property string cpuName:  "AMD Ryzen 5 7530U"
     property string gpuName:  "AMD Radeon (iGPU)"
     property string faceSource: "file:///home/xans/.face"
+
+    // ── Disk ──────────────────────────────────────────────────────────────
+    property string diskText:  "—"
+    property real   diskUsage: 0     // 0–100 untuk bar
+
+    // ── Network speed ──────────────────────────────────────────────────────
+    property string netRx: "0 KB/s"
+    property string netTx: "0 KB/s"
+    property var _netPrev: null      // {rx, tx, time}
 
     // Diteruskan ke Bar: Bar menutup dashboard lalu menjalankan file picker
     // (agar window picker tidak tertutup dashboard), dan membuka dashboard
@@ -125,14 +135,73 @@ Item {
         }
     }
 
-    // RAM
+    // RAM (teks + persentase untuk bar)
     Process {
         id: ramProc
         command: ["sh", "-c",
-            "free -b | awk '/^Mem:/ {used=$2-$7; printf \"%s / %s\", int(used/1073741824*10)/10\"G\", int($2/1073741824*10)/10\"G\"}'"]
+            "free -b | awk '/^Mem:/ {used=$2-$7; pct=int(used/$2*100); printf \"%s / %s %d\", int(used/1073741824*10)/10\"G\", int($2/1073741824*10)/10\"G\", pct}'"]
         stdout: StdioCollector {
-            onStreamFinished: root.ramText = text.trim()
+            onStreamFinished: {
+                const parts = text.trim().split(" ")
+                // format: "X.XG / Y.YG PCT"
+                const pct = parseInt(parts[parts.length - 1])
+                root.ramUsage = isNaN(pct) ? 0 : pct
+                root.ramText  = parts.slice(0, parts.length - 1).join(" ")
+            }
         }
+    }
+
+    // Disk usage
+    Process {
+        id: diskProc
+        command: ["sh", "-c",
+            "df / | awk 'NR==2 {used=$3; total=$2; pct=int(used/total*100); printf \"%s / %s %d\", int(used/1048576*10)/10\"G\", int(total/1048576*10)/10\"G\", pct}'"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const parts = text.trim().split(" ")
+                const pct = parseInt(parts[parts.length - 1])
+                root.diskUsage = isNaN(pct) ? 0 : pct
+                root.diskText  = parts.slice(0, parts.length - 1).join(" ")
+            }
+        }
+    }
+
+    // Network speed — baca /proc/net/dev tiap 2 detik
+    Process {
+        id: netSpeedProc
+        command: ["sh", "-c",
+            "awk '/^[[:space:]]*(e|w)/{gsub(/:/,\"\"); print $1,$2,$10}' /proc/net/dev | head -2"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const now = Date.now()
+                let totalRx = 0, totalTx = 0
+                const lines = text.trim().split("\n").filter(l => l.trim() !== "")
+                lines.forEach(l => {
+                    const p = l.trim().split(/\s+/)
+                    if (p.length >= 3) {
+                        totalRx += parseInt(p[1]) || 0
+                        totalTx += parseInt(p[2]) || 0
+                    }
+                })
+
+                if (root._netPrev !== null) {
+                    const dt = (now - root._netPrev.time) / 1000  // detik
+                    if (dt > 0) {
+                        const rx = (totalRx - root._netPrev.rx) / dt
+                        const tx = (totalTx - root._netPrev.tx) / dt
+                        root.netRx = root._fmtSpeed(rx)
+                        root.netTx = root._fmtSpeed(tx)
+                    }
+                }
+                root._netPrev = { rx: totalRx, tx: totalTx, time: now }
+            }
+        }
+    }
+
+    function _fmtSpeed(bps) {
+        if (bps < 1024)        return Math.round(bps) + " B/s"
+        if (bps < 1048576)     return (bps / 1024).toFixed(1) + " KB/s"
+        return (bps / 1048576).toFixed(1) + " MB/s"
     }
 
     // ── Weather poller (wttr.in, update tiap 15 menit) ───────────────────
@@ -191,6 +260,8 @@ Item {
             gpuTempProc.running = true
             gpuUsageProc.running = true
             ramProc.running     = true
+            diskProc.running    = true
+            netSpeedProc.running = true
         }
     }
 
@@ -333,6 +404,21 @@ Item {
                         }
                         Text {
                             text: root.ramText
+                            font.pixelSize: 11
+                            color: Root.Colors.subtext
+                        }
+                    }
+
+                    // Network speed inline
+                    RowLayout {
+                        spacing: 5
+                        Text {
+                            text: "󰤨"
+                            font.pixelSize: 11
+                            color: Root.Colors.blue
+                        }
+                        Text {
+                            text: "↓" + root.netRx + "  ↑" + root.netTx
                             font.pixelSize: 11
                             color: Root.Colors.subtext
                         }
@@ -529,6 +615,149 @@ Item {
                     color: Root.Colors.surface2
                     elide: Text.ElideRight
                     Layout.fillWidth: true
+                }
+            }
+        }
+
+        // ── RAM card ──────────────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 52
+            radius: 14
+            color: Root.Colors.base
+            Behavior on color { ColorAnimation { duration: 200 } }
+
+            ColumnLayout {
+                anchors {
+                    top: parent.top; left: parent.left
+                    right: parent.right; margins: 10
+                }
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "󰍛  RAM"
+                        font.pixelSize: 11; font.weight: Font.Medium
+                        color: Root.Colors.green
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: root.ramText
+                        font.pixelSize: 11
+                        color: Root.Colors.subtext
+                    }
+                    Text {
+                        text: "  " + root.ramUsage + "%"
+                        font.pixelSize: 11; font.weight: Font.SemiBold
+                        color: Root.Colors.green
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 5; radius: 2.5
+                    color: Root.Colors.surface1
+                    Rectangle {
+                        width: parent.width * root.ramUsage / 100
+                        height: parent.height; radius: parent.radius
+                        color: root.ramUsage > 85 ? Root.Colors.red
+                             : root.ramUsage > 65 ? Root.Colors.yellow
+                             : Root.Colors.green
+                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                    }
+                }
+            }
+        }
+
+        // ── Disk card ─────────────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 52
+            radius: 14
+            color: Root.Colors.base
+            Behavior on color { ColorAnimation { duration: 200 } }
+
+            ColumnLayout {
+                anchors {
+                    top: parent.top; left: parent.left
+                    right: parent.right; margins: 10
+                }
+                spacing: 4
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Text {
+                        text: "󰋊  Disk"
+                        font.pixelSize: 11; font.weight: Font.Medium
+                        color: Root.Colors.yellow
+                    }
+                    Item { Layout.fillWidth: true }
+                    Text {
+                        text: root.diskText
+                        font.pixelSize: 11
+                        color: Root.Colors.subtext
+                    }
+                    Text {
+                        text: "  " + root.diskUsage + "%"
+                        font.pixelSize: 11; font.weight: Font.SemiBold
+                        color: Root.Colors.yellow
+                    }
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 5; radius: 2.5
+                    color: Root.Colors.surface1
+                    Rectangle {
+                        width: parent.width * root.diskUsage / 100
+                        height: parent.height; radius: parent.radius
+                        color: root.diskUsage > 90 ? Root.Colors.red
+                             : root.diskUsage > 75 ? Root.Colors.peach
+                             : Root.Colors.yellow
+                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+                        Behavior on color { ColorAnimation { duration: 300 } }
+                    }
+                }
+            }
+        }
+
+        // ── Network speed card ────────────────────────────────────────────
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 44
+            radius: 14
+            color: Root.Colors.base
+            Behavior on color { ColorAnimation { duration: 200 } }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: 12; anchors.rightMargin: 12
+                spacing: 8
+
+                Text {
+                    text: "󰤨"
+                    font.pixelSize: 14
+                    color: Root.Colors.blue
+                }
+                Text {
+                    text: "Jaringan"
+                    font.pixelSize: 11; font.weight: Font.Medium
+                    color: Root.Colors.blue
+                }
+                Item { Layout.fillWidth: true }
+                Text {
+                    text: "↓ " + root.netRx
+                    font.pixelSize: 11; font.weight: Font.SemiBold
+                    color: Root.Colors.green
+                    Behavior on color { ColorAnimation { duration: 200 } }
+                }
+                Text {
+                    text: "  ↑ " + root.netTx
+                    font.pixelSize: 11; font.weight: Font.SemiBold
+                    color: Root.Colors.peach
+                    Behavior on color { ColorAnimation { duration: 200 } }
                 }
             }
         }

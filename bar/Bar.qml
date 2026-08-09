@@ -26,6 +26,8 @@ PanelWindow {
     property bool volumePanelOpen: false
     property bool batteryPanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
+    property bool notifPanelOpen: false
+    property bool clipboardPanelOpen: false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -36,13 +38,17 @@ PanelWindow {
     onBatteryPanelOpenChanged:   if (!batteryPanelOpen)   batteryCloseTimer.restart()
     onWallpaperPanelOpenChanged: if (!wallpaperPanelOpen) wallpaperCloseTimer.restart()
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
+    onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
+    onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
-    Timer { id: powerCloseTimer;    interval: 300; repeat: false }
-    Timer { id: connectCloseTimer;  interval: 300; repeat: false }
-    Timer { id: volumeCloseTimer;   interval: 300; repeat: false }
-    Timer { id: batteryCloseTimer;  interval: 300; repeat: false }
+    Timer { id: powerCloseTimer;     interval: 300; repeat: false }
+    Timer { id: connectCloseTimer;   interval: 300; repeat: false }
+    Timer { id: volumeCloseTimer;    interval: 300; repeat: false }
+    Timer { id: batteryCloseTimer;   interval: 300; repeat: false }
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
+    Timer { id: notifCloseTimer;     interval: 300; repeat: false }
+    Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
 
     anchors { top: true; left: true; right: true }
     margins.top: 10
@@ -90,16 +96,30 @@ PanelWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                Clock {
+                Row {
                     anchors.centerIn: parent
-                    onClicked: {
-                        bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
-                        bar.connectPanelOpen = false
-                        bar.volumePanelOpen = false
-                        bar.batteryPanelOpen = false
-                        bar.shellState.wallpaperPanelOpen = false
+                    spacing: 8
+
+                    // Judul window aktif
+                    ActiveWindow {
+                        maxWidth: 200
                     }
-                    onRightClicked: controlCenterProcess.running = true
+
+                    Clock {
+                        onClicked: {
+                            bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
+                            bar.connectPanelOpen = false
+                            bar.volumePanelOpen = false
+                            bar.batteryPanelOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
+                        }
+                        onRightClicked: controlCenterProcess.running = true
+                    }
+
+                    // Stopwatch (hanya tampil saat aktif)
+                    Stopwatch {}
                 }
             }
 
@@ -113,6 +133,9 @@ PanelWindow {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 14
 
+                    // ── Tray indicators (Syncthing, VPN, Tailscale) ───────
+                    TrayIndicators {}
+
                     NetworkStatus {
                         id: netStatus
                         panelOpen: bar.connectPanelOpen && bar.connectTab === 0
@@ -122,6 +145,8 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -135,8 +160,88 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
+                    }
+
+                    // ── Clipboard Button ──────────────────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: clipArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.clipboardPanelOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰅍"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 15
+                            color: bar.clipboardPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: clipArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                bar.clipboardPanelOpen = !bar.clipboardPanelOpen
+                                bar.connectPanelOpen = false
+                                bar.volumePanelOpen = false
+                                bar.shellState.dashboardOpen = false
+                                bar.shellState.wallpaperPanelOpen = false
+                                bar.notifPanelOpen = false
+                            }
+                        }
+                    }
+
+                    // ── Notification History Button ───────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: notifArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.notifPanelOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰂞"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 15
+                            color: bar.notifPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: notifArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                bar.notifPanelOpen = !bar.notifPanelOpen
+                                bar.connectPanelOpen = false
+                                bar.volumePanelOpen = false
+                                bar.shellState.dashboardOpen = false
+                                bar.shellState.wallpaperPanelOpen = false
+                                bar.clipboardPanelOpen = false
+                            }
+                        }
                     }
 
                     // ── Wallpaper Button ──────────────────────────────────
@@ -176,6 +281,8 @@ PanelWindow {
                                     bar.connectPanelOpen   = false
                                     bar.volumePanelOpen    = false
                                     bar.shellState.dashboardOpen = false
+                                    bar.notifPanelOpen = false
+                                    bar.clipboardPanelOpen = false
                                 }
                             }
                         }
@@ -189,6 +296,8 @@ PanelWindow {
                             bar.connectPanelOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -204,6 +313,8 @@ PanelWindow {
                             bar.volumePanelOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
                         }
                     }
                     PowerButton {
@@ -214,6 +325,8 @@ PanelWindow {
                             bar.volumePanelOpen  = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.shellState.dashboardOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
                         }
                     }
                 }
@@ -308,6 +421,28 @@ PanelWindow {
         WallpaperPanel {
             open: bar.wallpaperPanelOpen
             onCloseRequested: bar.shellState.wallpaperPanelOpen = false
+        }
+    }
+
+    // ── Notification History Panel ────────────────────────────────────────
+    LazyLoader {
+        id: notifPanelLoader
+        active: bar.notifPanelOpen || notifCloseTimer.running
+
+        NotificationPanel {
+            open: bar.notifPanelOpen
+            onCloseRequested: bar.notifPanelOpen = false
+        }
+    }
+
+    // ── Clipboard Panel ───────────────────────────────────────────────────
+    LazyLoader {
+        id: clipboardLoader
+        active: bar.clipboardPanelOpen || clipboardCloseTimer.running
+
+        ClipboardPanel {
+            open: bar.clipboardPanelOpen
+            onCloseRequested: bar.clipboardPanelOpen = false
         }
     }
 

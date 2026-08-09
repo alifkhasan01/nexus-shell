@@ -262,6 +262,20 @@ PanelWindow {
                     anchors.margins: 10
                 }
             }
+
+            // Catatan / Todo
+            Rectangle {
+                width: parent.width
+                height: Math.max(todoWidget.implicitHeight, 120) + 20
+                radius: 14; color: Root.Colors.base
+                Behavior on color { ColorAnimation { duration: 200 } }
+
+                Dash.TodoWidget {
+                    id: todoWidget
+                    anchors.fill: parent
+                    anchors.margins: 10
+                }
+            }
         }
 
         // ── Kolom kanan — Media full height ──────────────────────────────

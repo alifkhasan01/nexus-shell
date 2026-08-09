@@ -14,9 +14,9 @@ PanelWindow {
     // DND: saat true, notif masuk tetap di-track tapi popup tidak ditampilkan
     property bool dnd: false
 
-    anchors { bottom: true; left: true; right: true }
+    anchors { top: true; left: true; right: true }
     // tepat di bawah bar (bar height 45 + margin top 8 + gap 6)
-    margins.bottom: 10
+    margins.top: 10
 
     // Tinggi window = tinggi semua kartu aktif, atau minimal 1 px
     implicitHeight: Math.max(1, stack.implicitHeight)
