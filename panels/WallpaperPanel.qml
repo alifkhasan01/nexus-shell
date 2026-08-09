@@ -679,6 +679,18 @@ PanelWindow {
                                     color: Root.Colors.surface1
                                     visible: parent.status !== Image.Ready
                                     Behavior on color { ColorAnimation { duration: 150 } }
+                                    // Spinner saat load langsung dari file asli (belum ada thumb cache)
+                                    Text {
+                                        anchors.centerIn: parent
+                                        visible: parent.parent.status === Image.Loading
+                                        text: "\udb80\udde3"; font.pixelSize: 18; font.family: root.nf
+                                        color: Root.Colors.blue
+                                        RotationAnimation on rotation {
+                                            running: parent.parent.status === Image.Loading
+                                            from: 0; to: 360; duration: 800; loops: Animation.Infinite
+                                            direction: RotationAnimation.Counterclockwise
+                                        }
+                                    }
                                     Text {
                                         anchors.centerIn: parent
                                         visible: parent.parent.status === Image.Error

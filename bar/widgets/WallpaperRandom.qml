@@ -87,10 +87,7 @@ Item {
             "awww img '" + esc + "'" +
             " --transition-type "     + root.transitionType +
             " --transition-duration " + root.transitionDuration +
-            " --transition-fps "      + root.transitionFps +
-            " && mkdir -p ~/.cache/wallpaper" +
-            " && printf '%s' '" + esc + "' > ~/.cache/wallpaper/current" +
-            " && ln -sf '"     + esc + "' ~/.cache/wallpaper/hyprlock-bg"]
+            " --transition-fps "      + root.transitionFps]
         setProc.running = true
     }
 

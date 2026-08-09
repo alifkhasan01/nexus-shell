@@ -52,6 +52,77 @@ ShellRoot {
         }
     }
 
+    // ── Screenshot processes (root-level agar bisa dipanggil dari IPC) ───
+    // Dipisah dari Bar.qml supaya keybind Hyprland tidak bergantung pada
+    // instance Bar tertentu.
+    Process {
+        id: ipcScreenshotSelectProc
+        command: ["sh", "-c",
+            "DIR=~/Pictures/Screenshots; " +
+            "mkdir -p \"$DIR\"; " +
+            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
+            "grimblast copysave area \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const file = text.trim()
+                if (file !== "")
+                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                        "--expire-time=4000", "--icon=camera-photo",
+                        "Screenshot Tersimpan",
+                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
+                else
+                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                        "--expire-time=4000", "--icon=dialog-error",
+                        "Screenshot Dibatalkan",
+                        "Area tidak dipilih atau gagal menyimpan."]
+                ipcNotifProc.running = true
+            }
+        }
+    }
+
+    Process {
+        id: ipcScreenshotFullProc
+        command: ["sh", "-c",
+            "DIR=~/Pictures/Screenshots; " +
+            "mkdir -p \"$DIR\"; " +
+            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
+            "grimblast copysave screen \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const file = text.trim()
+                if (file !== "")
+                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                        "--expire-time=4000", "--icon=camera-photo",
+                        "Screenshot Tersimpan",
+                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
+                else
+                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                        "--expire-time=4000", "--icon=dialog-error",
+                        "Screenshot Gagal",
+                        "Tidak dapat mengambil screenshot."]
+                ipcNotifProc.running = true
+            }
+        }
+    }
+
+    Process { id: ipcNotifProc }
+
+    // ── IPC call: Screenshot ──────────────────────────────────────────────
+    // Dari hyprland.conf:
+    //   bind = , Print,       exec, quickshell ipc call screenshot full
+    //   bind = SHIFT, Print,  exec, quickshell ipc call screenshot select
+    IpcHandler {
+        target: "screenshot"
+
+        function full(): void {
+            ipcScreenshotFullProc.running = true
+        }
+
+        function select(): void {
+            ipcScreenshotSelectProc.running = true
+        }
+    }
+
     // ── IPC call: Wallpaper Panel & Random ────────────────────────────────
     // Dari hyprland.conf:
     //   bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
