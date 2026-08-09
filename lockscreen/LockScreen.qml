@@ -8,6 +8,9 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Wayland._Screencopy
 import Quickshell.Services.Pam
+import Quickshell.Services.UPower
+import Quickshell.Services.Pipewire
+import Quickshell.Services.Mpris
 import "../" as Root
 
 // ── Lock Screen ────────────────────────────────────────────────────────────
@@ -30,6 +33,59 @@ Scope {
     property string _message:       ""
     property bool   _messageIsErr:  false
     property bool   _checking:      false
+
+    // ── Kutipan motivasi ────────────────────────────────────────────────
+    // Dicari dari artikel online (Kompas, CNN, Brilio, dll) — campuran
+    // bijak, santai, dan lucu biar gak kaku.
+    readonly property var quotes: [
+        "Hidup bukan seperti menunggu badai berlalu, tapi belajar menari di tengah hujan.",
+        "Mimpi besar dimulai dari langkah kecil.",
+        "Jangan takut gagal, takutlah untuk tidak mencoba.",
+        "Setiap hari adalah kesempatan baru untuk memulai lagi.",
+        "Kamu lebih kuat dari yang kamu kira.",
+        "Waktu terbaik untuk memulai adalah sekarang.",
+        "Perjalanan ribuan mil dimulai dari satu langkah.",
+        "Tetap bergerak walau perlahan.",
+        "Sukses datang pada mereka yang berani mencoba.",
+        "Jangan pernah menyerah pada apa yang benar-benar kamu inginkan.",
+        "Kebahagiaan bukan tujuan, melainkan perjalanan.",
+        "Rintangan ada untuk membuatmu lebih kuat.",
+        "Capek itu wajar. Semangat? Opsional.",
+        "Kalau hidupmu stuck, anggap saja lagi buffering.",
+        "Kalem. Rezekimu nggak pakai deadline.",
+        "Tenang... hidup begini ke semua orang.",
+        "Kalau kamu capek dikasih kuat, gapapa. Superhero aja kadang cuti.",
+        "Tarik napas. Jangan tarik mantan.",
+        "Santai tapi jangan santuy dalam kerja.",
+        "Jangan jadi penonton, jadilah pemain utama.",
+        "Hari ini gagal, besok bangkit dengan gaya.",
+        "Hidup itu kayak sandal jepit: hilang satu, langsung pincang.",
+        "Kerja keras, main santai, hasil maksimal.",
+        "Masih ada harapan selama kita terus berusaha.",
+    ]
+
+    // ── System status (dibagikan ke status row) ─────────────────────────
+    property var device:   UPower.displayDevice
+    property int battPercent: device?.percentage ? Math.round(device.percentage * 100) : 0
+    property bool charging:   device?.state === UPowerDeviceState.Charging
+
+    property var _defaultSink: Pipewire.defaultAudioSink
+    property real volLevel: _defaultSink?.audio ? _defaultSink.audio.volume : 0
+    property bool  volMuted: _defaultSink?.audio ? _defaultSink.audio.muted : true
+
+    property string netType: "none"
+    property string netName: ""
+    property int    netStrength: 0
+    function _refreshNet() { netPoll.running = true }
+
+    // ── Auto-suspend: kalau masih terkunci & idle, tidur setelah N menit ──
+    readonly property int autoSuspendMinutes: 15
+
+    // ── Media player aktif ───────────────────────────────────────────────
+    property var player: Mpris.players.values.length > 0 ? Mpris.players.values[0] : null
+    property bool hasMedia: root.player !== null &&
+                            root.player?.trackTitle !== "" &&
+                            root.player?.trackTitle !== undefined
 
     function _handleKey(event) {
         // Blok input hanya saat sedang checking — bukan berdasarkan pamCtx.active
@@ -94,9 +150,70 @@ Scope {
         onTriggered: { root._message = ""; root._messageIsErr = false }
     }
 
+    Process {
+        id: netPoll
+        command: ["sh", "-c",
+            "t=$(nmcli -t -f TYPE,STATE,CONNECTION dev | grep ':connected:' | head -1); " +
+            "[ -z \"$t\" ] && exit 0; " +
+            "ty=$(printf '%s' \"$t\" | cut -d: -f1); " +
+            "cn=$(printf '%s' \"$t\" | cut -d: -f3-); " +
+            "sg=0; " +
+            "if [ \"$ty\" = wifi ]; then " +
+            "sg=$(nmcli -t -f IN-USE,SIGNAL dev wifi list | grep '^\\*' | head -1 | cut -d: -f2); " +
+            "fi; " +
+            "printf '%s:connected:%s:%s\\n' \"$ty\" \"$cn\" \"${sg:-0}\""
+        ]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const raw = text.trim()
+                if (raw === "") { root.netType = "none"; root.netName = ""; return }
+                const parts = raw.split(":")
+                const type  = parts[0] || ""
+                const sig   = parseInt(parts[parts.length - 1]) || 0
+                const conn  = parts.slice(2, parts.length - 1).join(":") || ""
+                if (type === "ethernet" || type === "bond" || type === "vlan") {
+                    root.netType = "ethernet"; root.netName = conn
+                } else if (type === "wifi") {
+                    root.netType = "wifi"; root.netStrength = sig; root.netName = conn
+                } else {
+                    root.netType = "none"; root.netName = ""
+                }
+            }
+        }
+    }
+
+    Timer {
+        interval: 10000; running: true; repeat: true
+        triggeredOnStart: true
+        onTriggered: netPoll.running = true
+    }
+
+    // ── Auto-suspend ────────────────────────────────────────────────────
+    Process {
+        id: suspendProc
+        // command diisi saat dipanggil
+    }
+
+    Timer {
+        id: autoSuspendTimer
+        interval: root.autoSuspendMinutes * 60 * 1000
+        onTriggered: {
+            suspendProc.command = ["systemctl", "suspend"]
+            suspendProc.running = true
+        }
+    }
+
     // ── Session Lock ─────────────────────────────────────────────────────
     WlSessionLock {
         id: sessionLock
+
+        // Mulai/hentikan hitungan auto-suspend mengikuti status lock
+        onLockedChanged: {
+            if (locked)
+                autoSuspendTimer.restart()
+            else
+                autoSuspendTimer.stop()
+        }
 
         WlSessionLockSurface {
             id: surface
@@ -140,6 +257,131 @@ Scope {
                     color: Qt.rgba(0, 0, 0, 0.45)
                 }
 
+                // ── Media card (top center) — gaya dashboard ────────────────
+                Rectangle {
+                    id: mediaCard
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.top: parent.top
+                    anchors.topMargin: 42
+                    width: Math.min(400, parent.width * 0.92)
+                    height: 92
+                    radius: 16
+                    color: Qt.rgba(Root.Colors.surface0.r, Root.Colors.surface0.g,
+                                   Root.Colors.surface0.b, 0.75)
+                    border.color: Root.Colors.surface2
+                    border.width: 1
+                    visible: hasMedia
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 12
+                        spacing: 12
+
+                        // ── Cover art ────────────────────────────────────
+                        Rectangle {
+                            width: 64
+                            height: 64
+                            radius: 12
+                            color: Root.Colors.surface1
+                            clip: true
+
+                            Image {
+                                id: mediaArtImg
+                                anchors.fill: parent
+                                source: root.player?.trackArtUrl ?? ""
+                                sourceSize.width: 128
+                                sourceSize.height: 128
+                                fillMode: Image.PreserveAspectCrop
+                                smooth: true
+                                visible: source !== ""
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                visible: mediaArtImg.source === ""
+                                text: "󰝚"
+                                font.pixelSize: 24
+                                color: Root.Colors.subtext
+                            }
+                        }
+
+                        // ── Info + kontrol ────────────────────────────────
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 2
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.player?.trackTitle ?? "Unknown Title"
+                                color: Root.Colors.text
+                                font.pixelSize: 14
+                                font.bold: true
+                                elide: Text.ElideRight
+                            }
+                            Text {
+                                Layout.fillWidth: true
+                                text: root.player?.trackArtist ?? "Unknown Artist"
+                                color: Root.Colors.subtext
+                                font.pixelSize: 12
+                                elide: Text.ElideRight
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: 14
+                                Layout.topMargin: 2
+
+                                Text {
+                                    text: "󰒮"
+                                    font.family: "CaskaydiaCove Nerd Font"
+                                    font.pixelSize: 16
+                                    color: Root.Colors.text
+                                    opacity: root.player?.canGoPrevious ? 1 : 0.35
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: if (root.player?.canGoPrevious) root.player.previous()
+                                    }
+                                }
+                                Text {
+                                    text: root.player?.playbackState === MprisPlaybackState.Playing ? "󰏤" : "󰐊"
+                                    font.family: "CaskaydiaCove Nerd Font"
+                                    font.pixelSize: 18
+                                    color: Root.Colors.blue
+                                    opacity: root.player?.canControl ? 1 : 0.45
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            if (!root.player?.canControl) return
+                                            if (root.player.playbackState === MprisPlaybackState.Playing) {
+                                                root.player.pause()
+                                            } else {
+                                                root.player.play()
+                                            }
+                                        }
+                                    }
+                                }
+                                Text {
+                                    text: "󰒭"
+                                    font.family: "CaskaydiaCove Nerd Font"
+                                    font.pixelSize: 16
+                                    color: Root.Colors.text
+                                    opacity: root.player?.canGoNext ? 1 : 0.35
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -6
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: if (root.player?.canGoNext) root.player.next()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
                 // ── Layout utama ──────────────────────────────────────
                 RowLayout {
                     anchors.centerIn: parent
@@ -150,15 +392,24 @@ Scope {
                     Item { Layout.fillWidth: true; Layout.fillHeight: true }
 
                     // ── Tengah ────────────────────────────────────────
+                    Rectangle {
+                        Layout.preferredWidth: 500
+                        Layout.preferredHeight: Math.min(parent.height * 0.62, 520)
+                        radius: 20
+                        color: Qt.rgba(Root.Colors.base.r, Root.Colors.base.g,
+                                       Root.Colors.base.b, 0.4)
+                        border.color: Root.Colors.lavender
+                        border.width: 1.5
+
                     ColumnLayout {
-                        Layout.preferredWidth: 340
-                        Layout.fillHeight: true
+                        anchors.fill: parent
+                        anchors.margins: 20
                         spacing: 0
 
                         Item { Layout.fillHeight: true }
 
                         // Jam dua warna
-                        Row {
+                        RowLayout {
                             Layout.alignment: Qt.AlignHCenter
                             spacing: 0
 
@@ -191,6 +442,20 @@ Scope {
                                     interval: 1000; running: true
                                     repeat: true; triggeredOnStart: true
                                     onTriggered: minsText.text = Qt.formatDateTime(new Date(), "mm")
+                                }
+                            }
+                            Text {
+                                id: secsText
+                                font.pixelSize: 34
+                                font.weight: Font.Bold
+                                color: Root.Colors.subtext
+                                lineHeight: 0.85
+                                Layout.alignment: Qt.AlignBottom
+                                Layout.leftMargin: 8
+                                Timer {
+                                    interval: 1000; running: true
+                                    repeat: true; triggeredOnStart: true
+                                    onTriggered: secsText.text = Qt.formatDateTime(new Date(), "ss")
                                 }
                             }
                         }
@@ -437,13 +702,152 @@ Scope {
                             Behavior on opacity { NumberAnimation { duration: 200 } }
                         }
 
+                        // Kutipan motivasi — fade in/out setiap 8 detik
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            Layout.topMargin: 16
+                            Layout.preferredWidth: 360
+                            Layout.preferredHeight: 48
+
+                            Rectangle {
+                                anchors.top: parent.top
+                                anchors.bottom: parent.bottom
+                                anchors.left: parent.left
+                                anchors.leftMargin: -14
+                                width: 2
+                                radius: 1
+                                color: Root.Colors.lavender
+                                opacity: 0.5
+                            }
+
+                            Text {
+                                id: quoteText
+                                anchors.fill: parent
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
+                                text: root.quotes[0]
+                                font.pixelSize: 14
+                                font.italic: true
+                                color: Root.Colors.text
+                                opacity: 1
+                                Behavior on opacity { NumberAnimation { duration: 400 } }
+                            }
+
+                            SequentialAnimation {
+                                id: quoteAnim
+                                NumberAnimation { target: quoteText; property: "opacity"; to: 0; duration: 400 }
+                                ScriptAction {
+                                    script: {
+                                        quoteText.text = root.quotes[
+                                            Math.floor(Math.random() * root.quotes.length)]
+                                    }
+                                }
+                                NumberAnimation { target: quoteText; property: "opacity"; to: 1; duration: 400 }
+                            }
+
+                            Timer {
+                                interval: 8000; repeat: true
+                                triggeredOnStart: true
+                                onTriggered: quoteAnim.start()
+                            }
+                        }
+
                         Item { Layout.fillHeight: true }
                     }
+                    }   // ── end Rectangle (tengah)
 
                     Item { Layout.fillWidth: true; Layout.fillHeight: true }
                 }
-            }   // ── end Item (focus handler)
-        }       // ── end WlSessionLockSurface
+
+                // ── Status row (bottom) ────────────────────────────────
+                Row {
+                    id: statusRow
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: 30
+                    spacing: 7
+
+                        // ── Baterai ─────────────────────────────────────
+                        Rectangle {
+                            height: 30
+                            radius: 15
+                            color: Qt.rgba(Root.Colors.surface0.r, Root.Colors.surface0.g,
+                                           Root.Colors.surface0.b, 0.65)
+                            width: battLabel.implicitWidth + 22
+
+                            Text {
+                                id: battLabel
+                                anchors.centerIn: parent
+                                font.family: "CaskaydiaCove Nerd Font"
+                                font.pixelSize: 13
+                                color: root.charging ? Root.Colors.yellow
+                                     : root.battPercent <= 20 ? Root.Colors.red
+                                     : Root.Colors.text
+                                text: {
+                                    const icon = root.charging ? "󰂄"
+                                              : root.battPercent >= 90 ? "󰁹"
+                                              : root.battPercent >= 60 ? "󰂀"
+                                              : root.battPercent >= 35 ? "󰁾"
+                                              : root.battPercent >= 15 ? "󰁻"
+                                              : "󰂃"
+                                    return icon + " " + root.battPercent + "%"
+                                }
+                            }
+                        }
+
+                        // ── Jaringan ────────────────────────────────────
+                        Rectangle {
+                            height: 30
+                            radius: 15
+                            color: Qt.rgba(Root.Colors.surface0.r, Root.Colors.surface0.g,
+                                           Root.Colors.surface0.b, 0.65)
+                            width: netLabel.implicitWidth + 22
+                            visible: root.netType !== "none"
+
+                            Text {
+                                id: netLabel
+                                anchors.centerIn: parent
+                                font.family: "CaskaydiaCove Nerd Font"
+                                font.pixelSize: 13
+                                color: root.netType === "ethernet" ? Root.Colors.green
+                                     : Root.Colors.text
+                                text: {
+                                    let icon
+                                    if (root.netType === "ethernet") icon = "󰈀"
+                                    else if (root.netStrength >= 75) icon = "󰤨"
+                                    else if (root.netStrength >= 50) icon = "󰤥"
+                                    else if (root.netStrength >= 25) icon = "󰤢"
+                                    else icon = "󰤟"
+                                    return icon + " " + root.netName
+                                }
+                            }
+                        }
+
+                        // ── Volume ──────────────────────────────────────
+                        Rectangle {
+                            height: 30
+                            radius: 15
+                            color: Qt.rgba(Root.Colors.surface0.r, Root.Colors.surface0.g,
+                                           Root.Colors.surface0.b, 0.65)
+                            width: volLabel.implicitWidth + 22
+
+                            Text {
+                                id: volLabel
+                                anchors.centerIn: parent
+                                font.family: "CaskaydiaCove Nerd Font"
+                                font.pixelSize: 13
+                                color: root.volMuted ? Root.Colors.subtext : Root.Colors.text
+                                text: {
+                                    const pct = Math.round(root.volLevel * 100)
+                                    if (root.volMuted || pct === 0) return "󰝟 " + pct + "%"
+                                    return (pct < 50 ? "󰕿" : "󰕾") + " " + pct + "%"
+                                }
+                            }
+                        }
+                    }
+                }
+            }   // ── end Item (focus handler)       // ── end WlSessionLockSurface
     }           // ── end WlSessionLock
 
     // ── IPC Handler ──────────────────────────────────────────────────────
