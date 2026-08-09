@@ -6,77 +6,113 @@ import QtQuick.Effects
 import Quickshell.Io
 import "../" as Root
 
+
 // ── SystemInfo ────────────────────────────────────────────────────────────────
-// Panel kanan dashboard: profile picture + face setter, suhu CPU/GPU,
-// nama CPU/GPU, usage bar animated, RAM.
+// Panel kanan dashboard: profile picture + face setter, CPU/GPU/RAM/Disk
+// dalam satu card statistik, lalu weather card memakai sisa ruang.
+// Data cuaca dibaca langsung dari Root.WeatherService (singleton, always-on).
 
 Item {
     id: root
 
+// ── StatRow — satu baris kompak untuk CPU / GPU / RAM / Disk ─────────
+component StatRow: Item {
+    id: box
+
+    property string label: ""
+    property string icon: ""
+    property color accent: Root.Colors.blue
+    property real pct: 0
+    property string tempText: ""
+    property color tempColor: Root.Colors.subtext
+    property string subText: ""
+
+    Layout.fillWidth: true
+    implicitHeight: 28
+
+    RowLayout {
+        anchors.fill: parent
+        spacing: 6
+
+        // Ikon
+        Text {
+            text: box.icon
+            font.pixelSize: 13
+            color: box.tempColor
+            Layout.preferredWidth: 16
+            horizontalAlignment: Text.AlignHCenter
+            Behavior on color { ColorAnimation { duration: 200 } }
+        }
+
+        // Label
+        Text {
+            text: box.label
+            font.pixelSize: 11
+            font.weight: Font.Medium
+            color: Root.Colors.text
+            Layout.preferredWidth: 28
+            Behavior on color { ColorAnimation { duration: 200 } }
+        }
+
+        // Bar
+        Rectangle {
+            Layout.fillWidth: true
+            height: 5
+            radius: 2.5
+            color: Root.Colors.surface1
+            Behavior on color { ColorAnimation { duration: 200 } }
+
+            Rectangle {
+                width: parent.width * Math.max(0, Math.min(100, box.pct)) / 100
+                height: parent.height
+                radius: parent.radius
+                color: box.tempColor
+                Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
+                Behavior on color { ColorAnimation { duration: 300 } }
+            }
+        }
+
+        // Persentase
+        Text {
+            text: Math.round(box.pct) + "%"
+            font.pixelSize: 11
+            font.weight: Font.SemiBold
+            color: box.tempColor
+            Layout.preferredWidth: 34
+            horizontalAlignment: Text.AlignRight
+            Behavior on color { ColorAnimation { duration: 200 } }
+        }
+
+        // Temp atau sub-teks pendek
+        Text {
+            visible: box.tempText !== "" || box.subText !== ""
+            text: box.tempText !== "" ? box.tempText : box.subText
+            font.pixelSize: 10
+            color: Root.Colors.subtext
+            elide: Text.ElideRight
+            Layout.preferredWidth: 60
+            horizontalAlignment: Text.AlignRight
+            Behavior on color { ColorAnimation { duration: 200 } }
+        }
+    }
+}
+
+
     // ── Data state ────────────────────────────────────────────────────────
-    property real  cpuUsage:  0      // 0–100
-    property real  cpuTemp:   0      // °C
-    property real  gpuTemp:   0      // °C
-    property real  gpuUsage:  0      // 0–100 (AMDGPU)
-    property string ramText:  "—"
-    property real  ramUsage:  0      // 0–100 untuk bar
-    property string cpuName:  "AMD Ryzen 5 7530U"
-    property string gpuName:  "AMD Radeon (iGPU)"
+    property real   cpuUsage:  0
+    property real   cpuTemp:   0
+    property real   gpuTemp:   0
+    property real   gpuUsage:  0
+    property string ramText:   "—"
+    property real   ramUsage:  0
+    property string cpuName:   "AMD Ryzen 5 7530U"
+    property string gpuName:   "AMD Radeon (iGPU)"
     property string faceSource: "file:///home/xans/.face"
 
-    // ── Disk ──────────────────────────────────────────────────────────────
     property string diskText:  "—"
-    property real   diskUsage: 0     // 0–100 untuk bar
+    property real   diskUsage: 0
 
-    // ── Network speed ──────────────────────────────────────────────────────
-    property string netRx: "0 KB/s"
-    property string netTx: "0 KB/s"
-    property var _netPrev: null      // {rx, tx, time}
-
-    // Diteruskan ke Bar: Bar menutup dashboard lalu menjalankan file picker
-    // (agar window picker tidak tertutup dashboard), dan membuka dashboard
-    // lagi setelah selesai.
     signal setFaceRequested()
-
-    // Riwayat CPU usage untuk spark-line (20 titik)
-    property var cpuHistory: []
-
-    // ── Weather state ─────────────────────────────────────────────────────
-    property string weatherTemp:     ""
-    property string weatherFeels:    ""
-    property string weatherDesc:     ""
-    property string weatherIcon:     "󰖐"
-    property string weatherHumidity: ""
-    property string weatherWind:     ""
-    property string weatherCity:     ""
-    property string weatherUpdated:  ""
-
-    // Forecast 3 hari: [{date, dayName, icon, maxC, minC, rain}]
-    property var weatherForecast: []
-
-    // Map kondisi cuaca ke ikon Nerd Font weather (glyphnames.json, range U+E3xx)
-    function _weatherIcon(desc) {
-        const d = desc.toLowerCase()
-        if (d.includes("thunder"))                      return "\ue31d"   // weather-thunderstorm
-        if (d.includes("drizzle"))                      return "\ue31b"   // weather-sprinkle
-        if (d.includes("heavy rain"))                   return "\ue318"   // weather-rain
-        if (d.includes("rain") || d.includes("shower")) return "\ue319"   // weather-showers
-        if (d.includes("snow"))                         return "\ue31a"   // weather-snow
-        if (d.includes("fog") || d.includes("mist"))    return "\ue313"   // weather-fog
-        if (d.includes("haze") || d.includes("smoky"))  return "\ue3ae"   // weather-day_haze
-        if (d.includes("overcast"))                     return "\ue312"   // weather-cloudy
-        if (d.includes("partly"))                       return "\ue30c"   // weather-day_sunny_overcast
-        if (d.includes("cloudy"))                       return "\ue312"   // weather-cloudy
-        if (d.includes("sunny") || d.includes("clear")) return "\ue30d"   // weather-day_sunny
-        return "\ue312"
-    }
-
-    // Nama hari singkat dari date string "YYYY-MM-DD"
-    function _dayName(dateStr) {
-        const days = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"]
-        const d = new Date(dateStr)
-        return days[d.getDay()]
-    }
 
     // ── Pollers ───────────────────────────────────────────────────────────
 
@@ -88,24 +124,19 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = text.trim().split(/\s+/).slice(1).map(Number)
-                const idle = parts[3] + parts[4]
+                const idle  = parts[3] + parts[4]
                 const total = parts.reduce((a, b) => a + b, 0)
                 if (root._cpuPrev) {
                     const dTotal = total - root._cpuPrev.total
                     const dIdle  = idle  - root._cpuPrev.idle
                     root.cpuUsage = dTotal > 0 ? Math.round((1 - dIdle / dTotal) * 100) : 0
-                    // append ke history
-                    const h = root.cpuHistory.slice()
-                    h.push(root.cpuUsage)
-                    if (h.length > 20) h.shift()
-                    root.cpuHistory = h
                 }
                 root._cpuPrev = { total, idle }
             }
         }
     }
 
-    // CPU temp (k10temp Tctl) — hwmon5/temp1_input dalam milli-celsius
+    // CPU temp (k10temp Tctl)
     Process {
         id: cpuTempProc
         command: ["sh", "-c", "cat /sys/class/hwmon/hwmon5/temp1_input"]
@@ -114,7 +145,7 @@ Item {
         }
     }
 
-    // GPU temp (amdgpu edge) — hwmon4/temp1_input
+    // GPU temp (amdgpu edge)
     Process {
         id: gpuTempProc
         command: ["sh", "-c", "cat /sys/class/hwmon/hwmon4/temp1_input"]
@@ -123,7 +154,7 @@ Item {
         }
     }
 
-    // GPU usage — /sys/class/drm/card*/device/gpu_busy_percent
+    // GPU usage
     Process {
         id: gpuUsageProc
         command: ["sh", "-c", "cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -1"]
@@ -135,7 +166,7 @@ Item {
         }
     }
 
-    // RAM (teks + persentase untuk bar)
+    // RAM
     Process {
         id: ramProc
         command: ["sh", "-c",
@@ -143,7 +174,6 @@ Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 const parts = text.trim().split(" ")
-                // format: "X.XG / Y.YG PCT"
                 const pct = parseInt(parts[parts.length - 1])
                 root.ramUsage = isNaN(pct) ? 0 : pct
                 root.ramText  = parts.slice(0, parts.length - 1).join(" ")
@@ -151,7 +181,7 @@ Item {
         }
     }
 
-    // Disk usage
+    // Disk
     Process {
         id: diskProc
         command: ["sh", "-c",
@@ -166,102 +196,16 @@ Item {
         }
     }
 
-    // Network speed — baca /proc/net/dev tiap 2 detik
-    Process {
-        id: netSpeedProc
-        command: ["sh", "-c",
-            "awk '/^[[:space:]]*(e|w)/{gsub(/:/,\"\"); print $1,$2,$10}' /proc/net/dev | head -2"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const now = Date.now()
-                let totalRx = 0, totalTx = 0
-                const lines = text.trim().split("\n").filter(l => l.trim() !== "")
-                lines.forEach(l => {
-                    const p = l.trim().split(/\s+/)
-                    if (p.length >= 3) {
-                        totalRx += parseInt(p[1]) || 0
-                        totalTx += parseInt(p[2]) || 0
-                    }
-                })
-
-                if (root._netPrev !== null) {
-                    const dt = (now - root._netPrev.time) / 1000  // detik
-                    if (dt > 0) {
-                        const rx = (totalRx - root._netPrev.rx) / dt
-                        const tx = (totalTx - root._netPrev.tx) / dt
-                        root.netRx = root._fmtSpeed(rx)
-                        root.netTx = root._fmtSpeed(tx)
-                    }
-                }
-                root._netPrev = { rx: totalRx, tx: totalTx, time: now }
-            }
-        }
-    }
-
-    function _fmtSpeed(bps) {
-        if (bps < 1024)        return Math.round(bps) + " B/s"
-        if (bps < 1048576)     return (bps / 1024).toFixed(1) + " KB/s"
-        return (bps / 1048576).toFixed(1) + " MB/s"
-    }
-
-    // ── Weather poller (wttr.in, update tiap 15 menit) ───────────────────
-    Process {
-        id: weatherProc
-        command: ["sh", "-c", "curl -s --max-time 8 'wttr.in/?format=j1'"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                try {
-                    const d = JSON.parse(text)
-                    const cur  = d.current_condition[0]
-                    const area = d.nearest_area[0]
-                    root.weatherTemp     = cur.temp_C
-                    root.weatherFeels    = cur.FeelsLikeC
-                    root.weatherDesc     = cur.weatherDesc[0].value
-                    root.weatherIcon     = root._weatherIcon(cur.weatherDesc[0].value)
-                    root.weatherHumidity = cur.humidity
-                    root.weatherWind     = cur.windspeedKmph
-                    root.weatherCity     = area.areaName[0].value
-                    const now = new Date()
-                    root.weatherUpdated  = Qt.formatDateTime(now, "HH:mm")
-
-                    // Parse 3-hari forecast
-                    const forecast = []
-                    for (let i = 0; i < d.weather.length; i++) {
-                        const w = d.weather[i]
-                        // Ambil deskripsi dari tengah hari (index 4 = jam 12:00)
-                        const mid = w.hourly[Math.floor(w.hourly.length / 2)]
-                        forecast.push({
-                            dayName: i === 0 ? "Hari ini" : i === 1 ? "Besok" : root._dayName(w.date),
-                            icon:    root._weatherIcon(mid.weatherDesc[0].value),
-                            maxC:    w.maxtempC,
-                            minC:    w.mintempC,
-                            rain:    mid.chanceofrain,
-                            desc:    mid.weatherDesc[0].value
-                        })
-                    }
-                    root.weatherForecast = forecast
-                } catch(e) {}
-            }
-        }
-    }
-
-    Timer {
-        interval: 900000   // 15 menit
-        running: true; repeat: true; triggeredOnStart: true
-        onTriggered: weatherProc.running = true
-    }
-
     // Tick tiap 2 detik
     Timer {
         interval: 2000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {
-            cpuStatProc.running = true
-            cpuTempProc.running = true
-            gpuTempProc.running = true
+            cpuStatProc.running  = true
+            cpuTempProc.running  = true
+            gpuTempProc.running  = true
             gpuUsageProc.running = true
-            ramProc.running     = true
-            diskProc.running    = true
-            netSpeedProc.running = true
+            ramProc.running      = true
+            diskProc.running     = true
         }
     }
 
@@ -273,7 +217,7 @@ Item {
         // ── Profile card ──────────────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 100   // fixed — avatar butuh ruang tetap
+            Layout.preferredHeight: 84
             radius: 14
             color: Root.Colors.base
             Behavior on color { ColorAnimation { duration: 200 } }
@@ -283,9 +227,9 @@ Item {
                 anchors.margins: 12
                 spacing: 12
 
-                // Avatar + klik untuk ganti
+                // Avatar
                 Item {
-                    width: 72; height: 72
+                    width: 60; height: 60
 
                     Rectangle {
                         anchors.fill: parent
@@ -295,7 +239,6 @@ Item {
                         border.width: 2
                     }
 
-                    // Isi avatar bulat via MultiEffect mask (Rectangle.clip tak ikut radius)
                     Rectangle {
                         id: faceBg
                         anchors.fill: parent
@@ -337,11 +280,11 @@ Item {
                         visible: faceImg.status !== Image.Ready
                         text: "󰀄"
                         font.family: "CaskaydiaCove Nerd Font"
-                        font.pixelSize: 36
+                        font.pixelSize: 28
                         color: Root.Colors.subtext
                     }
 
-                    // Hover overlay — klik buka file picker
+                    // Hover overlay
                     Rectangle {
                         anchors.fill: parent
                         radius: width / 2
@@ -353,7 +296,7 @@ Item {
                             anchors.centerIn: parent
                             text: "󰷌"
                             font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 22
+                            font.pixelSize: 18
                             color: "white"
                         }
 
@@ -394,7 +337,6 @@ Item {
                         Layout.fillWidth: true
                     }
 
-                    // RAM inline
                     RowLayout {
                         spacing: 5
                         Text {
@@ -408,372 +350,72 @@ Item {
                             color: Root.Colors.subtext
                         }
                     }
-
-                    // Network speed inline
-                    RowLayout {
-                        spacing: 5
-                        Text {
-                            text: "󰤨"
-                            font.pixelSize: 11
-                            color: Root.Colors.blue
-                        }
-                        Text {
-                            text: "↓" + root.netRx + "  ↑" + root.netTx
-                            font.pixelSize: 11
-                            color: Root.Colors.subtext
-                        }
-                    }
                 }
             }
         }
 
-        // ── CPU card ──────────────────────────────────────────────────────
+        // ── Card Stats: CPU · GPU · RAM · Disk ────────────────────────────
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 64
+            implicitHeight: statsCol.implicitHeight + 20
             radius: 14
             color: Root.Colors.base
             Behavior on color { ColorAnimation { duration: 200 } }
 
             ColumnLayout {
-                id: cpuCardCol
-                anchors {
-                    top: parent.top; left: parent.left
-                    right: parent.right; margins: 10
-                }
-                spacing: 4
-
-                // Header
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "󰻠  CPU"
-                        font.pixelSize: 11
-                        font.weight: Font.Medium
-                        color: Root.Colors.blue
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: root.cpuTemp + "°C"
-                        font.pixelSize: 11
-                        color: root.cpuTemp > 85 ? Root.Colors.red
-                             : root.cpuTemp > 70 ? Root.Colors.yellow
-                             : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
-                    Text {
-                        text: "  " + root.cpuUsage + "%"
-                        font.pixelSize: 11
-                        font.weight: Font.SemiBold
-                        color: Root.Colors.blue
-                    }
-                }
-
-                // Usage bar
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 5
-                    radius: 2.5
-                    color: Root.Colors.surface1
-
-                    Rectangle {
-                        width: parent.width * root.cpuUsage / 100
-                        height: parent.height
-                        radius: parent.radius
-                        color: root.cpuUsage > 85 ? Root.Colors.red
-                             : root.cpuUsage > 60 ? Root.Colors.yellow
-                             : Root.Colors.blue
-                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
-                }
-
-                // Spark-line CPU history
-                Canvas {
-                    id: sparkCanvas
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 12
-                    Layout.minimumHeight: 12
-
-                    property var data: root.cpuHistory
-
-                    onDataChanged: requestPaint()
-
-                    onPaint: {
-                        const ctx = getContext("2d")
-                        ctx.clearRect(0, 0, width, height)
-
-                        const pts = data
-                        if (pts.length < 2) return
-
-                        // Fill area
-                        ctx.beginPath()
-                        ctx.moveTo(0, height)
-                        for (let i = 0; i < pts.length; i++) {
-                            const x = (i / (pts.length - 1)) * width
-                            const y = height - (pts[i] / 100) * height
-                            i === 0 ? ctx.lineTo(x, y) : ctx.lineTo(x, y)
-                        }
-                        ctx.lineTo(width, height)
-                        ctx.closePath()
-
-                        const grad = ctx.createLinearGradient(0, 0, 0, height)
-                        grad.addColorStop(0,   Qt.rgba(
-                            Qt.color(Root.Colors.blue).r,
-                            Qt.color(Root.Colors.blue).g,
-                            Qt.color(Root.Colors.blue).b, 0.35))
-                        grad.addColorStop(1,   Qt.rgba(
-                            Qt.color(Root.Colors.blue).r,
-                            Qt.color(Root.Colors.blue).g,
-                            Qt.color(Root.Colors.blue).b, 0.03))
-                        ctx.fillStyle = grad
-                        ctx.fill()
-
-                        // Line
-                        ctx.beginPath()
-                        for (let i = 0; i < pts.length; i++) {
-                            const x = (i / (pts.length - 1)) * width
-                            const y = height - (pts[i] / 100) * height
-                            i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)
-                        }
-                        ctx.strokeStyle = Root.Colors.blue.toString()
-                        ctx.lineWidth = 1.5
-                        ctx.stroke()
-                    }
-
-                    Connections {
-                        target: Root.Colors
-                        function onBaseChanged() { sparkCanvas.requestPaint() }
-                    }
-                }
-            }
-        }
-
-        // ── GPU card ──────────────────────────────────────────────────────
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 76   // GPU tidak punya spark-line, cukup fixed kecil
-            radius: 14
-            color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            ColumnLayout {
+                id: statsCol
                 anchors.fill: parent
-                anchors.margins: 12
-                spacing: 6
-
-                RowLayout {
-                    Layout.fillWidth: true
-
-                    Text {
-                        text: "󰾲  GPU"
-                        font.pixelSize: 12
-                        font.weight: Font.Medium
-                        color: Root.Colors.mauve
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: root.gpuTemp + "°C"
-                        font.pixelSize: 12
-                        color: root.gpuTemp > 90 ? Root.Colors.red
-                             : root.gpuTemp > 75 ? Root.Colors.yellow
-                             : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
-                    Text {
-                        text: "  " + root.gpuUsage + "%"
-                        font.pixelSize: 12
-                        font.weight: Font.SemiBold
-                        color: Root.Colors.mauve
-                    }
-                }
-
-                // Usage bar
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 6
-                    radius: 3
-                    color: Root.Colors.surface1
-
-                    Rectangle {
-                        width: parent.width * root.gpuUsage / 100
-                        height: parent.height
-                        radius: parent.radius
-                        color: root.gpuUsage > 85 ? Root.Colors.red
-                             : root.gpuUsage > 60 ? Root.Colors.yellow
-                             : Root.Colors.mauve
-                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
-                }
-
-                // GPU name kecil
-                Text {
-                    text: root.gpuName
-                    font.pixelSize: 10
-                    color: Root.Colors.surface2
-                    elide: Text.ElideRight
-                    Layout.fillWidth: true
-                }
-            }
-        }
-
-        // ── RAM card ──────────────────────────────────────────────────────
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 52
-            radius: 14
-            color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            ColumnLayout {
-                anchors {
-                    top: parent.top; left: parent.left
-                    right: parent.right; margins: 10
-                }
+                anchors.margins: 10
                 spacing: 4
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    Text {
-                        text: "󰍛  RAM"
-                        font.pixelSize: 11; font.weight: Font.Medium
-                        color: Root.Colors.green
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: root.ramText
-                        font.pixelSize: 11
-                        color: Root.Colors.subtext
-                    }
-                    Text {
-                        text: "  " + root.ramUsage + "%"
-                        font.pixelSize: 11; font.weight: Font.SemiBold
-                        color: Root.Colors.green
-                    }
+                StatRow {
+                    label: "CPU"; icon: "󰻠"
+                    tempColor: root.cpuTemp > 85 ? Root.Colors.red
+                              : root.cpuTemp > 70 ? Root.Colors.yellow
+                              : Root.Colors.blue
+                    tempText: root.cpuTemp + "°C"
+                    pct: root.cpuUsage
                 }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 5; radius: 2.5
-                    color: Root.Colors.surface1
-                    Rectangle {
-                        width: parent.width * root.ramUsage / 100
-                        height: parent.height; radius: parent.radius
-                        color: root.ramUsage > 85 ? Root.Colors.red
-                             : root.ramUsage > 65 ? Root.Colors.yellow
-                             : Root.Colors.green
-                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
+                StatRow {
+                    label: "GPU"; icon: "󰾲"
+                    accent: Root.Colors.mauve
+                    tempColor: root.gpuTemp > 75 ? Root.Colors.red
+                              : root.gpuTemp > 60 ? Root.Colors.yellow
+                              : Root.Colors.mauve
+                    tempText: root.gpuTemp + "°C"
+                    pct: root.gpuUsage
                 }
-            }
-        }
-
-        // ── Disk card ─────────────────────────────────────────────────────
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 52
-            radius: 14
-            color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            ColumnLayout {
-                anchors {
-                    top: parent.top; left: parent.left
-                    right: parent.right; margins: 10
+                StatRow {
+                    label: "RAM"; icon: "󰍛"
+                    accent: Root.Colors.green
+                    tempColor: root.ramUsage > 85 ? Root.Colors.red
+                              : root.ramUsage > 65 ? Root.Colors.yellow
+                              : Root.Colors.green
+                    pct: root.ramUsage
+                    subText: root.ramText
                 }
-                spacing: 4
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    Text {
-                        text: "󰋊  Disk"
-                        font.pixelSize: 11; font.weight: Font.Medium
-                        color: Root.Colors.yellow
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: root.diskText
-                        font.pixelSize: 11
-                        color: Root.Colors.subtext
-                    }
-                    Text {
-                        text: "  " + root.diskUsage + "%"
-                        font.pixelSize: 11; font.weight: Font.SemiBold
-                        color: Root.Colors.yellow
-                    }
-                }
-
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 5; radius: 2.5
-                    color: Root.Colors.surface1
-                    Rectangle {
-                        width: parent.width * root.diskUsage / 100
-                        height: parent.height; radius: parent.radius
-                        color: root.diskUsage > 90 ? Root.Colors.red
-                             : root.diskUsage > 75 ? Root.Colors.peach
-                             : Root.Colors.yellow
-                        Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                        Behavior on color { ColorAnimation { duration: 300 } }
-                    }
+                StatRow {
+                    label: "Disk"; icon: "󰋊"
+                    accent: Root.Colors.yellow
+                    tempColor: root.diskUsage > 90 ? Root.Colors.red
+                              : root.diskUsage > 75 ? Root.Colors.peach
+                              : Root.Colors.yellow
+                    pct: root.diskUsage
+                    subText: root.diskText
                 }
             }
         }
 
-        // ── Network speed card ────────────────────────────────────────────
+        // ── Weather card — data dari WeatherService (always-on singleton) ─
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 44
-            radius: 14
-            color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 12; anchors.rightMargin: 12
-                spacing: 8
-
-                Text {
-                    text: "󰤨"
-                    font.pixelSize: 14
-                    color: Root.Colors.blue
-                }
-                Text {
-                    text: "Jaringan"
-                    font.pixelSize: 11; font.weight: Font.Medium
-                    color: Root.Colors.blue
-                }
-                Item { Layout.fillWidth: true }
-                Text {
-                    text: "↓ " + root.netRx
-                    font.pixelSize: 11; font.weight: Font.SemiBold
-                    color: Root.Colors.green
-                    Behavior on color { ColorAnimation { duration: 200 } }
-                }
-                Text {
-                    text: "  ↑ " + root.netTx
-                    font.pixelSize: 11; font.weight: Font.SemiBold
-                    color: Root.Colors.peach
-                    Behavior on color { ColorAnimation { duration: 200 } }
-                }
-            }
-        }
-
-        // ── Weather card ──────────────────────────────────────────────────
-        Rectangle {
-            Layout.fillWidth: true
-            Layout.fillHeight: true          // ambil sisa ruang di bawah GPU
-            Layout.minimumHeight: 130        // cukup kecil agar tak melebihi dashboard
+            Layout.fillHeight: true
+            Layout.minimumHeight: 130
             radius: 14
             color: Root.Colors.base
             clip: true
             Behavior on color { ColorAnimation { duration: 200 } }
 
-            // Isi bisa discroll kalau kartu lebih pendek dari konten cuaca,
-            // sehingga tidak pernah meluber melewati batas dashboard.
             Flickable {
                 id: weatherFlick
                 anchors.fill: parent
@@ -789,186 +431,183 @@ Item {
                     width: weatherFlick.width
                     spacing: 10
 
-                // Header
-                RowLayout {
-                    Layout.fillWidth: true
-                    Text {
-                        text: "󰖐  Cuaca"
-                        font.pixelSize: 14
-                        font.weight: Font.Medium
-                        color: Root.Colors.peach
-                    }
-                    Item { Layout.fillWidth: true }
-                    Text {
-                        text: root.weatherCity
-                        font.pixelSize: 12
-                        color: Root.Colors.subtext
-                        elide: Text.ElideRight
-                    }
-                }
-
-                // Suhu besar + ikon kondisi
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 12
-
-                    Text {
-                        text: root.weatherIcon
-                        font.family: "CaskaydiaCove Nerd Font"
-                        font.pixelSize: 36
-                        color: Root.Colors.peach
-                        Layout.preferredWidth: 44
-                        horizontalAlignment: Text.AlignHCenter
-                    }
-
-                    ColumnLayout {
-                        spacing: 2
+                    // Header
+                    RowLayout {
+                        Layout.fillWidth: true
                         Text {
-                            text: root.weatherTemp !== "" ? root.weatherTemp + "°C" : "—"
-                            font.pixelSize: 30
-                            font.weight: Font.Bold
-                            color: Root.Colors.text
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            text: "󰖐  Cuaca"
+                            font.pixelSize: 14
+                            font.weight: Font.Medium
+                            color: Root.Colors.peach
+                        }
+                        Item { Layout.fillWidth: true }
+                        // Loading indicator
+                        Text {
+                            visible: Root.WeatherService.loading
+                            text: "memuat…"
+                            font.pixelSize: 11
+                            color: Root.Colors.subtext
                         }
                         Text {
-                            text: root.weatherDesc
-                            font.pixelSize: 13
+                            visible: !Root.WeatherService.loading
+                            text: Root.WeatherService.city
+                            font.pixelSize: 12
                             color: Root.Colors.subtext
                             elide: Text.ElideRight
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
+                    // Suhu besar + ikon kondisi
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
 
-                    // Feels like + humidity + wind
-                    ColumnLayout {
-                        spacing: 4
                         Text {
-                            text: "Terasa " + (root.weatherFeels !== "" ? root.weatherFeels + "°C" : "—")
-                            font.pixelSize: 12
-                            color: Root.Colors.subtext
-                            horizontalAlignment: Text.AlignRight
-                            Layout.alignment: Qt.AlignRight
+                            text: Root.WeatherService.icon
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 36
+                            color: Root.Colors.peach
+                            Layout.preferredWidth: 44
+                            horizontalAlignment: Text.AlignHCenter
                         }
-                        Text {
-                            text: "󰖌 " + (root.weatherHumidity !== "" ? root.weatherHumidity + "%" : "—")
-                            font.pixelSize: 12
-                            color: Root.Colors.subtext
-                            horizontalAlignment: Text.AlignRight
-                            Layout.alignment: Qt.AlignRight
+
+                        ColumnLayout {
+                            spacing: 2
+                            Text {
+                                text: Root.WeatherService.hasData ? Root.WeatherService.temp + "°C" : "—"
+                                font.pixelSize: 30
+                                font.weight: Font.Bold
+                                color: Root.Colors.text
+                                Behavior on color { ColorAnimation { duration: 200 } }
+                            }
+                            Text {
+                                text: Root.WeatherService.desc
+                                font.pixelSize: 13
+                                color: Root.Colors.subtext
+                                elide: Text.ElideRight
+                            }
                         }
-                        Text {
-                            text: "󰞄 " + (root.weatherWind !== "" ? root.weatherWind + " km/h" : "—")
-                            font.pixelSize: 12
-                            color: Root.Colors.subtext
-                            horizontalAlignment: Text.AlignRight
-                            Layout.alignment: Qt.AlignRight
+
+                        Item { Layout.fillWidth: true }
+
+                        ColumnLayout {
+                            spacing: 4
+                            Text {
+                                text: "Terasa " + (Root.WeatherService.hasData ? Root.WeatherService.feels + "°C" : "—")
+                                font.pixelSize: 12
+                                color: Root.Colors.subtext
+                                horizontalAlignment: Text.AlignRight
+                                Layout.alignment: Qt.AlignRight
+                            }
+                            Text {
+                                text: "󰖌 " + (Root.WeatherService.hasData ? Root.WeatherService.humidity + "%" : "—")
+                                font.pixelSize: 12
+                                color: Root.Colors.subtext
+                                horizontalAlignment: Text.AlignRight
+                                Layout.alignment: Qt.AlignRight
+                            }
+                            Text {
+                                text: "󰞄 " + (Root.WeatherService.hasData ? Root.WeatherService.wind + " km/h" : "—")
+                                font.pixelSize: 12
+                                color: Root.Colors.subtext
+                                horizontalAlignment: Text.AlignRight
+                                Layout.alignment: Qt.AlignRight
+                            }
                         }
                     }
-                }
 
-                // Last updated
-                Text {
-                    text: root.weatherUpdated !== "" ? "Diperbarui: " + root.weatherUpdated : ""
-                    font.pixelSize: 10
-                    color: Root.Colors.surface2
-                    visible: root.weatherUpdated !== ""
-                }
+                    // Last updated
+                    Text {
+                        visible: Root.WeatherService.updated !== ""
+                        text: "Diperbarui: " + Root.WeatherService.updated
+                        font.pixelSize: 10
+                        color: Root.Colors.surface2
+                    }
 
-                // Spacer agar forecast duduk di bawah kartu
-                Item { Layout.fillHeight: true }
+                    // Garis pemisah
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 1
+                        color: Root.Colors.surface1
+                        visible: Root.WeatherService.forecast.length > 0
+                    }
 
-                // ── Garis pemisah ─────────────────────────────────────
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Root.Colors.surface1
-                    visible: root.weatherForecast.length > 0
-                }
+                    // 3-hari forecast
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 0
+                        visible: Root.WeatherService.forecast.length > 0
 
-                // ── 3-hari forecast ───────────────────────────────────
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 0
-                    visible: root.weatherForecast.length > 0
+                        Repeater {
+                            model: Root.WeatherService.forecast
 
-                    Repeater {
-                        model: root.weatherForecast
+                            delegate: Rectangle {
+                                required property var modelData
+                                required property int index
 
-                        delegate: Rectangle {
-                            required property var modelData
-                            required property int index
+                                Layout.fillWidth: true
+                                height: forecastCol.implicitHeight + 14
+                                radius: 10
+                                color: index === 0 ? Root.Colors.surface0 : "transparent"
+                                Behavior on color { ColorAnimation { duration: 200 } }
 
-                            Layout.fillWidth: true
-                            height: forecastCol.implicitHeight + 14
-                            radius: 10
-                            color: index === 0 ? Root.Colors.surface0 : "transparent"
-                            Behavior on color { ColorAnimation { duration: 200 } }
-
-                            // Pemisah antar hari (kecuali pertama)
-                            Rectangle {
-                                visible: index > 0
-                                anchors.left: parent.left
-                                anchors.top: parent.top
-                                anchors.bottom: parent.bottom
-                                anchors.topMargin: 8
-                                anchors.bottomMargin: 8
-                                width: 1
-                                color: Root.Colors.surface1
-                            }
-
-                            ColumnLayout {
-                                id: forecastCol
-                                anchors.centerIn: parent
-                                spacing: 3
-
-                                // Nama hari
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: modelData.dayName
-                                    font.pixelSize: 11
-                                    font.weight: index === 0 ? Font.SemiBold : Font.Normal
-                                    color: index === 0 ? Root.Colors.peach : Root.Colors.subtext
+                                Rectangle {
+                                    visible: index > 0
+                                    anchors.left: parent.left
+                                    anchors.top: parent.top
+                                    anchors.bottom: parent.bottom
+                                    anchors.topMargin: 8
+                                    anchors.bottomMargin: 8
+                                    width: 1
+                                    color: Root.Colors.surface1
                                 }
 
-                                // Ikon cuaca
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: modelData.icon
-                                    font.family: "CaskaydiaCove Nerd Font"
-                                    font.pixelSize: 24
-                                    color: Root.Colors.text
-                                }
-
-                                // Max / Min
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: modelData.maxC + "°"
-                                    font.pixelSize: 15
-                                    font.weight: Font.SemiBold
-                                    color: Root.Colors.text
-                                }
-                                Text {
-                                    Layout.alignment: Qt.AlignHCenter
-                                    text: modelData.minC + "°"
-                                    font.pixelSize: 12
-                                    color: Root.Colors.subtext
-                                }
-
-                                // Chance of rain
-                                RowLayout {
-                                    Layout.alignment: Qt.AlignHCenter
+                                ColumnLayout {
+                                    id: forecastCol
+                                    anchors.centerIn: parent
                                     spacing: 3
-                                    visible: parseInt(modelData.rain) > 0
+
                                     Text {
-                                        text: "󰖌"
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: modelData.dayName
                                         font.pixelSize: 11
-                                        color: Root.Colors.blue
+                                        font.weight: index === 0 ? Font.SemiBold : Font.Normal
+                                        color: index === 0 ? Root.Colors.peach : Root.Colors.subtext
                                     }
                                     Text {
-                                        text: modelData.rain + "%"
-                                        font.pixelSize: 11
-                                        color: Root.Colors.blue
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: modelData.icon
+                                        font.family: "CaskaydiaCove Nerd Font"
+                                        font.pixelSize: 24
+                                        color: Root.Colors.text
+                                    }
+                                    Text {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: modelData.maxC + "°"
+                                        font.pixelSize: 15
+                                        font.weight: Font.SemiBold
+                                        color: Root.Colors.text
+                                    }
+                                    Text {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        text: modelData.minC + "°"
+                                        font.pixelSize: 12
+                                        color: Root.Colors.subtext
+                                    }
+                                    RowLayout {
+                                        Layout.alignment: Qt.AlignHCenter
+                                        spacing: 3
+                                        visible: parseInt(modelData.rain) > 0
+                                        Text {
+                                            text: "󰖌"
+                                            font.pixelSize: 11
+                                            color: Root.Colors.blue
+                                        }
+                                        Text {
+                                            text: modelData.rain + "%"
+                                            font.pixelSize: 11
+                                            color: Root.Colors.blue
+                                        }
                                     }
                                 }
                             }
@@ -977,10 +616,7 @@ Item {
                 }
             }
         }
-        }
 
-        // Spacer kecil di bawah agar tidak mepet pinggir
         Item { Layout.preferredHeight: 0 }
     }
-
 }

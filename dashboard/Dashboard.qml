@@ -4,6 +4,7 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
+import Quickshell.Services.Pipewire
 import Quickshell.Io
 import "../" as Root
 import "./" as Dash
@@ -263,19 +264,6 @@ PanelWindow {
                 }
             }
 
-            // Catatan / Todo
-            Rectangle {
-                width: parent.width
-                height: Math.max(todoWidget.implicitHeight, 120) + 20
-                radius: 14; color: Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 200 } }
-
-                Dash.TodoWidget {
-                    id: todoWidget
-                    anchors.fill: parent
-                    anchors.margins: 10
-                }
-            }
         }
 
         // ── Kolom kanan — Media full height ──────────────────────────────
@@ -291,6 +279,7 @@ PanelWindow {
                 id: mediaCard
                 anchors.fill: parent
                 radius: 14; color: Root.Colors.base
+                clip: true
                 Behavior on color { ColorAnimation { duration: 200 } }
 
                 property var player: {
@@ -303,12 +292,50 @@ PanelWindow {
                 }
                 property bool hasPlayer: player !== null
 
+                property var defaultSink: Pipewire.defaultAudioSink
+                property bool playerVolume: mediaCard.player?.volumeSupported ?? false
+
+                function fmt(sec) {
+                    sec = Math.floor(sec || 0)
+                    const m = Math.floor(sec / 60)
+                    const s = sec % 60
+                    return m + ":" + (s < 10 ? "0" : "") + s
+                }
+
                 Timer {
                     interval: 1000
                     running: mediaCard.hasPlayer &&
                              mediaCard.player?.playbackState === MprisPlaybackState.Playing
                     repeat: true
                     onTriggered: mediaCard.player?.positionChanged()
+                }
+
+                // ── Background blur dari album art ─────────────────────────
+                Image {
+                    id: mediaArtBg
+                    anchors.fill: parent
+                    source: mediaCard.hasPlayer ? (mediaCard.player?.trackArtUrl ?? "") : ""
+                    sourceSize.width: 160
+                    sourceSize.height: 160
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    visible: mediaArtBg.status === Image.Ready && mediaCard.hasPlayer
+                    opacity: 0.5
+                    layer.enabled: visible
+                    layer.effect: MultiEffect {
+                        blurEnabled: true
+                        blur: 1.0
+                        saturation: 0.3
+                        brightness: -0.2
+                    }
+                }
+
+                // Overlay agar teks tetap terbaca
+                Rectangle {
+                    anchors.fill: parent
+                    color: Root.Colors.base
+                    opacity: mediaCard.hasPlayer ? 0.72 : 1
+                    Behavior on opacity { NumberAnimation { duration: 200 } }
                 }
 
                 // ── Tidak ada player ──────────────────────────────────────
@@ -334,10 +361,24 @@ PanelWindow {
                     spacing: 8
                     visible: mediaCard.hasPlayer
 
-                    // CavaRing — mengambil sisa tinggi setelah info + kontrol
+                    // Nama aplikasi sumber
+                    Item {
+                        width: parent.width; height: 16
+                        Text {
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            text: (mediaCard.player?.identity
+                                   || mediaCard.player?.desktopEntry || "")
+                            color: Root.Colors.subtext; font.pixelSize: 10
+                            font.weight: Font.Medium
+                            elide: Text.ElideRight
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+                    }
+
+                    // CavaRing — visualizer, ambil sisa tinggi
                     Dash.CavaRingDank {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        property int _avail: mediaCard.height - 52 - 14 - 44 - 24 - 40
+                        property int _avail: mediaCard.height - 16 - 44 - 24 - 44 - 34 - 24 - 40
                         size: Math.max(80, Math.min(_avail, parent.width - 16))
                         coverSource: mediaCard.player?.trackArtUrl ?? ""
                     }
@@ -371,36 +412,54 @@ PanelWindow {
                         }
                     }
 
-                    // Seek bar
+                    // Seek bar + waktu berjalan (1:32 / 4:23)
                     Item {
-                        width: parent.width; height: 14
+                        width: parent.width; height: 22
 
-                        Rectangle {
-                            id: seekBar
-                            anchors.verticalCenter: parent.verticalCenter
-                            width: parent.width; height: 4; radius: 2
-                            color: Root.Colors.surface1
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: 8
 
-                            readonly property real dur: mediaCard.player?.length   ?? 0
-                            readonly property real pos: mediaCard.player?.position ?? 0
+                            Text {
+                                text: mediaCard.fmt(mediaCard.player?.position ?? 0)
+                                color: Root.Colors.text; font.pixelSize: 10
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
 
                             Rectangle {
-                                width: seekBar.dur > 0
-                                       ? parent.width * (seekBar.pos / seekBar.dur) : 0
-                                height: parent.height; radius: parent.radius
-                                color: Root.Colors.blue
-                                Behavior on width {
-                                    NumberAnimation { duration: 950; easing.type: Easing.Linear }
+                                id: seekBar
+                                Layout.fillWidth: true
+                                Layout.alignment: Qt.AlignVCenter
+                                height: 4; radius: 2
+                                color: Root.Colors.surface1
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                readonly property real dur: mediaCard.player?.length   ?? 0
+                                readonly property real pos: mediaCard.player?.position ?? 0
+
+                                Rectangle {
+                                    width: seekBar.dur > 0
+                                           ? parent.width * (seekBar.pos / seekBar.dur) : 0
+                                    height: parent.height; radius: parent.radius
+                                    color: Root.Colors.blue
+                                    Behavior on width {
+                                        NumberAnimation { duration: 950; easing.type: Easing.Linear }
+                                    }
+                                }
+                                MouseArea {
+                                    anchors.fill: parent; cursorShape: Qt.PointingHandCursor
+                                    onClicked: mouse => {
+                                        const p = mediaCard.player
+                                        if (p?.canSeek && seekBar.dur > 0)
+                                            p.position = (mouse.x / seekBar.width) * seekBar.dur
+                                    }
                                 }
                             }
-                            MouseArea {
-                                anchors.fill: parent; cursorShape: Qt.PointingHandCursor
-                                onClicked: mouse => {
-                                    const p = mediaCard.player
-                                    if (p?.canSeek && seekBar.dur > 0)
-                                        p.position = (mouse.x / seekBar.width) * seekBar.dur
-                                }
+
+                            Text {
+                                text: mediaCard.fmt(mediaCard.player?.length ?? 0)
+                                color: Root.Colors.subtext; font.pixelSize: 10
+                                Behavior on color { ColorAnimation { duration: 150 } }
                             }
                         }
                     }
@@ -520,6 +579,27 @@ PanelWindow {
                                     const p = mediaCard.player; if (p?.canGoNext) p.next()
                                 }
                             }
+                        }
+                    }
+
+                    // Volume slider
+                    Dash.SliderRow {
+                        width: parent.width
+                        icon: {
+                            if (mediaCard.playerVolume) return "󰕾"
+                            const s = mediaCard.defaultSink?.audio
+                            if (!s) return "󰝟"
+                            if (s.muted || s.volume <= 0) return "󰝟"
+                            return s.volume < 0.5 ? "󰕿" : "󰕾"
+                        }
+                        value: mediaCard.playerVolume
+                               ? (mediaCard.player?.volume ?? 0)
+                               : (mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0)
+                        onMoved: v => {
+                            if (mediaCard.playerVolume && mediaCard.player)
+                                mediaCard.player.volume = v
+                            else if (mediaCard.defaultSink?.audio)
+                                mediaCard.defaultSink.audio.volume = v
                         }
                     }
                 }

@@ -729,6 +729,7 @@ Scope {
                                 text: root.quotes[0]
                                 font.pixelSize: 14
                                 font.italic: true
+                                font.bold: true
                                 color: Root.Colors.text
                                 opacity: 1
                                 Behavior on opacity { NumberAnimation { duration: 400 } }

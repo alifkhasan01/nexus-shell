@@ -4,8 +4,8 @@ import Quickshell.Io
 
 // Palette dinamis — ubah `currentTheme` untuk ganti tema seluruh shell.
 // Tersedia dua tema:
-//   "light" – Catppuccin Latte
-//   "dark"  – Catppuccin Mocha (default)
+//   "light" – Ayu Light
+//   "dark"  – Ayu Dark (default)
 QtObject {
     id: root
 
@@ -49,40 +49,40 @@ QtObject {
         onRunningChanged: if (!running) saveProc.running = false
     }
 
-    // ── Palette Latte (Light) ─────────────────────────────────────────────
+    // ── Palette Ayu Light ─────────────────────────────────────────────────
     readonly property var _latte: ({
-        base:     "#eff1f5",
-        mantle:   "#e6e9ef",
-        surface0: "#ccd0da",
-        surface1: "#bcc0cc",
-        surface2: "#acb0be",
-        text:     "#4c4f69",
-        subtext:  "#6c6f85",
-        blue:     "#1e66f5",
-        lavender: "#7287fd",
-        green:    "#40a02b",
-        yellow:   "#df8e1d",
-        peach:    "#fe640b",
-        red:      "#d20f39",
-        mauve:    "#8839ef"
+        base:     "#fafafa",
+        mantle:   "#f3f4f5",
+        surface0: "#e7e8e9",
+        surface1: "#d9dadb",
+        surface2: "#abb0b6",
+        text:     "#575f66",
+        subtext:  "#8a9199",
+        blue:     "#36a3d9",
+        lavender: "#a37acc",
+        green:    "#86b300",
+        yellow:   "#f29718",
+        peach:    "#fa8d3e",
+        red:      "#f07171",
+        mauve:    "#a37acc"
     })
 
-    // ── Palette Mocha (Dark) ──────────────────────────────────────────────
+    // ── Palette Ayu Dark ──────────────────────────────────────────────────
     readonly property var _mocha: ({
-        base:     "#1e1e2e",
-        mantle:   "#181825",
-        surface0: "#313244",
-        surface1: "#45475a",
-        surface2: "#585b70",
-        text:     "#cdd6f4",
-        subtext:  "#a6adc8",
-        blue:     "#89b4fa",
-        lavender: "#b4befe",
-        green:    "#a6e3a1",
-        yellow:   "#f9e2af",
-        peach:    "#fab387",
-        red:      "#f38ba8",
-        mauve:    "#cba6f7"
+        base:     "#0d1017",
+        mantle:   "#0a0e14",
+        surface0: "#131721",
+        surface1: "#1c2333",
+        surface2: "#2d3347",
+        text:     "#bfbdb6",
+        subtext:  "#707a8c",
+        blue:     "#59c2ff",
+        lavender: "#d2a6ff",
+        green:    "#aad94c",
+        yellow:   "#e6b450",
+        peach:    "#ff8f40",
+        red:      "#f07178",
+        mauve:    "#d2a6ff"
     })
 
     readonly property var _p: currentTheme === "light" ? _latte : _mocha

@@ -28,6 +28,7 @@ PanelWindow {
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
     property bool notifPanelOpen: false
     property bool clipboardPanelOpen: false
+    property bool calendarPanelOpen: false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -40,6 +41,7 @@ PanelWindow {
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
     onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
+    onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
     Timer { id: powerCloseTimer;     interval: 300; repeat: false }
@@ -49,6 +51,7 @@ PanelWindow {
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
+    Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
 
     anchors { top: true; left: true; right: true }
     margins.top: 2
@@ -88,6 +91,9 @@ PanelWindow {
                     spacing: 6
                     MenuButton {}
                     Workspaces {}
+                    ActiveWindow {
+                        maxWidth: 200
+                    }
                 }
             }
 
@@ -100,14 +106,11 @@ PanelWindow {
                     anchors.centerIn: parent
                     spacing: 8
 
-                    // Judul window aktif
-                    ActiveWindow {
-                        maxWidth: 200
-                    }
-
                     Clock {
+                        // Left click → kalender
                         onClicked: {
-                            bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
+                            bar.calendarPanelOpen = !bar.calendarPanelOpen
+                            bar.shellState.dashboardOpen = false
                             bar.connectPanelOpen = false
                             bar.volumePanelOpen = false
                             bar.batteryPanelOpen = false
@@ -115,7 +118,17 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
                         }
-                        onRightClicked: controlCenterProcess.running = true
+                        // Right click → dashboard
+                        onRightClicked: {
+                            bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
+                            bar.calendarPanelOpen = false
+                            bar.connectPanelOpen = false
+                            bar.volumePanelOpen = false
+                            bar.batteryPanelOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.clipboardPanelOpen = false
+                        }
                     }
 
                     // Stopwatch (hanya tampil saat aktif)
@@ -147,6 +160,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
+                            bar.calendarPanelOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -162,6 +176,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
+                            bar.calendarPanelOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
                     }
@@ -201,6 +216,7 @@ PanelWindow {
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.notifPanelOpen = false
+                                bar.calendarPanelOpen = false
                             }
                         }
                     }
@@ -240,6 +256,7 @@ PanelWindow {
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.clipboardPanelOpen = false
+                                bar.calendarPanelOpen = false
                             }
                         }
                     }
@@ -283,6 +300,7 @@ PanelWindow {
                                     bar.shellState.dashboardOpen = false
                                     bar.notifPanelOpen = false
                                     bar.clipboardPanelOpen = false
+                                    bar.calendarPanelOpen = false
                                 }
                             }
                         }
@@ -298,6 +316,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
+                            bar.calendarPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -315,6 +334,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
+                            bar.calendarPanelOpen = false
                         }
                     }
                     PowerButton {
@@ -327,6 +347,7 @@ PanelWindow {
                             bar.shellState.dashboardOpen = false
                             bar.notifPanelOpen = false
                             bar.clipboardPanelOpen = false
+                            bar.calendarPanelOpen = false
                         }
                     }
                 }
@@ -376,6 +397,17 @@ PanelWindow {
             onOpenChanged: {
                 if (!open) dashCloseTimer.restart()
             }
+        }
+    }
+
+    // ── Calendar Panel ────────────────────────────────────────────────────
+    LazyLoader {
+        id: calendarLoader
+        active: bar.calendarPanelOpen || calendarCloseTimer.running
+
+        CalendarPanel {
+            open: bar.calendarPanelOpen
+            onCloseRequested: bar.calendarPanelOpen = false
         }
     }
 

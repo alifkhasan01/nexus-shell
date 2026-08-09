@@ -10,6 +10,10 @@ import "../" as Root
 Item {
     id: root
 
+    // Kalau false, header "Catatan" disembunyikan (dipakai di ClipboardPanel
+    // yang sudah punya tab bar sendiri).
+    property bool showHeader: true
+
     // ── State ──────────────────────────────────────────────────────────────
     property var items: []    // [{text, done}]
     property string _draft: ""
@@ -83,11 +87,14 @@ Item {
     // ── UI ─────────────────────────────────────────────────────────────────
     ColumnLayout {
         anchors.fill: parent
+        anchors.topMargin: 0
         spacing: 6
 
         // ── Header ─────────────────────────────────────────────────────────
         RowLayout {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
+            visible: root.showHeader
 
             Text {
                 text: "󰸕  Catatan"
@@ -121,6 +128,7 @@ Item {
         // ── Input tambah item baru ──────────────────────────────────────────
         Rectangle {
             Layout.fillWidth: true
+            Layout.alignment: Qt.AlignTop
             height: 32; radius: 8
             color: Root.Colors.surface0
             border.color: todoInput.activeFocus ? Root.Colors.lavender : Root.Colors.surface1
@@ -163,7 +171,7 @@ Item {
         Item {
             visible: root.items.length === 0
             Layout.fillWidth: true
-            height: 36
+            Layout.fillHeight: true
 
             Text {
                 anchors.centerIn: parent

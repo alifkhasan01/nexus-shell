@@ -2,48 +2,48 @@ import QtQuick
 import Quickshell.Hyprland
 import "../../" as Root
 
-// Widget judul window aktif — tampil di antara Clock dan workspace
-// Update otomatis lewat Hyprland.focusedClient
+// Widget judul window aktif — tampil di tengah bar.
+// Quickshell v0.3.0+: Hyprland.activeToplevel langsung bertipe HyprlandToplevel.
 Item {
     id: root
 
-    implicitWidth: titleText.implicitWidth + 20
+    implicitWidth:  visible ? (row.implicitWidth + 24) : 0
     implicitHeight: 30
 
-    // Judul dipotong kalau terlalu panjang
     property int maxWidth: 280
 
-    readonly property string _title: {
-        const c = Hyprland.focusedClient
-        if (!c) return ""
-        // Lebih prefer initialTitle kalau ada, fallback ke title
-        return c.title ?? ""
-    }
+    // Langsung akses HyprlandToplevel — tidak perlu resolve via attached object
+    readonly property var _tl: Hyprland.activeToplevel
 
+    readonly property string _title: _tl ? (_tl.title ?? "") : ""
+
+    // class ada di lastIpcObject (tidak ada dedicated .className di v0.3.0)
     readonly property string _class: {
-        const c = Hyprland.focusedClient
-        if (!c) return ""
-        return c.className ?? ""
+        if (!_tl) return ""
+        const obj = _tl.lastIpcObject
+        return (obj && obj["class"]) ? obj["class"] : ""
     }
 
-    // Ikon per app class — fallback ke generic window icon
     function _iconFor(cls) {
         const c = (cls || "").toLowerCase()
-        if (c.includes("firefox"))              return "󰈹"
-        if (c.includes("chrome") || c.includes("chromium")) return ""
-        if (c.includes("code") || c.includes("vscodium"))   return "󰨞"
-        if (c.includes("kitty") || c.includes("alacritty") || c.includes("wezterm") || c.includes("foot")) return ""
-        if (c.includes("thunar") || c.includes("nautilus") || c.includes("dolphin")) return "󰉋"
-        if (c.includes("spotify"))              return "󰓇"
-        if (c.includes("discord"))              return "󰙯"
-        if (c.includes("telegram"))             return "󰔁"
-        if (c.includes("mpv"))                  return "󰐈"
-        if (c.includes("vlc"))                  return "󰐽"
-        if (c.includes("gimp"))                 return "󰽉"
-        if (c.includes("obs"))                  return "󱜠"
-        if (c.includes("steam"))                return "󰓓"
-        if (c.includes("libreoffice"))          return "󰏫"
-        if (c.includes("nvim") || c.includes("vim")) return ""
+        if (c.includes("firefox"))                                   return "󰈹"
+        if (c.includes("chrome") || c.includes("chromium"))         return ""
+        if (c.includes("code") || c.includes("vscodium") ||
+            c.includes("kiro"))                                      return "󰨞"
+        if (c.includes("kitty") || c.includes("alacritty") ||
+            c.includes("wezterm") || c.includes("foot"))            return ""
+        if (c.includes("thunar") || c.includes("nautilus") ||
+            c.includes("dolphin"))                                   return "󰉋"
+        if (c.includes("spotify"))                                   return "󰓇"
+        if (c.includes("discord"))                                   return "󰙯"
+        if (c.includes("telegram"))                                  return "󰔁"
+        if (c.includes("mpv"))                                       return "󰐈"
+        if (c.includes("vlc"))                                       return "󰐽"
+        if (c.includes("gimp"))                                      return "󰽉"
+        if (c.includes("obs"))                                       return "󱜠"
+        if (c.includes("steam"))                                     return "󰓓"
+        if (c.includes("libreoffice"))                               return "󰏫"
+        if (c.includes("nvim") || c.includes("vim"))                return ""
         return "󰖲"
     }
 
@@ -58,6 +58,7 @@ Item {
     }
 
     Row {
+        id: row
         anchors.centerIn: parent
         spacing: 6
 

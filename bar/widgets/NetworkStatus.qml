@@ -23,6 +23,7 @@ Item {
 
     readonly property string iconText: {
         if (connType === "ethernet") return "󰈀"
+        if (!wifiEnabled) return "󰤮"
         if (connType === "wifi") {
             if (wifiStrength >= 75) return "󰤨"
             if (wifiStrength >= 50) return "󰤥"
@@ -67,18 +68,29 @@ Item {
     }
 
     // Toggle wifi on/off langsung dari bar (left click)
-    property bool wifiEnabled: connType !== "none"
+    property bool wifiEnabled: true   // state radio wifi — di-sync saat poll
 
     Process {
         id: wifiToggleProc
         // command diisi saat dipanggil
     }
 
+    Process {
+        id: radioCheckProc
+        command: ["sh", "-c", "nmcli radio wifi"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.wifiEnabled = text.trim() === "enabled"
+            }
+        }
+    }
+
     function doToggleWifi() {
         const cmd = wifiEnabled ? "nmcli radio wifi off" : "nmcli radio wifi on"
         wifiToggleProc.command = ["sh", "-c", cmd]
         wifiToggleProc.running = true
-        Qt.callLater(() => pollProc.running = true)
+        // tunggu sebentar lalu re-check radio state + koneksi
+        radioCheckTimer.restart()
     }
 
     Process {
@@ -116,6 +128,13 @@ Item {
     Timer {
         interval: 5000; running: true; repeat: true
         triggeredOnStart: true
-        onTriggered: pollProc.running = true
+        onTriggered: { pollProc.running = true; radioCheckProc.running = true }
+    }
+
+    Timer {
+        id: radioCheckTimer
+        interval: 1200
+        repeat: false
+        onTriggered: { radioCheckProc.running = true; pollProc.running = true }
     }
 }

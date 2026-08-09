@@ -82,7 +82,7 @@ Item {
     // ── Ikon + label ──────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
-        radius: 6
+        radius: 4
         color: batteryMa.containsMouse
                ? Root.Colors.surface1
                : (root.panelOpen ? Root.Colors.surface0 : "transparent")

@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Layouts
-import Quickshell.Services.Pipewire
 import Quickshell.Io
 import "../" as Root
 
@@ -8,60 +7,80 @@ ColumnLayout {
     id: root
     spacing: 10
 
-    // ── Audio sink aktif ──────────────────────────────────────────────────
-    property var defaultSink: Pipewire.defaultAudioSink
-    property var btSink: {
-        const nodes = Pipewire.nodes.values
-        for (let i = 0; i < nodes.length; i++) {
-            const n = nodes[i]
-            if (!n || !n.audio || !n.isSink || n.isStream) continue
-            const pr = n.properties || {}
-            if (pr["device.api"] === "bluez5" || (n.name || "").startsWith("bluez_output."))
-                return n
-        }
-        void Pipewire.defaultAudioSink
-        return null
-    }
-    property var activeSink: (btSink && defaultSink && btSink.id === defaultSink.id)
-                             ? btSink : defaultSink
+    // ── Network ───────────────────────────────────────────────────────────
+    // Menampilkan kecepatan download/upload, sumber data dari SystemInfo
+    // (baca /proc/net/dev tiap 2 detik) — bukan dari widget bar.
+    property string netRx: "0 KB/s"
+    property string netTx: "0 KB/s"
+    property var _netPrev: null      // {rx, tx, time}
 
-    // Daftar semua hardware sink (untuk selector)
-    // (dipindahkan ke VolumePanel.qml)
+    Process {
+        id: netSpeedProc
+        command: ["sh", "-c",
+            "awk '/^[[:space:]]*(e|w)/{gsub(/:/,\"\"); print $1,$2,$10}' /proc/net/dev | head -2"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const now = Date.now()
+                let totalRx = 0, totalTx = 0
+                const lines = text.trim().split("\n").filter(l => l.trim() !== "")
+                lines.forEach(l => {
+                    const p = l.trim().split(/\s+/)
+                    if (p.length >= 3) {
+                        totalRx += parseInt(p[1]) || 0
+                        totalTx += parseInt(p[2]) || 0
+                    }
+                })
 
-    PwObjectTracker {
-        objects: {
-            const arr = []
-            const nodes = Pipewire.nodes.values
-            for (let i = 0; i < nodes.length; i++) {
-                const n = nodes[i]
-                if (n && n.isSink && !n.isStream && n.audio) arr.push(n)
+                if (root._netPrev !== null) {
+                    const dt = (now - root._netPrev.time) / 1000  // detik
+                    if (dt > 0) {
+                        const rx = (totalRx - root._netPrev.rx) / dt
+                        const tx = (totalTx - root._netPrev.tx) / dt
+                        root.netRx = root._fmtSpeed(rx)
+                        root.netTx = root._fmtSpeed(tx)
+                    }
+                }
+                root._netPrev = { rx: totalRx, tx: totalTx, time: now }
             }
-            if (root.defaultSink) arr.push(root.defaultSink)
-            return arr
         }
     }
 
-    // ── Sound ─────────────────────────────────────────────────────────────
-    SectionLabel { text: "Sound" }
-
-    SliderRow {
-        Layout.fillWidth: true
-        icon: {
-            if (!root.activeSink?.audio || root.activeSink.audio.muted) return "󰸈"
-            const pct = Math.round((root.activeSink.audio.volume ?? 0) * 100)
-            return pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
-        }
-        value: root.activeSink?.audio ? (root.activeSink.audio.volume ?? 0) : 0
-        onMoved: v => { if (root.activeSink?.audio) root.activeSink.audio.volume = v }
+    function _fmtSpeed(bps) {
+        if (bps < 1024)        return Math.round(bps) + " B/s"
+        if (bps < 1048576)     return (bps / 1024).toFixed(1) + " KB/s"
+        return (bps / 1048576).toFixed(1) + " MB/s"
     }
 
-    // Slider BT terpisah — hanya muncul kalau BT bukan default sink
-    SliderRow {
+    Timer {
+        interval: 2000; running: true; repeat: true; triggeredOnStart: true
+        onTriggered: netSpeedProc.running = true
+    }
+
+    SectionLabel { text: "Network" }
+
+    RowLayout {
         Layout.fillWidth: true
-        visible: root.btSink != null && root.btSink.id !== (root.defaultSink?.id ?? -1)
-        icon: "󰋋"
-        value: root.btSink?.audio ? (root.btSink.audio.volume ?? 0) : 0
-        onMoved: v => { if (root.btSink?.audio) root.btSink.audio.volume = v }
+        spacing: 8
+
+        Text {
+            text: "󰤨"
+            font.pixelSize: 16
+            color: Root.Colors.blue
+        }
+
+        Item { Layout.fillWidth: true }
+
+        Text {
+            text: "↓ " + root.netRx
+            font.pixelSize: 11; font.weight: Font.SemiBold
+            color: Root.Colors.green
+        }
+
+        Text {
+            text: "  ↑ " + root.netTx
+            font.pixelSize: 11; font.weight: Font.SemiBold
+            color: Root.Colors.peach
+        }
     }
 
     // ── Display ───────────────────────────────────────────────────────────

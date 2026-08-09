@@ -28,7 +28,7 @@ RowLayout {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Light"
+                text: "Ayu Light"
                 font.pixelSize: 12
                 font.bold: Root.Colors.currentTheme === "light"
                 color: Root.Colors.currentTheme === "light" ? Root.Colors.base : Root.Colors.subtext
@@ -63,7 +63,7 @@ RowLayout {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Dark"
+                text: "Ayu Dark"
                 font.pixelSize: 12
                 font.bold: Root.Colors.currentTheme === "dark"
                 color: Root.Colors.currentTheme === "dark" ? Root.Colors.base : Root.Colors.subtext
