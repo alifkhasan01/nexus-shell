@@ -33,7 +33,7 @@ Item {
     Process {
         id: tailer
         running: false
-        command: ["tail", "-f", "/tmp/qs-cava.out"]
+        command: ["tail", "-F", "/tmp/qs-cava.out"]
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => cava.parse(data)
