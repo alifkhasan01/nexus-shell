@@ -111,7 +111,7 @@ GridLayout {
         }
     }
 
-    // ── wf-recorder toggle ────────────────────────────────────────────────
+    // ── gpu-screen-recorder toggle ────────────────────────────────────────
     // Left click  = desktop audio saja (default)
     // Right click = desktop + mic
     Rectangle {
@@ -129,16 +129,32 @@ GridLayout {
                : (recArea.containsPress ? Root.Colors.blue : Root.Colors.surface0)
         Behavior on color { ColorAnimation { duration: 150 } }
 
+        // Deteksi status recording via pidfile qs_gsr.pid.
+        // Kalau sebelumnya recording=true tapi pidfile hilang = baru saja stop → notif.
         Process {
             id: recCheckProc
             command: ["sh", "-c",
-                "pgrep -x wf-recorder > /dev/null && echo yes || echo no; " +
-                "cat /proc/$(pgrep -x wf-recorder)/cmdline 2>/dev/null | tr '\\0' ' ' | grep -q 'qs_rec_mix' && echo mic || echo nomic"]
+                "PIDFILE=\"/run/user/$(id -u)/qs_gsr.pid\"; " +
+                "PID=$(cat \"$PIDFILE\" 2>/dev/null); " +
+                "if [ -n \"$PID\" ] && kill -0 \"$PID\" 2>/dev/null; then " +
+                "  echo yes; " +
+                "  grep -ql 'default_input' /proc/$PID/cmdline 2>/dev/null && echo mic || echo nomic; " +
+                "else " +
+                "  echo no; echo nomic; " +
+                "fi"]
             stdout: StdioCollector {
                 onStreamFinished: {
                     const lines = text.trim().split("\n")
-                    recorderBtn.recording        = (lines[0] || "").trim() === "yes"
+                    const wasRecording = recorderBtn.recording
+                    const nowRecording = (lines[0] || "").trim() === "yes"
+                    recorderBtn.recording        = nowRecording
                     recorderBtn.recordingWithMic = (lines[1] || "").trim() === "mic"
+                    // Baru saja berhenti → kirim notifikasi
+                    if (wasRecording && !nowRecording && quickTogglesRoot.dashboardRoot) {
+                        quickTogglesRoot.dashboardRoot.notifyRequested(
+                            "media-record", "Recording Tersimpan",
+                            "File disimpan di ~/Videos/Recordings")
+                    }
                 }
             }
         }

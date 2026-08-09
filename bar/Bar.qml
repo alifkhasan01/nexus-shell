@@ -371,45 +371,22 @@ PanelWindow {
         onTriggered: grimProc.running = true
     }
 
-    // wf-recorder — desktop only (left click, default)
+    // gpu-screen-recorder — desktop only (left click, default)
+    // Script fork GSR lalu langsung exit, jadi onRunningChanged tidak dipakai
+    // untuk deteksi stop. Deteksi stop dilakukan via pidfile di recCheckProc.
     Process {
         id: recorderProc
         command: ["sh", "-c",
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
             "bash ~/.config/quickshell/scripts/record.sh desktop-only"]
-        onRunningChanged: {
-            if (!running) {
-                // Script selesai — cek apakah ini stop (wf-recorder sudah tidak jalan)
-                recNotifCheckProc.running = true
-            }
-        }
     }
 
-    // wf-recorder — desktop + mic gabungan (right click)
+    // gpu-screen-recorder — desktop + mic gabungan (right click)
     Process {
         id: recorderMicProc
         command: ["sh", "-c",
             "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
             "bash ~/.config/quickshell/scripts/record.sh both"]
-        onRunningChanged: {
-            if (!running) {
-                recNotifCheckProc.running = true
-            }
-        }
-    }
-
-    // Cek apakah wf-recorder masih jalan setelah script selesai
-    // Kalau tidak jalan = baru saja stop → kirim notif file tersimpan
-    Process {
-        id: recNotifCheckProc
-        command: ["sh", "-c", "pgrep -x wf-recorder > /dev/null && echo running || echo stopped"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                if (text.trim() === "stopped")
-                    bar.sendNotif("media-record", "Recording Tersimpan",
-                        "File disimpan di ~/Videos/Recordings")
-            }
-        }
     }
 
     function takeScreenshot()    { screenshotProc.running = true }

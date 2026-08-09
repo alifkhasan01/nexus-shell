@@ -22,6 +22,9 @@ PanelWindow {
             showPanel = true
             if (root.wallpapers.length === 0)
                 loadConfigProc.running = true
+            else
+                // Panel sudah pernah scan — langsung muat cache untuk wallpaper yang ada
+                root.loadExistingThumbs(root.wallpapers)
         }
     }
 
@@ -46,6 +49,26 @@ PanelWindow {
     // path wallpaper yang sedang di-preview (hover / klik)
     property string previewPath:    ""
     property string currentWallpaperPath: ""  // wallpaper aktif saat ini
+
+    // ── Thumbnail cache (disk) ─────────────────────────────────────────────
+    // Map: origPath (string) → thumbPath (string).
+    // Diisi oleh genThumbsProc. Jika path belum ada di sini, Image load dari
+    // sumber asli sambil thumb di-generate di background.
+    property var thumbCache: ({})
+
+    // Kembalikan URL source terbaik untuk sebuah wallpaper:
+    // thumb dari cache (lebih cepat) → file asli (fallback).
+    function thumbSource(origPath) {
+        const t = root.thumbCache[origPath]
+        return (t && t.length > 0) ? ("file://" + t) : ("file://" + origPath)
+    }
+
+    // Perbarui satu entri cache dan paksa QML model refresh melalui re-assign.
+    function _setCacheEntry(origPath, thumbPath) {
+        const c = root.thumbCache
+        c[origPath] = thumbPath
+        root.thumbCache = c   // trigger propertyChanged → delegate re-evaluate
+    }
 
     readonly property string nf: "CaskaydiaCove Nerd Font"
 
@@ -86,7 +109,7 @@ PanelWindow {
         }
     }
 
-    function _home() { return "/home/youtta" }
+    function _home() { return "/home/xans" }
 
     function saveConfig() {
         const cfg = {
@@ -105,6 +128,41 @@ PanelWindow {
         saveConfigProc.running = true
     }
     Process { id: saveConfigProc }
+
+    // ── Thumbnail cache — generate + load ────────────────────────────────
+    // Jalankan gen-thumbs.sh dengan daftar file dari stdin.
+    // Output per baris: "<thumbPath>|<origPath>"  (thumbPath kosong = gagal)
+    Process {
+        id: genThumbsProc
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const lines = text.trim().split("\n").filter(l => l.length > 0)
+                for (const line of lines) {
+                    const sep = line.indexOf("|")
+                    if (sep < 0) continue
+                    const thumbPath = line.substring(0, sep)
+                    const origPath  = line.substring(sep + 1)
+                    if (origPath.length > 0 && thumbPath.length > 0)
+                        root._setCacheEntry(origPath, thumbPath)
+                }
+            }
+        }
+    }
+
+    // Kirim daftar path ke gen-thumbs.sh. Script otomatis skip file yang
+    // thumb-nya sudah up-to-date (cek mtime), generate hanya yang baru/stale.
+    // Output per baris: "<thumbPath>|<origPath>" → diisi ke thumbCache.
+    function loadExistingThumbs(paths) {
+        if (paths.length === 0) return
+        const scriptPath = "/home/xans/.config/quickshell/scripts/gen-thumbs.sh"
+        const escaped = paths.map(p => p.replace(/'/g, "'\\''")).join("\\n")
+        // Jalankan script — entri yang thumb-nya sudah baru langsung return
+        // tanpa regenerate; entri yang belum ada atau stale akan di-generate.
+        genThumbsProc.command = ["sh", "-c",
+            "printf '" + escaped + "\\n' | bash '" +
+            scriptPath.replace(/'/g, "'\\''") + "'"]
+        genThumbsProc.running = true
+    }
 
     // ── Scan ──────────────────────────────────────────────────────────────
     function scanWallpapers() {
@@ -130,6 +188,9 @@ PanelWindow {
                 root.applyFilter()
                 root.scanning = false
                 root.statusText = lines.length + " wallpaper ditemukan."
+                // Muat / generate thumbnail cache untuk semua wallpaper yang baru di-scan.
+                // Script otomatis skip file yang thumb-nya sudah baru (mtime check).
+                root.loadExistingThumbs(lines)
             }
         }
         onExited: (code) => {
@@ -606,7 +667,7 @@ PanelWindow {
 
                             Image {
                                 anchors.fill: parent
-                                source: "file://" + modelData
+                                source: root.thumbSource(modelData)
                                 fillMode: Image.PreserveAspectCrop
                                 asynchronous: true; cache: true
                                 sourceSize.width:  grid.thumbW * 2

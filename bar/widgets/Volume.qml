@@ -55,7 +55,7 @@ Item {
         font.pixelSize: 14
         Behavior on color { ColorAnimation { duration: 150 } }
         text: {
-            if (root.muted || !root.sink?.audio) return "󰸈"
+            if (root.muted || !root.sink?.audio) return "󰸈 Mute"
             const pct = Math.round(root.volume * 100)
             const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
             return icon + "  " + pct + "%"
