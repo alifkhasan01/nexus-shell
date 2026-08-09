@@ -27,10 +27,14 @@ bar_delimiter = 32
 frame_delimiter = 10
 EOF
 
-# Tulis 1 baris per frame ke OUT, restart otomatis kalau cava crash
+# Tulis 1 baris per frame ke OUT secara atomic (tmp → mv)
+# agar QML tidak membaca baris yang belum selesai ditulis (torn frame).
+TMP="${OUT}.tmp"
 while true; do
     cava -p "$CONF" 2>/dev/null | while IFS= read -r line; do
-        [ -n "$line" ] && printf '%s\n' "$line" > "$OUT"
+        if [ -n "$line" ]; then
+            printf '%s\n' "$line" > "$TMP" && mv -f "$TMP" "$OUT"
+        fi
     done
     sleep 1
 done

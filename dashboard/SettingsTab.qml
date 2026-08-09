@@ -68,14 +68,17 @@ ColumnLayout {
     SectionLabel { text: "Display" }
 
     SliderRow {
+        id: brightSlider
         Layout.fillWidth: true
-        icon: "󰃞"
-        onMoved: v => {
-            setBright.command = ["brightnessctl", "set", Math.round(v * 100) + "%"]
-            setBright.running = true
+        icon: {
+            const pct = value * 100
+            return pct >= 67 ? "󰃞" : (pct >= 34 ? "󰃝" : "󰃜")
         }
+        // Bind ke BrightnessService (satu sumber dengan Bar) — instan bereaksi
+        // terhadap perubahan eksternal (hotkey/controll-center, dll).
+        value: Root.BrightnessService.fraction
 
-        Process { id: setBright }
+        onMoved: v => Root.BrightnessService.setPercent(v)
     }
 
     // ── Theme ─────────────────────────────────────────────────────────────

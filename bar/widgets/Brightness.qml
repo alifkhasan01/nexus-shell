@@ -1,38 +1,17 @@
 import QtQuick
-import Quickshell.Io
 import "../../" as Root
 
-// Kontrol brightness via brightnessctl — baca dan set pakai tool yang sama
-// supaya nilai selalu konsisten.
+// Kontrol brightness via BrightnessService (satu sumber untuk Bar & Dashboard).
+// Service memantau sysfs dengan inotify + fallback polling cepat, jadi setiap
+// perubahan (dari hotkey, slider, dll) langsung tercermin di sini.
 Item {
     id: root
     implicitWidth: label.implicitWidth
     width: implicitWidth
     height: 20
 
-    property int percent: 0
-
-    // ── Baca brightness saat ini via brightnessctl ────────────────────────
-    Process {
-        id: getProcess
-        command: ["brightnessctl", "--device=amdgpu_bl1", "info"]
-        stdout: SplitParser {
-            onRead: data => {
-                // Output brightnessctl: "Current brightness: 2 (0%)"
-                const match = data.match(/\((\d+)%\)/)
-                if (match) root.percent = parseInt(match[1])
-            }
-        }
-    }
-
-    // Poll setiap 2 detik — cukup responsif tanpa membebani CPU
-    Timer {
-        interval: 2000
-        running: true
-        repeat: true
-        triggeredOnStart: true
-        onTriggered: getProcess.running = true
-    }
+    // Nilai selalu dari service — instan saat berubah dari luar
+    readonly property int percent: Root.BrightnessService.percent
 
     // ── Label ─────────────────────────────────────────────────────────────
     Rectangle {
@@ -66,34 +45,20 @@ Item {
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
         onWheel: wheel => {
-            const step = 5
-            const dir = wheel.angleDelta.y > 0 ? 1 : -1
-
-            // Optimistic update
-            root.percent = Math.max(0, Math.min(100, root.percent + dir * step))
-
-            const arg = wheel.angleDelta.y > 0 ? (step + "%+") : (step + "%-")
-            setProcess.command = ["brightnessctl", "--device=amdgpu_bl1", "set", arg]
+            const step = Math.round(Root.BrightnessService.maxBrightness * 0.05)   // 5% dari max
+            const dir  = wheel.angleDelta.y > 0 ? 1 : -1
             root._pendingOsd = true
-            setProcess.running = true
+
+            // Optimistic update via service — UI langsung berubah
+            Root.BrightnessService.setRaw(Root.BrightnessService.brightness + dir * step)
         }
     }
 
-    // Setelah set selesai, baca ulang nilai aktual
-    Process {
-        id: setProcess
-        onExited: getProcess.running = true
-    }
-
-    // Kirim OSD setelah nilai aktual diperbarui dari getProcess
+    // Kirim OSD setelah percent berubah
     property bool _pendingOsd: false
-
-    Connections {
-        target: root
-        function onPercentChanged() {
-            if (!root._pendingOsd) return
-            root._pendingOsd = false
-            root.osdBrightness(root.percent / 100)
-        }
+    onPercentChanged: {
+        if (!_pendingOsd) return
+        _pendingOsd = false
+        osdBrightness(percent / 100)
     }
 }
