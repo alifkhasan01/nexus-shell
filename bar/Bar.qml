@@ -20,6 +20,9 @@ PanelWindow {
     // powerMenuOpen dibaca dari shellState sehingga GlobalShortcut Hyprland
     // (quickshell:powermenu) dan klik tombol di Bar keduanya sinkron.
     property bool powerMenuOpen: shellState ? shellState.powerMenuOpen : false
+    // menuOpen dibaca dari shellState sehingga IPC call dan klik tombol di Bar
+    // keduanya sinkron.
+    property bool menuOpen: shellState ? shellState.menuOpen : false
     // Satu panel gabungan Wi-Fi + Bluetooth (tag dipilih via connectTab).
     property bool connectPanelOpen: false
     property int connectTab: 0  // 0 = Wi-Fi, 1 = Bluetooth
@@ -52,11 +55,10 @@ PanelWindow {
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
-
     anchors { top: true; left: true; right: true }
-    margins.top: 2
-    margins.left: 4
-    margins.right: 4
+    margins.top: 6
+    margins.left: 8
+    margins.right: 8
 
     implicitHeight: 45
     color: "transparent"
@@ -89,7 +91,20 @@ PanelWindow {
                     anchors.left: parent.left
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: 6
-                    MenuButton {}
+                    MenuButton {
+                        menuOpen: bar.menuOpen
+                        onToggleMenu: {
+                            bar.shellState.menuOpen = !bar.shellState.menuOpen
+                            bar.shellState.dashboardOpen      = false
+                            bar.connectPanelOpen              = false
+                            bar.volumePanelOpen               = false
+                            bar.batteryPanelOpen              = false
+                            bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen                = false
+                            bar.clipboardPanelOpen            = false
+                            bar.calendarPanelOpen             = false
+                        }
+                    }
                     Workspaces {}
                     ActiveWindow {
                         maxWidth: 200
@@ -353,6 +368,12 @@ PanelWindow {
                 }
             }
         }
+    }
+
+    // ── Menu Panel ────────────────────────────────────────────────────────
+    MenuPanel {
+        open: bar.menuOpen
+        onCloseRequested: bar.shellState.menuOpen = false
     }
 
     // ── Power Menu ────────────────────────────────────────────────────────

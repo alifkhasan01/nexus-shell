@@ -1,25 +1,27 @@
 import QtQuick
-import Quickshell.Io
 import "../../" as Root
 
 Rectangle {
     id: root
 
-    // Ganti sesuai app launcher yang dipakai: fuzzel, wofi, rofi -show drun, dll.
-    property string launcherCommand: "walker"
+    property bool menuOpen: false
+
+    signal toggleMenu()
 
     width: 34
     height: 26
     radius: 6
     color: mouseArea.containsMouse
         ? Root.Colors.surface1
-        : (mouseArea.pressed ? Root.Colors.surface2 : "transparent")
+        : (menuOpen ? Root.Colors.surface0 : "transparent")
+
+    Behavior on color { ColorAnimation { duration: 150 } }
 
     Text {
         anchors.centerIn: parent
-        text: "󰣇"        // nf-linux-archlinux, ganti sesuai icon font yang dipakai
+        text: "󰣇"        // nf-linux-archlinux
         font.pixelSize: 16
-        color: Root.Colors.blue
+        color: menuOpen ? Root.Colors.blue : Root.Colors.blue
     }
 
     MouseArea {
@@ -27,11 +29,6 @@ Rectangle {
         anchors.fill: parent
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
-        onClicked: launcherProcess.running = true
-    }
-
-    Process {
-        id: launcherProcess
-        command: ["sh", "-c", root.launcherCommand]
+        onClicked: root.toggleMenu()
     }
 }

@@ -292,8 +292,33 @@ PanelWindow {
                 }
                 property bool hasPlayer: player !== null
 
-                property var defaultSink: Pipewire.defaultAudioSink
+                // Deteksi sink aktif: prioritaskan BT sink kalau ia adalah default,
+                // sama seperti logika di bar/widgets/Volume.qml
+                property var _defaultSink: Pipewire.defaultAudioSink
+                property var _btSink: {
+                    const nodes = Pipewire.nodes.values
+                    for (let i = 0; i < nodes.length; i++) {
+                        const n = nodes[i]
+                        if (!n || !n.audio || !n.isSink || n.isStream) continue
+                        const props = n.properties || {}
+                        if (props["device.api"] === "bluez5" ||
+                            (n.name || "").startsWith("bluez_output."))
+                            return n
+                    }
+                    return null
+                }
+                // Gunakan BT sink hanya jika ia memang sedang menjadi default
+                property var defaultSink: {
+                    if (_btSink && _defaultSink && _btSink.id === _defaultSink.id)
+                        return _btSink
+                    return _defaultSink
+                }
                 property bool playerVolume: mediaCard.player?.volumeSupported ?? false
+
+                // Lacak perubahan pada node yang relevan
+                PwObjectTracker {
+                    objects: [mediaCard._defaultSink, mediaCard._btSink].filter(n => n != null)
+                }
 
                 function fmt(sec) {
                     sec = Math.floor(sec || 0)
@@ -582,24 +607,82 @@ PanelWindow {
                         }
                     }
 
-                    // Volume slider
+                    // Label output aktif (device atau player volume)
+                    Item {
+                        width: parent.width
+                        height: 16
+                        visible: mediaCard.hasPlayer
+
+                        // Ikon kecil + nama output yang sedang digunakan slider
+                        Row {
+                            anchors.centerIn: parent
+                            spacing: 4
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: {
+                                    if (mediaCard.playerVolume) return "󰝚"
+                                    const nm = (mediaCard.defaultSink?.nickname
+                                                || mediaCard.defaultSink?.description
+                                                || mediaCard.defaultSink?.name || "").toLowerCase()
+                                    const props = mediaCard.defaultSink?.properties || {}
+                                    if (props["device.api"] === "bluez5" ||
+                                        nm.includes("bluetooth") || nm.includes("a2dp"))
+                                        return "󰋋"
+                                    if (nm.includes("hdmi")) return "󰍹"
+                                    if (nm.includes("usb"))  return "󰻇"
+                                    return "󰓃"
+                                }
+                                font.pixelSize: 10
+                                color: Root.Colors.blue
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+
+                            Text {
+                                anchors.verticalCenter: parent.verticalCenter
+                                text: {
+                                    if (mediaCard.playerVolume)
+                                        return mediaCard.player?.identity || "Player"
+                                    return mediaCard.defaultSink?.nickname
+                                        || mediaCard.defaultSink?.description
+                                        || mediaCard.defaultSink?.name
+                                        || "Output"
+                                }
+                                font.pixelSize: 10
+                                color: Root.Colors.subtext
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+                        }
+                    }
+
+                    // Volume slider — mengikuti sink aktif (BT / default / player)
                     Dash.SliderRow {
                         width: parent.width
                         icon: {
-                            if (mediaCard.playerVolume) return "󰕾"
+                            if (mediaCard.playerVolume) {
+                                const v = mediaCard.player?.volume ?? 0
+                                if (v <= 0) return "󰕿"
+                                return v < 0.5 ? "󰖀" : "󰕾"
+                            }
                             const s = mediaCard.defaultSink?.audio
-                            if (!s) return "󰝟"
-                            if (s.muted || s.volume <= 0) return "󰝟"
+                            if (!s || s.muted || s.volume <= 0) return "󰝟"
                             return s.volume < 0.5 ? "󰕿" : "󰕾"
                         }
-                        value: mediaCard.playerVolume
+                        // Nilai sumber: ambil dari player atau sink yang aktif saat ini
+                        readonly property real sourceVolume: mediaCard.playerVolume
                                ? (mediaCard.player?.volume ?? 0)
                                : (mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0)
+                        
+                        value: sourceVolume
+
                         onMoved: v => {
-                            if (mediaCard.playerVolume && mediaCard.player)
+                            if (mediaCard.playerVolume && mediaCard.player) {
                                 mediaCard.player.volume = v
-                            else if (mediaCard.defaultSink?.audio)
+                            } else if (mediaCard.defaultSink?.audio) {
                                 mediaCard.defaultSink.audio.volume = v
+                            }
                         }
                     }
                 }

@@ -26,6 +26,7 @@ ShellRoot {
         property bool dashboardOpen:      false
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
+        property bool menuOpen:          false
         property bool dnd:               false
         property var wallpaperRandom: wpRandom
     }
@@ -51,6 +52,30 @@ ShellRoot {
             shellStateObj.powerMenuOpen = !shellStateObj.powerMenuOpen
         }
     }
+
+    // ── IPC call: Menu Panel ──────────────────────────────────────────────
+    // Panggil dari hyprland.conf:
+    //   bind = $mod, M, exec, quickshell ipc call menu toggle
+    //   bind = $mod, M, exec, quickshell ipc call menu open
+    //   bind = $mod, M, exec, quickshell ipc call menu close
+    // Atau dari terminal / script:
+    //   quickshell ipc call menu toggle
+    IpcHandler {
+        target: "menu"
+
+        function toggle() {
+            shellStateObj.menuOpen = !shellStateObj.menuOpen
+        }
+
+        function open() {
+            shellStateObj.menuOpen = true
+        }
+
+        function close() {
+            shellStateObj.menuOpen = false
+        }
+    }
+
 
     // ── Screenshot processes (root-level agar bisa dipanggil dari IPC) ───
     // Dipisah dari Bar.qml supaya keybind Hyprland tidak bergantung pada

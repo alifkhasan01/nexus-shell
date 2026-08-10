@@ -5,13 +5,13 @@ import "../../" as Root
 Text {
     id: root
 
-    property string timeFormat: "ddd, dd MMM  •  HH:mm"
+    property string timeFormat: "HH:mm" // "ddd, dd MMM  •  HH:mm"
     signal clicked()
     signal rightClicked()
 
     text: Qt.formatDateTime(clock.date, timeFormat)
     color: Root.Colors.text
-    font.pixelSize: 14
+    font.pixelSize: 16
     font.bold: true
 
     SystemClock {
