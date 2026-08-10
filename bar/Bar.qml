@@ -64,7 +64,7 @@ PanelWindow {
     color: "transparent"
 
     WlrLayershell.layer: WlrLayer.Top
-    WlrLayershell.exclusiveZone: implicitHeight
+    WlrLayershell.exclusiveZone: implicitHeight + margins.top  // 45 + 6 = 51
     WlrLayershell.namespace: "quickshell-bar"
 
     Rectangle {

@@ -279,8 +279,11 @@ PanelWindow {
                 id: mediaCard
                 anchors.fill: parent
                 radius: 14; color: Root.Colors.base
+                border.color: Root.Colors.surface1
+                border.width: 1
                 clip: true
                 Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on border.color { ColorAnimation { duration: 200 } }
 
                 property var player: {
                     const list = Mpris.players.values
@@ -292,32 +295,75 @@ PanelWindow {
                 }
                 property bool hasPlayer: player !== null
 
-                // Deteksi sink aktif: prioritaskan BT sink kalau ia adalah default,
-                // sama seperti logika di bar/widgets/Volume.qml
-                property var _defaultSink: Pipewire.defaultAudioSink
-                property var _btSink: {
-                    const nodes = Pipewire.nodes.values
-                    for (let i = 0; i < nodes.length; i++) {
-                        const n = nodes[i]
-                        if (!n || !n.audio || !n.isSink || n.isStream) continue
-                        const props = n.properties || {}
-                        if (props["device.api"] === "bluez5" ||
-                            (n.name || "").startsWith("bluez_output."))
-                            return n
-                    }
-                    return null
-                }
-                // Gunakan BT sink hanya jika ia memang sedang menjadi default
-                property var defaultSink: {
-                    if (_btSink && _defaultSink && _btSink.id === _defaultSink.id)
-                        return _btSink
-                    return _defaultSink
-                }
-                property bool playerVolume: mediaCard.player?.volumeSupported ?? false
+                // Sink aktif — Pipewire.defaultAudioSink sudah mengikuti preferred
+                // default (termasuk sink bluetooth yang di-auto-promote di shell.qml),
+                // jadi langsung pakai itu sebagai sumber volume.
+                property var defaultSink: Pipewire.defaultAudioSink
 
-                // Lacak perubahan pada node yang relevan
+                // Klasifikasi jenis output:
+                //   0 = sound system (internal), 1 = bluetooth, 2 = usb, 3 = hdmi
+                readonly property int outputKind: {
+                    const s = mediaCard.defaultSink
+                    if (!s) return 0
+                    const props = s.properties || {}
+                    const nm = (s.nickname || s.description || s.name || "").toLowerCase()
+                    if (props["device.api"] === "bluez5" ||
+                        props["device.bus"] === "bluetooth" ||
+                        (s.name || "").startsWith("bluez_output.") ||
+                        nm.includes("bluetooth") || nm.includes("a2dp"))
+                        return 1
+                    if (props["device.bus"] === "usb" || nm.includes("usb"))
+                        return 2
+                    if (props["device.bus"] === "hdmi" || nm.includes("hdmi"))
+                        return 3
+                    return 0
+                }
+                readonly property string outputKindText:
+                    ["Sound System", "Bluetooth", "USB", "HDMI"][mediaCard.outputKind] || "Sound System"
+                readonly property string outputIcon:
+                    ["󰓃", "󰋋", "󰻇", "󰍹"][mediaCard.outputKind] || "󰃀"
+                readonly property string outputName:
+                    mediaCard.defaultSink?.nickname
+                    || mediaCard.defaultSink?.description
+                    || mediaCard.defaultSink?.name
+                    || "Output"
+
+                // Lacak perubahan pada sink aktif (BT connect/disconnect, ganti default)
                 PwObjectTracker {
-                    objects: [mediaCard._defaultSink, mediaCard._btSink].filter(n => n != null)
+                    objects: [mediaCard.defaultSink].filter(n => n != null)
+                }
+
+                // Set volume lewat pactl — lebih andal sampai ke hardware
+                // dibanding binding langsung ke PwNodeAudio (sama seperti
+                // VolumePanel yang pakai wpctl untuk device hardware).
+                Process {
+                    id: pactlVolProc
+                    running: false
+                }
+
+                function setSinkVolume(value) {
+                    const s = mediaCard.defaultSink
+                    if (!s?.audio) return
+                    // Nama node pipewire ≈ nama sink pulse, sehingga pactl
+                    // menargetkan sink aktif (BT/usb/HDMI/speaker) secara presisi.
+                    pactlVolProc.command = [
+                        "pactl", "set-sink-volume",
+                        s.name || "@DEFAULT_SINK@",
+                        Math.round(value * 100) + "%"
+                    ]
+                    pactlVolProc.running = true
+                }
+
+                // Set mute lewat pactl
+                function setSinkMuted(muted) {
+                    const s = mediaCard.defaultSink
+                    if (!s?.audio) return
+                    pactlVolProc.command = [
+                        "pactl", "set-sink-mute",
+                        s.name || "@DEFAULT_SINK@",
+                        muted ? "1" : "0"
+                    ]
+                    pactlVolProc.running = true
                 }
 
                 function fmt(sec) {
@@ -607,47 +653,48 @@ PanelWindow {
                         }
                     }
 
-                    // Label output aktif (device atau player volume)
+                    // Label output aktif — tunjukkan jenis output: sound system (built-in)
+                    // atau perangkat tambahan (bluetooth/usb/hdmi)
                     Item {
                         width: parent.width
                         height: 16
                         visible: mediaCard.hasPlayer
 
-                        // Ikon kecil + nama output yang sedang digunakan slider
-                        Row {
-                            anchors.centerIn: parent
+                        RowLayout {
+                            anchors.fill: parent
                             spacing: 4
 
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: {
-                                    if (mediaCard.playerVolume) return "󰝚"
-                                    const nm = (mediaCard.defaultSink?.nickname
-                                                || mediaCard.defaultSink?.description
-                                                || mediaCard.defaultSink?.name || "").toLowerCase()
-                                    const props = mediaCard.defaultSink?.properties || {}
-                                    if (props["device.api"] === "bluez5" ||
-                                        nm.includes("bluetooth") || nm.includes("a2dp"))
-                                        return "󰋋"
-                                    if (nm.includes("hdmi")) return "󰍹"
-                                    if (nm.includes("usb"))  return "󰻇"
-                                    return "󰓃"
-                                }
+                                text: mediaCard.outputIcon
                                 font.pixelSize: 10
+                                color: Root.Colors.blue
+                                Behavior on color { ColorAnimation { duration: 150 } }
+
+                                // Klik ikon untuk toggle mute output aktif
+                                MouseArea {
+                                    anchors.fill: parent
+                                    anchors.margins: -4
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        const s = mediaCard.defaultSink
+                                        if (s?.audio) mediaCard.setSinkMuted(!s.audio.muted)
+                                    }
+                                }
+                            }
+
+                            Text {
+                                text: mediaCard.outputKindText
+                                font.pixelSize: 10
+                                font.bold: true
                                 color: Root.Colors.blue
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
 
+                            Item { Layout.preferredWidth: 2 }
+
                             Text {
-                                anchors.verticalCenter: parent.verticalCenter
-                                text: {
-                                    if (mediaCard.playerVolume)
-                                        return mediaCard.player?.identity || "Player"
-                                    return mediaCard.defaultSink?.nickname
-                                        || mediaCard.defaultSink?.description
-                                        || mediaCard.defaultSink?.name
-                                        || "Output"
-                                }
+                                Layout.fillWidth: true
+                                text: mediaCard.outputName
                                 font.pixelSize: 10
                                 color: Root.Colors.subtext
                                 elide: Text.ElideRight
@@ -657,33 +704,22 @@ PanelWindow {
                         }
                     }
 
-                    // Volume slider — mengikuti sink aktif (BT / default / player)
+                    // Volume slider — selalu terhubung ke Pipewire (sink aktif),
+                    // set volumenya lewat pactl agar sampai ke hardware.
                     Dash.SliderRow {
                         width: parent.width
                         icon: {
-                            if (mediaCard.playerVolume) {
-                                const v = mediaCard.player?.volume ?? 0
-                                if (v <= 0) return "󰕿"
-                                return v < 0.5 ? "󰖀" : "󰕾"
-                            }
                             const s = mediaCard.defaultSink?.audio
                             if (!s || s.muted || s.volume <= 0) return "󰝟"
                             return s.volume < 0.5 ? "󰕿" : "󰕾"
                         }
-                        // Nilai sumber: ambil dari player atau sink yang aktif saat ini
-                        readonly property real sourceVolume: mediaCard.playerVolume
-                               ? (mediaCard.player?.volume ?? 0)
-                               : (mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0)
-                        
+                        // Nilai sumber: baca dari sink aktif (reactive ke Pipewire)
+                        readonly property real sourceVolume:
+                            mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0
+
                         value: sourceVolume
 
-                        onMoved: v => {
-                            if (mediaCard.playerVolume && mediaCard.player) {
-                                mediaCard.player.volume = v
-                            } else if (mediaCard.defaultSink?.audio) {
-                                mediaCard.defaultSink.audio.volume = v
-                            }
-                        }
+                        onMoved: v => mediaCard.setSinkVolume(v)
                     }
                 }
             }

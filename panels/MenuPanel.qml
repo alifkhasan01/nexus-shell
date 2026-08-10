@@ -13,7 +13,7 @@ PanelWindow {
     signal closeRequested()
 
     anchors { top: true; left: true; right: true; bottom: true }
-    color: "transparent"
+    color: Qt.rgba(0, 0, 0, 0)  // Fully transparent (tidak ada warna putih)
     visible: showPanel
 
     property bool showPanel: false
