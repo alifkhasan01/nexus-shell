@@ -3,15 +3,20 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import "../" as Root
+import "../services"
 
-// Panel kalender — slide dari tengah atas, anchor ke posisi clock.
+// Panel kalender — Versi Lengkap dengan banyak fitur!
 // Fitur:
 //   • Navigasi bulan (prev/next) + tombol "Hari ini"
-//   • Highlight hari ini
-//   • Highlight hari yang dipilih
-//   • Mini-week header (Sen–Min)
-//   • Tampilkan nama bulan + tahun di header
-//   • Tahun bisa diklik untuk pindah cepat
+//   • Highlight hari ini & hari yang dipilih
+//   • Event system dengan color picker
+//   • Catatan harian (notes)
+//   • Week numbers (ISO 8601)
+//   • Hari libur nasional Indonesia
+//   • Kalender Hijriyah
+//   • Quick jump (dropdown tahun/bulan)
+//   • Statistik bulanan
+//   • Integrasi dengan todo widget
 PanelWindow {
     id: root
 
@@ -48,6 +53,11 @@ PanelWindow {
     property int selectedDay:   today
     property int selectedMonth: thisMonth
     property int selectedYear:  thisYear
+
+    // UI state
+    property bool showMonthPicker: false
+    property bool showYearPicker: false
+    property bool showStats: false
 
     // Nama bulan dalam Bahasa Indonesia
     readonly property var monthNames: [
@@ -117,8 +127,8 @@ PanelWindow {
         anchors.topMargin: 5
         anchors.horizontalCenter: parent.horizontalCenter
 
-        width: 320
-        height: cardCol.implicitHeight + 14
+        width: 720
+        height: Math.max(leftCol.implicitHeight, rightCol.implicitHeight) + 28
         radius: 18
         color: Root.Colors.mantle
         border.color: Root.Colors.surface2
@@ -172,26 +182,31 @@ PanelWindow {
         // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
 
-        ColumnLayout {
-            id: cardCol
+        RowLayout {
+            id: mainRow
             anchors {
-                top: parent.top
-                left: parent.left
-                right: parent.right
-                topMargin: 16
-                leftMargin: 16
-                rightMargin: 16
+                fill: parent
+                margins: 16
             }
-            spacing: 14
+            spacing: 16
+
+            // ═══════════════════════════════════════════════════════════════
+            // LEFT COLUMN: Calendar
+            // ═══════════════════════════════════════════════════════════════
+            ColumnLayout {
+                id: leftCol
+                Layout.fillHeight: true
+                Layout.preferredWidth: 420
+                spacing: 14
 
             // ── Header: bulan + tahun + navigasi ──────────────────────────
             RowLayout {
-                Layout.fillWidth: true
+                width: leftCol.width
                 spacing: 0
 
                 // Tombol prev
                 Rectangle {
-                    width: 30; height: 30; radius: 8
+                    width: 32; height: 32; radius: 8
                     color: prevMa.containsMouse ? Root.Colors.surface1 : "transparent"
                     Behavior on color { ColorAnimation { duration: 100 } }
                     Text {
@@ -213,26 +228,60 @@ PanelWindow {
 
                 Item { Layout.fillWidth: true }
 
-                // Nama bulan + tahun (klik untuk kembali ke hari ini)
+                // Nama bulan (clickable untuk quick picker)
                 Column {
-                    spacing: 0
+                    spacing: 2
                     Layout.alignment: Qt.AlignHCenter
 
-                    Text {
+                    Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: root.monthNames[root.viewMonth]
-                        font.pixelSize: 17
-                        font.bold: true
-                        color: Root.Colors.text
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        width: monthText.implicitWidth + 12
+                        height: 26
+                        radius: 6
+                        color: monthMa.containsMouse ? Root.Colors.surface0 : "transparent"
+                        
+                        Text {
+                            id: monthText
+                            anchors.centerIn: parent
+                            text: root.monthNames[root.viewMonth]
+                            font.pixelSize: 16
+                            font.bold: true
+                            color: Root.Colors.text
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: monthMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.showMonthPicker = !root.showMonthPicker
+                        }
                     }
 
-                    Text {
+                    Rectangle {
                         anchors.horizontalCenter: parent.horizontalCenter
-                        text: root.viewYear
-                        font.pixelSize: 12
-                        color: Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        width: yearText.implicitWidth + 12
+                        height: 20
+                        radius: 6
+                        color: yearMa.containsMouse ? Root.Colors.surface0 : "transparent"
+
+                        Text {
+                            id: yearText
+                            anchors.centerIn: parent
+                            text: root.viewYear
+                            font.pixelSize: 12
+                            color: Root.Colors.subtext
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: yearMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.showYearPicker = !root.showYearPicker
+                        }
                     }
                 }
 
@@ -240,7 +289,7 @@ PanelWindow {
 
                 // Tombol next
                 Rectangle {
-                    width: 30; height: 30; radius: 8
+                    width: 32; height: 32; radius: 8
                     color: nextMa.containsMouse ? Root.Colors.surface1 : "transparent"
                     Behavior on color { ColorAnimation { duration: 100 } }
                     Text {
@@ -259,12 +308,264 @@ PanelWindow {
                         onClicked: root.nextMonth()
                     }
                 }
+
+                // Tombol stats
+                Rectangle {
+                    width: 32; height: 32; radius: 8
+                    color: statsMa.containsMouse ? Root.Colors.surface1 : "transparent"
+                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Text {
+                        anchors.centerIn: parent
+                        text: "󰄶"
+                        font.family: "CaskaydiaCove Nerd Font"
+                        font.pixelSize: 16
+                        color: root.showStats ? Root.Colors.blue : Root.Colors.subtext
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                    }
+                    MouseArea {
+                        id: statsMa
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.showStats = !root.showStats
+                    }
+                }
             }
 
+            // ── Quick Pickers (Month & Year) ──────────────────────────────
+            Rectangle {
+                visible: root.showMonthPicker
+                width: leftCol.width
+                height: visible ? monthPickerGrid.implicitHeight + 12 : 0
+                radius: 10
+                color: Root.Colors.surface0
+                clip: true
+
+                Grid {
+                    id: monthPickerGrid
+                    anchors {
+                        centerIn: parent
+                        margins: 6
+                    }
+                    columns: 4
+                    spacing: 4
+
+                    Repeater {
+                        model: root.monthNames
+                        delegate: Rectangle {
+                            required property string modelData
+                            required property int index
+                            width: 90
+                            height: 28
+                            radius: 6
+                            color: {
+                                if (index === root.viewMonth) return Root.Colors.blue
+                                if (monthPickerMa.containsMouse) return Root.Colors.surface1
+                                return "transparent"
+                            }
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData
+                                font.pixelSize: 11
+                                font.bold: index === root.viewMonth
+                                color: index === root.viewMonth ? Root.Colors.base : Root.Colors.text
+                            }
+
+                            MouseArea {
+                                id: monthPickerMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    root.viewMonth = index
+                                    root.showMonthPicker = false
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                visible: root.showYearPicker
+                width: leftCol.width
+                height: visible ? 140 : 0
+                radius: 10
+                color: Root.Colors.surface0
+                clip: true
+
+                Flickable {
+                    anchors.fill: parent
+                    contentHeight: yearPickerCol.implicitHeight
+                    clip: true
+
+                    Column {
+                        id: yearPickerCol
+                        anchors.centerIn: parent
+                        spacing: 2
+
+                        Repeater {
+                            model: 20
+                            delegate: Rectangle {
+                                required property int index
+                                readonly property int year: root.thisYear - 10 + index
+                                width: 100
+                                height: 28
+                                radius: 6
+                                color: {
+                                    if (year === root.viewYear) return Root.Colors.blue
+                                    if (yearPickerMa.containsMouse) return Root.Colors.surface1
+                                    return "transparent"
+                                }
+
+                                Text {
+                                    anchors.centerIn: parent
+                                    text: year
+                                    font.pixelSize: 12
+                                    font.bold: year === root.viewYear
+                                    color: year === root.viewYear ? Root.Colors.base : Root.Colors.text
+                                }
+
+                                MouseArea {
+                                    id: yearPickerMa
+                                    anchors.fill: parent
+                                    hoverEnabled: true
+                                    cursorShape: Qt.PointingHandCursor
+                                    onClicked: {
+                                        root.viewYear = year
+                                        root.showYearPicker = false
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // ── Statistik Bulanan ──────────────────────────────────────────
+            Rectangle {
+                visible: root.showStats
+                width: leftCol.width
+                height: visible ? statsCol.implicitHeight + 16 : 0
+                radius: 10
+                color: Root.Colors.surface0
+                clip: true
+
+                Column {
+                    id: statsCol
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        top: parent.top
+                        margins: 12
+                    }
+                    spacing: 6
+
+                    Text {
+                        text: "󰃭 Statistik Bulan Ini"
+                        font.pixelSize: 12
+                        font.bold: true
+                        color: Root.Colors.text
+                        font.family: "CaskaydiaCove Nerd Font"
+                    }
+
+                    Row {
+                        spacing: 20
+                        readonly property var stats: CalendarService.getMonthStats(root.viewYear, root.viewMonth)
+
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: stats.totalDays
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: Root.Colors.blue
+                            }
+                            Text {
+                                text: "Total Hari"
+                                font.pixelSize: 9
+                                color: Root.Colors.subtext
+                            }
+                        }
+
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: stats.workDays
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: Root.Colors.green
+                            }
+                            Text {
+                                text: "Hari Kerja"
+                                font.pixelSize: 9
+                                color: Root.Colors.subtext
+                            }
+                        }
+
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: stats.weekendDays
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: Root.Colors.red
+                            }
+                            Text {
+                                text: "Weekend"
+                                font.pixelSize: 9
+                                color: Root.Colors.subtext
+                            }
+                        }
+
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: stats.holidays
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: Root.Colors.peach
+                            }
+                            Text {
+                                text: "Libur Nasional"
+                                font.pixelSize: 9
+                                color: Root.Colors.subtext
+                            }
+                        }
+
+                        Column {
+                            spacing: 2
+                            Text {
+                                text: stats.events
+                                font.pixelSize: 18
+                                font.bold: true
+                                color: Root.Colors.mauve
+                            }
+                            Text {
+                                text: "Events"
+                                font.pixelSize: 9
+                                color: Root.Colors.subtext
+                            }
+                        }
+                    }
+                }
+            }
             // ── Header hari (Sen Sel Rab…) ─────────────────────────────────
             Row {
-                Layout.fillWidth: true
+                width: leftCol.width
                 spacing: 0
+
+                // Week number column header
+                Text {
+                    width: 28
+                    horizontalAlignment: Text.AlignHCenter
+                    text: "W"
+                    font.pixelSize: 10
+                    font.bold: true
+                    color: Root.Colors.overlay1
+                    Behavior on color { ColorAnimation { duration: 150 } }
+                }
 
                 Repeater {
                     model: root.dayShort
@@ -272,7 +573,7 @@ PanelWindow {
                         required property string modelData
                         required property int index
 
-                        width: (card.width - 32) / 7
+                        width: (leftCol.width - 28) / 7
                         horizontalAlignment: Text.AlignHCenter
                         text: modelData
                         font.pixelSize: 11
@@ -286,19 +587,50 @@ PanelWindow {
                 }
             }
 
-            // ── Grid hari ─────────────────────────────────────────────────
-            Grid {
-                id: dayGrid
-                Layout.fillWidth: true
-                columns: 7
-                spacing: 2
+            // ── Grid hari dengan Week Numbers ─────────────────────────────
+            Row {
+                width: leftCol.width
+                spacing: 0
+
+                // Week numbers column
+                Column {
+                    width: 28
+                    spacing: 2
+
+                    Repeater {
+                        model: Math.ceil((root.firstDayOfWeek(root.viewMonth, root.viewYear) + root.daysInMonth(root.viewMonth, root.viewYear)) / 7)
+                        delegate: Item {
+                            required property int index
+                            width: 28
+                            height: (leftCol.width - 28) / 7
+
+                            Text {
+                                anchors.centerIn: parent
+                                text: {
+                                    const firstDay = index * 7 - root.firstDayOfWeek(root.viewMonth, root.viewYear) + 1
+                                    const day = Math.max(1, Math.min(firstDay, root.daysInMonth(root.viewMonth, root.viewYear)))
+                                    return CalendarService.getWeekNumber(root.viewYear, root.viewMonth, day)
+                                }
+                                font.pixelSize: 9
+                                color: Root.Colors.overlay0
+                            }
+                        }
+                    }
+                }
+
+                // Calendar grid
+                Grid {
+                    id: dayGrid
+                    width: leftCol.width - 28
+                    columns: 7
+                    spacing: 2
 
                 // Sel kosong sebelum hari pertama
                 Repeater {
                     model: root.firstDayOfWeek(root.viewMonth, root.viewYear)
                     delegate: Item {
-                        width:  (card.width - 32) / 7
-                        height: (card.width - 32) / 7
+                        width:  (leftCol.width - 28) / 7
+                        height: (leftCol.width - 28) / 7
                     }
                 }
 
@@ -310,9 +642,12 @@ PanelWindow {
                         required property int index
                         readonly property int day: index + 1
                         readonly property int col: (root.firstDayOfWeek(root.viewMonth, root.viewYear) + index) % 7
+                        readonly property bool hasEvent: CalendarService.hasEvents(root.viewYear, root.viewMonth, day)
+                        readonly property bool hasNote: CalendarService.hasNote(root.viewYear, root.viewMonth, day)
+                        readonly property string holiday: CalendarService.getHoliday(root.viewYear, root.viewMonth, day)
 
-                        width:  (card.width - 32) / 7
-                        height: (card.width - 32) / 7
+                        width:  (leftCol.width - 28) / 7
+                        height: (leftCol.width - 28) / 7
 
                         // Lingkaran highlight
                         Rectangle {
@@ -321,6 +656,8 @@ PanelWindow {
                             height: width
                             radius: width / 2
                             color: {
+                                if (holiday !== "") 
+                                    return Qt.rgba(Root.Colors.peach.r, Root.Colors.peach.g, Root.Colors.peach.b, 0.15)
                                 if (root.isSelected(day) && root.isToday(day))
                                     return Root.Colors.blue
                                 if (root.isSelected(day))
@@ -333,25 +670,60 @@ PanelWindow {
                             }
                             border.color: root.isToday(day) && !root.isSelected(day)
                                 ? Root.Colors.blue
-                                : "transparent"
-                            border.width: 1.5
+                                : holiday !== "" ? Root.Colors.peach : "transparent"
+                            border.width: holiday !== "" ? 1.5 : (root.isToday(day) ? 1.5 : 0)
                             Behavior on color { ColorAnimation { duration: 100 } }
 
-                            Text {
+                            Column {
                                 anchors.centerIn: parent
-                                text: day
-                                font.pixelSize: 13
-                                font.bold: root.isToday(day) || root.isSelected(day)
-                                color: {
-                                    if (root.isSelected(day) && root.isToday(day))
-                                        return Root.Colors.mantle   // teks putih/gelap kontras
-                                    if (root.isToday(day))
-                                        return Root.Colors.blue
-                                    if (col >= 5)  // weekend
-                                        return Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.8)
-                                    return Root.Colors.text
+                                spacing: 1
+
+                                Text {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    text: day
+                                    font.pixelSize: 12
+                                    font.bold: root.isToday(day) || root.isSelected(day)
+                                    color: {
+                                        if (root.isSelected(day) && root.isToday(day))
+                                            return Root.Colors.mantle
+                                        if (root.isToday(day))
+                                            return Root.Colors.blue
+                                        if (holiday !== "")
+                                            return Root.Colors.peach
+                                        if (col >= 5)
+                                            return Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.8)
+                                        return Root.Colors.text
+                                    }
+                                    Behavior on color { ColorAnimation { duration: 100 } }
                                 }
-                                Behavior on color { ColorAnimation { duration: 100 } }
+
+                                // Event & Note indicators
+                                Row {
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    spacing: 2
+                                    visible: hasEvent || hasNote
+
+                                    // Event dot
+                                    Rectangle {
+                                        visible: hasEvent
+                                        width: 4
+                                        height: 4
+                                        radius: 2
+                                        color: {
+                                            const events = CalendarService.getEvents(root.viewYear, root.viewMonth, day)
+                                            return events.length > 0 ? events[0].color : Root.Colors.blue
+                                        }
+                                    }
+
+                                    // Note indicator
+                                    Text {
+                                        visible: hasNote
+                                        text: "󰷈"
+                                        font.family: "CaskaydiaCove Nerd Font"
+                                        font.pixelSize: 6
+                                        color: Root.Colors.yellow
+                                    }
+                                }
                             }
                         }
 
@@ -360,7 +732,8 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: {
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
                                 root.selectedDay   = day
                                 root.selectedMonth = root.viewMonth
                                 root.selectedYear  = root.viewYear
@@ -369,27 +742,166 @@ PanelWindow {
                     }
                 }
             }
+        }
 
-            // ── Footer: info hari dipilih + tombol "Hari ini" ─────────────
+            // ── Footer: Date info & action buttons ────────────────────────
             RowLayout {
-                Layout.fillWidth: true
+                width: leftCol.width
                 spacing: 8
 
-                // Info hari dipilih
                 Column {
-                    spacing: 2
                     Layout.fillWidth: true
+                    spacing: 2
 
                     Text {
+                        text: {
+                            const d = new Date(root.selectedYear, root.selectedMonth, root.selectedDay)
+                            const dayNames = ["Min","Sen","Sel","Rab","Kam","Jum","Sab"]
+                            return dayNames[d.getDay()] + ", " + root.selectedDay + " " +
+                                   root.monthNames[root.selectedMonth].substring(0, 3) + " " + root.selectedYear
+                        }
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: Root.Colors.text
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    Text {
+                        text: {
+                            const hijri = CalendarService.toHijri(root.selectedYear, root.selectedMonth, root.selectedDay)
+                            return `${hijri.day} ${hijri.monthName.substring(0, 10)} ${hijri.year} H`
+                        }
+                        font.pixelSize: 9
+                        color: Root.Colors.green
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+                }
+
+                // Quick action buttons
+                Row {
+                    spacing: 4
+
+                    // Add event button
+                    Rectangle {
+                        width: 28; height: 28; radius: 7
+                        color: addEventMa.containsMouse ? Root.Colors.blue : Root.Colors.surface0
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: ""
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 14
+                            color: addEventMa.containsMouse ? Root.Colors.base : Root.Colors.blue
+                            Behavior on color { ColorAnimation { duration: 100 } }
+                        }
+
+                        MouseArea {
+                            id: addEventMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: eventDialog.showing = true
+                        }
+                    }
+
+                    // Add note button
+                    Rectangle {
+                        width: 28; height: 28; radius: 7
+                        color: addNoteMa.containsMouse ? Root.Colors.yellow : Root.Colors.surface0
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                        
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰷈"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 14
+                            color: addNoteMa.containsMouse ? Root.Colors.base : Root.Colors.yellow
+                            Behavior on color { ColorAnimation { duration: 100 } }
+                        }
+
+                        MouseArea {
+                            id: addNoteMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: noteDialog.showing = true
+                        }
+                    }
+
+                    // Today button
+                    Rectangle {
+                        visible: !(root.viewMonth === root.thisMonth && root.viewYear === root.thisYear)
+                        width: todayLbl.implicitWidth + 10
+                        height: 28
+                        radius: 7
+                        color: todayBtnMa.containsMouse ? Root.Colors.blue
+                             : Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.18)
+                        Behavior on color { ColorAnimation { duration: 120 } }
+
+                        Text {
+                            id: todayLbl
+                            anchors.centerIn: parent
+                            text: "Hari ini"
+                            font.pixelSize: 10
+                            font.bold: true
+                            color: todayBtnMa.containsMouse ? Root.Colors.mantle : Root.Colors.blue
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                        }
+
+                        MouseArea {
+                            id: todayBtnMa
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: root.goToday()
+                        }
+                    }
+                }
+            }
+        }  // End leftCol
+
+            // ═══════════════════════════════════════════════════════════════
+            // RIGHT COLUMN: Events & Notes
+            // ═══════════════════════════════════════════════════════════════
+            ColumnLayout {
+                id: rightCol
+                Layout.fillHeight: true
+                Layout.fillWidth: true
+                Layout.preferredWidth: 260
+                spacing: 12
+
+                // Header with date & holiday
+                Column {
+                    Layout.fillWidth: true
+                    spacing: 4
+
+                    Text {
+                        width: parent.width
                         text: {
                             const d = new Date(root.selectedYear, root.selectedMonth, root.selectedDay)
                             const dayNames = ["Minggu","Senin","Selasa","Rabu","Kamis","Jumat","Sabtu"]
                             return dayNames[d.getDay()] + ", " + root.selectedDay + " " +
                                    root.monthNames[root.selectedMonth] + " " + root.selectedYear
                         }
-                        font.pixelSize: 12
+                        font.pixelSize: 13
                         font.bold: true
                         color: Root.Colors.text
+                        wrapMode: Text.Wrap
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                    }
+
+                    Text {
+                        visible: text !== ""
+                        text: {
+                            const holiday = CalendarService.getHoliday(root.selectedYear, root.selectedMonth, root.selectedDay)
+                            return holiday !== "" ? "󰙳 " + holiday : ""
+                        }
+                        font.pixelSize: 10
+                        color: Root.Colors.peach
+                        font.family: "CaskaydiaCove Nerd Font"
+                        wrapMode: Text.Wrap
+                        width: parent.width
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
 
@@ -397,45 +909,224 @@ PanelWindow {
                         visible: root.isToday(root.selectedDay) &&
                                  root.selectedMonth === root.thisMonth &&
                                  root.selectedYear  === root.thisYear
-                        text: "Hari ini"
-                        font.pixelSize: 11
+                        text: "● Hari ini"
+                        font.pixelSize: 10
                         color: Root.Colors.blue
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }
                 }
 
-                // Tombol "Hari ini"
                 Rectangle {
-                    visible: !(root.viewMonth === root.thisMonth && root.viewYear === root.thisYear)
-                    width: todayLbl.implicitWidth + 16
-                    height: 26
-                    radius: 8
-                    color: todayBtnMa.containsMouse ? Root.Colors.blue
-                         : Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.18)
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Root.Colors.surface1
+                }
+
+                // Events section
+                Column {
+                    Layout.fillWidth: true
+                    spacing: 8
 
                     Text {
-                        id: todayLbl
-                        anchors.centerIn: parent
-                        text: "Hari ini"
+                        text: " Events"
                         font.pixelSize: 11
                         font.bold: true
-                        color: todayBtnMa.containsMouse ? Root.Colors.mantle : Root.Colors.blue
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        color: Root.Colors.subtext
+                        font.family: "CaskaydiaCove Nerd Font"
                     }
 
-                    MouseArea {
-                        id: todayBtnMa
-                        anchors.fill: parent
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
-                        onClicked: root.goToday()
+                    // Events list or empty state
+                    Column {
+                        width: parent.width
+                        spacing: 6
+
+                        Repeater {
+                            model: CalendarService.getEvents(root.selectedYear, root.selectedMonth, root.selectedDay)
+                            delegate: Rectangle {
+                                required property var modelData
+                                width: parent.width
+                                height: eventContent.implicitHeight + 12
+                                radius: 8
+                                color: Root.Colors.surface0
+
+                                RowLayout {
+                                    id: eventContent
+                                    anchors {
+                                        fill: parent
+                                        margins: 6
+                                    }
+                                    spacing: 8
+
+                                    Rectangle {
+                                        width: 4
+                                        Layout.fillHeight: true
+                                        radius: 2
+                                        color: modelData.color
+                                    }
+
+                                    Column {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+
+                                        Text {
+                                            text: modelData.title
+                                            font.pixelSize: 11
+                                            font.bold: true
+                                            color: Root.Colors.text
+                                            wrapMode: Text.Wrap
+                                            width: parent.width
+                                        }
+
+                                        Text {
+                                            visible: modelData.time !== ""
+                                            text: " " + modelData.time
+                                            font.pixelSize: 9
+                                            color: Root.Colors.subtext
+                                            font.family: "CaskaydiaCove Nerd Font"
+                                        }
+                                    }
+
+                                    Text {
+                                        text: "󰆴"
+                                        font.family: "CaskaydiaCove Nerd Font"
+                                        font.pixelSize: 14
+                                        color: deleteEventMa.containsMouse ? Root.Colors.red : Root.Colors.overlay0
+                                        
+                                        MouseArea {
+                                            id: deleteEventMa
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                CalendarService.removeEvent(root.selectedYear, root.selectedMonth, root.selectedDay, modelData.id)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Empty state
+                        Text {
+                            visible: !CalendarService.hasEvents(root.selectedYear, root.selectedMonth, root.selectedDay)
+                            text: "Tidak ada event"
+                            font.pixelSize: 10
+                            color: Root.Colors.overlay0
+                            font.italic: true
+                        }
                     }
                 }
-            }
 
-            // ── Spacer bawah ───────────────────────────────────────────────
-            Item { implicitHeight: 4 }
+                Rectangle {
+                    Layout.fillWidth: true
+                    height: 1
+                    color: Root.Colors.surface1
+                }
+
+                // Notes section
+                Column {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: 8
+
+                    Text {
+                        text: "󰠮 Catatan"
+                        font.pixelSize: 11
+                        font.bold: true
+                        color: Root.Colors.subtext
+                        font.family: "CaskaydiaCove Nerd Font"
+                    }
+
+                    // Note display or empty state
+                    Rectangle {
+                        visible: CalendarService.hasNote(root.selectedYear, root.selectedMonth, root.selectedDay)
+                        width: parent.width
+                        height: Math.min(notePreviewText.implicitHeight + 16, 200)
+                        radius: 8
+                        color: Root.Colors.surface0
+
+                        Flickable {
+                            anchors {
+                                fill: parent
+                                margins: 8
+                            }
+                            contentHeight: notePreviewText.implicitHeight
+                            clip: true
+
+                            Text {
+                                id: notePreviewText
+                                width: parent.width
+                                text: CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay)
+                                font.pixelSize: 10
+                                color: Root.Colors.text
+                                wrapMode: Text.Wrap
+                            }
+                        }
+
+                        MouseArea {
+                            anchors.fill: parent
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: noteDialog.showing = true
+                        }
+                    }
+
+                    Text {
+                        visible: !CalendarService.hasNote(root.selectedYear, root.selectedMonth, root.selectedDay)
+                        text: "Tidak ada catatan"
+                        font.pixelSize: 10
+                        color: Root.Colors.overlay0
+                        font.italic: true
+                    }
+                }
+
+                Item { Layout.fillHeight: true }
+            }  // End rightCol
+        }  // End mainRow
+    }
+
+    // ── Dialogs ────────────────────────────────────────────────────────────
+    EventDialog {
+        id: eventDialog
+        anchors.fill: parent
+        year: root.selectedYear
+        month: root.selectedMonth
+        day: root.selectedDay
+        showing: false
+
+        onAccepted: {
+            CalendarService.addEvent(year, month, day, eventTitle, eventTime, eventColor)
+            showing = false
         }
+
+        onCancelled: {
+            showing = false
+        }
+    }
+
+    NoteDialog {
+        id: noteDialog
+        anchors.fill: parent
+        year: root.selectedYear
+        month: root.selectedMonth
+        day: root.selectedDay
+        noteText: CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay)
+        showing: false
+
+        onAccepted: {
+            CalendarService.setNote(year, month, day, noteText)
+            showing = false
+        }
+
+        onCancelled: {
+            showing = false
+        }
+    }
+
+    // Connection to refresh dialogs when date changes
+    Connections {
+        target: root
+        function onSelectedDayChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
+        function onSelectedMonthChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
+        function onSelectedYearChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
     }
 }

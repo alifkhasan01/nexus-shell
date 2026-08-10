@@ -1,0 +1,8 @@
+module services
+
+singleton BrightnessService 1.0 BrightnessService.qml
+singleton CalendarService 1.0 CalendarService.qml
+singleton CavaService 1.0 CavaService.qml
+singleton Colors 1.0 Colors.qml
+singleton NotificationService 1.0 NotificationService.qml
+singleton WeatherService 1.0 WeatherService.qml

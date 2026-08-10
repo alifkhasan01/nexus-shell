@@ -56,6 +56,9 @@ QtObject {
         surface0: "#e7e8e9",
         surface1: "#d9dadb",
         surface2: "#abb0b6",
+        overlay0: "#a4a9af",
+        overlay1: "#9b9fa6",
+        overlay2: "#91969e",
         text:     "#575f66",
         subtext:  "#8a9199",
         blue:     "#36a3d9",
@@ -74,6 +77,9 @@ QtObject {
         surface0: "#131721",
         surface1: "#1c2333",
         surface2: "#2d3347",
+        overlay0: "#40485c",
+        overlay1: "#4f5870",
+        overlay2: "#5f6980",
         text:     "#bfbdb6",
         subtext:  "#707a8c",
         blue:     "#59c2ff",
@@ -94,6 +100,9 @@ QtObject {
     readonly property color surface0: _p.surface0
     readonly property color surface1: _p.surface1
     readonly property color surface2: _p.surface2
+    readonly property color overlay0: _p.overlay0
+    readonly property color overlay1: _p.overlay1
+    readonly property color overlay2: _p.overlay2
     readonly property color text:     _p.text
     readonly property color subtext:  _p.subtext
     readonly property color blue:     _p.blue
