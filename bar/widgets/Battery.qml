@@ -107,12 +107,12 @@ Item {
             font.pixelSize: 14
             text: {
                 let icon
-                if (root.charging) icon = "󰂄"
-                else if (root.percent >= 90) icon = "󰁹"
-                else if (root.percent >= 60) icon = "󰂀"
-                else if (root.percent >= 35) icon = "󰁾"
-                else if (root.percent >= 15) icon = "󰁻"
-                else icon = "󰂃"
+                if (root.charging) icon = "󰂄 "
+                else if (root.percent >= 90) icon = "󰁹 "
+                else if (root.percent >= 60) icon = "󰂀 "
+                else if (root.percent >= 35) icon = "󰁾 "
+                else if (root.percent >= 15) icon = "󰁻 "
+                else icon = "󰂃 "
                 return icon + " " + root.percent + "%"
             }
         }

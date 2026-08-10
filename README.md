@@ -1,3 +1,7 @@
+<iframe widht="560" height="315" src="https://youtu.be/NyO79qD3V_0?si=dUqW6U2ApIo5KxVF" frame="0" allowfullscreen></iframe>
+
+
+
 # Quickshell Config
 
 Shell desktop berbasis [Quickshell](https://quickshell.outfoxxed.me) untuk Hyprland.

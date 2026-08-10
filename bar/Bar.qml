@@ -106,9 +106,9 @@ PanelWindow {
                         }
                     }
                     Workspaces {}
-                    ActiveWindow {
-                        maxWidth: 200
-                    }
+                    // ActiveWindow {
+                        // maxWidth: 200
+                    // }
                 }
             }
 
