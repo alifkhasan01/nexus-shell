@@ -165,7 +165,7 @@ Menampilkan indikator workspace Hyprland via `Quickshell.Hyprland`. Klik pada wo
 |---|---|
 | Kiri | Foto profil, tanggal, jam, quick toggles, system stats, settings |
 | Tengah | Media card (MPRIS) + visualizer cava |
-| Kanan | System info detail (CPU, RAM, disk, uptime) |
+| Kanan | System info dengan sparkline chart (CPU, GPU, RAM, Disk + temps) |
 
 Signal yang dikirim ke Bar:
 
@@ -227,7 +227,25 @@ Tab settings di kolom kiri dashboard:
 
 ### `dashboard/SystemInfo.qml` & `SystemStats.qml`
 
-Menampilkan statistik sistem real-time: CPU usage, RAM usage, disk usage, uptime. Dibaca via `Process` yang menjalankan perintah shell (`top`, `free`, `df`, dll).
+**SystemInfo.qml** (Panel kanan dashboard):
+- Menampilkan statistik sistem real-time dengan **sparkline chart**
+- Metrics: CPU, GPU, RAM, Disk dengan usage percentage dan temperature
+- **Sparkline features:**
+  - Line chart mini yang menunjukkan history hingga 30 data points
+  - Auto-scaling berdasarkan min/max dari data (zoom in untuk perubahan kecil)
+  - Area fill dengan transparansi untuk visualisasi lebih baik
+  - Color coding dinamis: hijau/biru → kuning → merah sesuai threshold
+  - Smooth animation saat data update
+- Update interval: 1 detik
+- Data dibaca via `Process` yang menjalankan shell commands:
+  - CPU: `/proc/stat` untuk usage, `/sys/class/hwmon/hwmon5/temp1_input` untuk temperature
+  - GPU: `/sys/class/drm/card*/device/gpu_busy_percent` untuk usage, `/sys/class/hwmon/hwmon4/temp1_input` untuk temperature
+  - RAM: `free -b` untuk memory usage
+  - Disk: `df /` untuk disk usage
+
+**SystemStats.qml** (Bar di dashboard):
+- Versi ringkas tanpa grafik, hanya menampilkan angka usage
+- RAM, Disk, dan Uptime
 
 ---
 

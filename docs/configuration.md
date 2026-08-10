@@ -237,6 +237,99 @@ Jumlah dan label workspace diatur di `bar/widgets/Workspaces.qml`. Default mengi
 
 ---
 
+## System Info Sparkline
+
+Panel kanan dashboard menampilkan sparkline chart untuk CPU, GPU, RAM, dan Disk. Grafik ini otomatis menyesuaikan skala berdasarkan data yang ada.
+
+### Mengubah jumlah data points
+
+Edit `dashboard/SystemInfo.qml`:
+
+```qml
+property int maxHistoryPoints: 30   // <-- ubah jumlah data points (default 30)
+```
+
+### Mengubah update interval
+
+```qml
+Timer {
+    interval: 1000   // <-- ubah interval dalam ms (default 1000 = 1 detik)
+    running: true
+    repeat: true
+    triggeredOnStart: true
+    onTriggered: {
+        cpuStatProc.running  = true
+        gpuTempProc.running  = true
+        gpuUsageProc.running = true
+        ramProc.running      = true
+        diskProc.running     = true
+    }
+}
+```
+
+### Mengubah color threshold
+
+Edit bagian `StatRow` di section `// ── Card Stats: CPU · GPU · RAM · Disk`:
+
+```qml
+StatRow {
+    label: "CPU"; icon: "󰻠"
+    tempColor: root.cpuTemp > 85 ? Root.Colors.red      // <-- ubah threshold suhu tinggi
+              : root.cpuTemp > 70 ? Root.Colors.yellow  // <-- ubah threshold suhu sedang
+              : Root.Colors.blue                        // <-- warna normal
+    tempText: root.cpuTemp + "°C"
+    pct: root.cpuUsage
+    history: root.cpuHistory
+}
+```
+
+### Mematikan auto-scaling
+
+Jika ingin menggunakan fixed range 0-100% tanpa zoom, edit Canvas `onPaint` di component `StatRow`:
+
+```qml
+// Ganti section ini
+let minVal = Math.min(...box.history)
+let maxVal = Math.max(...box.history)
+// ... kode auto-scaling
+
+// Dengan ini
+let minVal = 0
+let maxVal = 100
+```
+
+### Hardware monitor path
+
+Path sensor temperature dan GPU usage mungkin berbeda tergantung hardware. Untuk cek path yang benar:
+
+```bash
+# CPU temperature
+ls /sys/class/hwmon/hwmon*/temp*_label
+cat /sys/class/hwmon/hwmon*/temp*_input
+
+# GPU temperature
+cat /sys/class/drm/card*/device/hwmon/hwmon*/temp*_input
+
+# GPU usage
+cat /sys/class/drm/card*/device/gpu_busy_percent
+```
+
+Sesuaikan path di `dashboard/SystemInfo.qml`:
+
+```qml
+Process {
+    id: cpuTempProc
+    command: ["sh", "-c", "cat /sys/class/hwmon/hwmon5/temp1_input"]  // <-- sesuaikan
+}
+
+Process {
+    id: gpuTempProc
+    command: ["sh", "-c", "cat /sys/class/hwmon/hwmon4/temp1_input"]  // <-- sesuaikan
+}
+```
+
+---
+
 ## Menambahkan Quick Toggle Baru
 
 Edit `dashboard/QuickToggles.qml`, tambahkan `QuickToggle` baru:

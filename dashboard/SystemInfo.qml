@@ -15,7 +15,7 @@ import "../" as Root
 Item {
     id: root
 
-// ── StatRow — satu baris kompak untuk CPU / GPU / RAM / Disk ─────────
+// ── StatRow — satu baris kompak untuk CPU / GPU / RAM / Disk dengan sparkline ─────────
 component StatRow: Item {
     id: box
 
@@ -26,6 +26,7 @@ component StatRow: Item {
     property string tempText: ""
     property color tempColor: Root.Colors.subtext
     property string subText: ""
+    property var history: []
 
     Layout.fillWidth: true
     implicitHeight: 28
@@ -54,22 +55,92 @@ component StatRow: Item {
             Behavior on color { ColorAnimation { duration: 200 } }
         }
 
-        // Bar
-        Rectangle {
+        // Sparkline Chart
+        Canvas {
+            id: sparkline
             Layout.fillWidth: true
-            height: 5
-            radius: 2.5
-            color: Root.Colors.surface1
-            Behavior on color { ColorAnimation { duration: 200 } }
-
-            Rectangle {
-                width: parent.width * Math.max(0, Math.min(100, box.pct)) / 100
-                height: parent.height
-                radius: parent.radius
-                color: box.tempColor
-                Behavior on width { NumberAnimation { duration: 600; easing.type: Easing.OutCubic } }
-                Behavior on color { ColorAnimation { duration: 300 } }
+            height: 22
+            
+            onPaint: {
+                const ctx = getContext("2d")
+                if (!ctx) return
+                
+                ctx.clearRect(0, 0, width, height)
+                
+                if (box.history.length < 1) return
+                
+                const padding = 1
+                const chartHeight = height - padding * 2
+                
+                // Find min/max untuk auto-scaling (dengan range minimal 20%)
+                let minVal = Math.min(...box.history)
+                let maxVal = Math.max(...box.history)
+                const range = maxVal - minVal
+                
+                // Jika range terlalu kecil, gunakan fixed range
+                if (range < 15) {
+                    const mid = (minVal + maxVal) / 2
+                    minVal = Math.max(0, mid - 10)
+                    maxVal = Math.min(100, mid + 10)
+                }
+                
+                // Tambah sedikit padding ke range
+                minVal = Math.max(0, minVal - 2)
+                maxVal = Math.min(100, maxVal + 2)
+                const effectiveRange = maxVal - minVal || 1
+                
+                const xStep = width / Math.max(1, box.history.length - 1)
+                
+                // Draw filled area
+                ctx.fillStyle = Qt.rgba(box.tempColor.r, box.tempColor.g, box.tempColor.b, 0.2)
+                ctx.beginPath()
+                ctx.moveTo(0, height - padding)
+                
+                for (let i = 0; i < box.history.length; i++) {
+                    const x = i * xStep
+                    const normalizedVal = (box.history[i] - minVal) / effectiveRange
+                    const y = height - padding - (normalizedVal * chartHeight)
+                    ctx.lineTo(x, y)
+                }
+                
+                ctx.lineTo(width, height - padding)
+                ctx.closePath()
+                ctx.fill()
+                
+                // Draw line
+                ctx.strokeStyle = box.tempColor
+                ctx.lineWidth = 2
+                ctx.lineCap = "round"
+                ctx.lineJoin = "round"
+                ctx.beginPath()
+                
+                for (let i = 0; i < box.history.length; i++) {
+                    const x = i * xStep
+                    const normalizedVal = (box.history[i] - minVal) / effectiveRange
+                    const y = height - padding - (normalizedVal * chartHeight)
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y)
+                    } else {
+                        ctx.lineTo(x, y)
+                    }
+                }
+                
+                ctx.stroke()
             }
+            
+            Connections {
+                target: box
+                function onHistoryChanged() { 
+                    sparkline.requestPaint()
+                }
+                function onTempColorChanged() { 
+                    sparkline.requestPaint()
+                }
+            }
+            
+            // Force repaint when parent width changes
+            onWidthChanged: requestPaint()
         }
 
         // Persentase
@@ -112,7 +183,34 @@ component StatRow: Item {
     property string diskText:  "—"
     property real   diskUsage: 0
 
+    // History arrays for sparkline (max 30 points)
+    property var cpuHistory: []
+    property var gpuHistory: []
+    property var ramHistory: []
+    property var diskHistory: []
+    property int maxHistoryPoints: 30
+
     signal setFaceRequested()
+
+    function addToHistory(array, value) {
+        var newArray = array.slice()
+        newArray.push(value)
+        if (newArray.length > maxHistoryPoints) {
+            newArray.shift()
+        }
+        return newArray
+    }
+    
+    // Initialize with some data points untuk visualisasi awal
+    Component.onCompleted: {
+        // Isi dengan nilai awal agar grafik langsung terlihat
+        for (let i = 0; i < 5; i++) {
+            cpuHistory.push(0)
+            gpuHistory.push(0)
+            ramHistory.push(0)
+            diskHistory.push(0)
+        }
+    }
 
     // ── Pollers ───────────────────────────────────────────────────────────
 
@@ -129,7 +227,9 @@ component StatRow: Item {
                 if (root._cpuPrev) {
                     const dTotal = total - root._cpuPrev.total
                     const dIdle  = idle  - root._cpuPrev.idle
-                    root.cpuUsage = dTotal > 0 ? Math.round((1 - dIdle / dTotal) * 100) : 0
+                    const usage = dTotal > 0 ? Math.round((1 - dIdle / dTotal) * 100) : 0
+                    root.cpuUsage = usage
+                    root.cpuHistory = root.addToHistory(root.cpuHistory, usage)
                 }
                 root._cpuPrev = { total, idle }
             }
@@ -161,7 +261,9 @@ component StatRow: Item {
         stdout: StdioCollector {
             onStreamFinished: {
                 const v = parseInt(text.trim())
-                root.gpuUsage = isNaN(v) ? 0 : v
+                const usage = isNaN(v) ? 0 : v
+                root.gpuUsage = usage
+                root.gpuHistory = root.addToHistory(root.gpuHistory, usage)
             }
         }
     }
@@ -175,8 +277,10 @@ component StatRow: Item {
             onStreamFinished: {
                 const parts = text.trim().split(" ")
                 const pct = parseInt(parts[parts.length - 1])
-                root.ramUsage = isNaN(pct) ? 0 : pct
+                const usage = isNaN(pct) ? 0 : pct
+                root.ramUsage = usage
                 root.ramText  = parts.slice(0, parts.length - 1).join(" ")
+                root.ramHistory = root.addToHistory(root.ramHistory, usage)
             }
         }
     }
@@ -190,15 +294,17 @@ component StatRow: Item {
             onStreamFinished: {
                 const parts = text.trim().split(" ")
                 const pct = parseInt(parts[parts.length - 1])
-                root.diskUsage = isNaN(pct) ? 0 : pct
+                const usage = isNaN(pct) ? 0 : pct
+                root.diskUsage = usage
                 root.diskText  = parts.slice(0, parts.length - 1).join(" ")
+                root.diskHistory = root.addToHistory(root.diskHistory, usage)
             }
         }
     }
 
-    // Tick tiap 2 detik
+    // Tick tiap 1 detik untuk update lebih responsif
     Timer {
-        interval: 2000; running: true; repeat: true; triggeredOnStart: true
+        interval: 1000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {
             cpuStatProc.running  = true
             cpuTempProc.running  = true
@@ -375,6 +481,7 @@ component StatRow: Item {
                               : Root.Colors.blue
                     tempText: root.cpuTemp + "°C"
                     pct: root.cpuUsage
+                    history: root.cpuHistory
                 }
                 StatRow {
                     label: "GPU"; icon: "󰾲"
@@ -384,6 +491,7 @@ component StatRow: Item {
                               : Root.Colors.mauve
                     tempText: root.gpuTemp + "°C"
                     pct: root.gpuUsage
+                    history: root.gpuHistory
                 }
                 StatRow {
                     label: "RAM"; icon: "󰍛"
@@ -393,6 +501,7 @@ component StatRow: Item {
                               : Root.Colors.green
                     pct: root.ramUsage
                     subText: root.ramText
+                    history: root.ramHistory
                 }
                 StatRow {
                     label: "Disk"; icon: "󰋊"
@@ -402,6 +511,7 @@ component StatRow: Item {
                               : Root.Colors.yellow
                     pct: root.diskUsage
                     subText: root.diskText
+                    history: root.diskHistory
                 }
             }
         }

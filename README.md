@@ -3,10 +3,21 @@
 Shell desktop berbasis [Quickshell](https://quickshell.outfoxxed.me) untuk Hyprland.
 Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — semua dalam satu config QML.
 
+## ✨ Fitur Unggulan
+
+- **Sparkline System Monitor** — Real-time CPU, GPU, RAM, Disk usage dengan line chart mini dan auto-scaling
+- **Live Theme Switching** — 4 flavor Catppuccin (Latte, Frappé, Macchiato, Mocha) bisa ganti tanpa restart
+- **Smart Wallpaper Manager** — Grid thumbnail, preview, slideshow otomatis, transisi animasi via swww
+- **Cava Audio Visualizer** — Cincin visualizer yang mengelilingi cover art media player
+- **Quick Toggles** — Panel aksi cepat: screenshot, record, idle, DND, night light
+- **Bluetooth Auto-Pairing** — Agent background yang auto-accept pairing request
+- **PAM Lock Screen** — Autentikasi native dengan blur background dan animasi smooth
+
 ## Tampilan
 
 - **Bar** — panel atas dengan workspace, clock, status network/bluetooth/volume/brightness/battery
 - **Dashboard** — dropdown dari clock: media player, quick toggles, system stats, settings
+- **System Info** — monitoring real-time CPU, GPU, RAM, Disk dengan sparkline chart dan auto-scaling
 - **Panel Wi-Fi & Bluetooth** — panel popup dengan daftar jaringan & perangkat
 - **Volume Panel** — mixer per-aplikasi + device selector
 - **Wallpaper Panel** — grid thumbnail, preview, slideshow, transisi via `swww`
@@ -52,7 +63,7 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 │   ├── QuickToggles.qml         # Grid toggle: idle, screenshot, recorder, DND, night
 │   ├── SettingsTab.qml          # Tab settings (slider volume/brightness, theme)
 │   ├── SliderRow.qml            # Komponen slider generik
-│   ├── SystemInfo.qml           # Info sistem (CPU, RAM, disk, uptime, profil)
+│   ├── SystemInfo.qml           # Info sistem dengan sparkline chart (CPU, GPU, RAM, Disk)
 │   ├── SystemStats.qml          # Bar stats ringkas di dashboard
 │   ├── ThemeSelector.qml        # Selector 4 flavor Catppuccin
 │   └── cava_feed.sh             # Script feed data cava ke named pipe
@@ -172,6 +183,23 @@ Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk referen
 | Folder & config wallpaper | `wallpaper.json` |
 
 Lihat [docs/configuration.md](docs/configuration.md) untuk detail lengkap.
+
+---
+
+## Changelog
+
+### v2.0 - Sparkline Charts
+- **[NEW]** Sparkline chart untuk CPU, GPU, RAM, Disk di SystemInfo panel
+- **[NEW]** Auto-scaling visualization - grafik otomatis zoom untuk menampilkan perubahan lebih jelas
+- **[NEW]** History tracking hingga 30 data points dengan smooth animation
+- **[IMPROVED]** Update interval lebih cepat (1 detik) untuk monitoring real-time
+- **[IMPROVED]** Color-coded threshold dengan transisi smooth
+
+### v1.0 - Initial Release
+- Dashboard dengan media player dan quick toggles
+- Wallpaper manager dengan grid dan slideshow
+- Lock screen dengan PAM authentication
+- Multi-theme support (4 Catppuccin flavors)
 
 ---
 
