@@ -1,4 +1,6 @@
-<iframe widht="560" height="315" src="https://youtu.be/NyO79qD3V_0?si=dUqW6U2ApIo5KxVF" frame="0" allowfullscreen></iframe>
+[
+  ![Demo Quickshell Config](https://youtu.be/NyO79qD3V_0?si=WNzwPuLjSuKLYqbZ)
+](https://youtu.be/NyO79qD3V_0?si=ss2lzZ9lB_0RUlRz)
 
 
 
