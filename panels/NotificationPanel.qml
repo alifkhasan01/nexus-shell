@@ -27,25 +27,6 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-notif-panel"
     WlrLayershell.exclusiveZone: 0
 
-    // ── Server khusus history (keepOnReload: true) ─────────────────────────
-    NotificationServer {
-        id: histServer
-        actionsSupported:    false
-        bodySupported:       true
-        bodyMarkupSupported: false
-        imageSupported:      false
-        keepOnReload:        true
-
-        onNotification: notif => {
-            notif.tracked = true
-            histModel.insert(0, { "notif": notif })
-            // Potong kalau terlalu banyak
-            while (histModel.count > 50) histModel.remove(histModel.count - 1)
-        }
-    }
-
-    ListModel { id: histModel }
-
     // ── Klik luar untuk tutup ──────────────────────────────────────────────
     MouseArea {
         anchors.fill: parent
@@ -129,7 +110,7 @@ PanelWindow {
 
                 // Badge jumlah
                 Rectangle {
-                    visible: histModel.count > 0
+                    visible: Root.NotificationService.historyModel.count > 0
                     width: Math.max(22, countTxt.implicitWidth + 10)
                     height: 20
                     radius: 10
@@ -137,7 +118,7 @@ PanelWindow {
                     Text {
                         id: countTxt
                         anchors.centerIn: parent
-                        text: histModel.count
+                        text: Root.NotificationService.historyModel.count
                         font.pixelSize: 11
                         font.bold: true
                         color: Root.Colors.blue
@@ -146,7 +127,7 @@ PanelWindow {
 
                 // Tombol hapus semua
                 Rectangle {
-                    visible: histModel.count > 0
+                    visible: Root.NotificationService.historyModel.count > 0
                     width: clearTxt.implicitWidth + 14
                     height: 24
                     radius: 8
@@ -166,20 +147,14 @@ PanelWindow {
                         anchors.fill: parent
                         hoverEnabled: true
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: {
-                            for (let i = 0; i < histModel.count; i++) {
-                                const item = histModel.get(i)
-                                if (item?.notif) item.notif.dismiss()
-                            }
-                            histModel.clear()
-                        }
+                        onClicked: Root.NotificationService.clearHistory()
                     }
                 }
             }
 
             // ── Kosong state ────────────────────────────────────────────────
             Item {
-                visible: histModel.count === 0
+                visible: Root.NotificationService.historyModel.count === 0
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 implicitHeight: 80
@@ -208,7 +183,7 @@ PanelWindow {
                 id: listFlick
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                visible: histModel.count > 0
+                visible: Root.NotificationService.historyModel.count > 0
                 implicitHeight: Math.min(notifCol.implicitHeight, 480)
                 contentWidth: width
                 contentHeight: notifCol.implicitHeight
@@ -221,7 +196,7 @@ PanelWindow {
                     spacing: 6
 
                     Repeater {
-                        model: histModel
+                        model: Root.NotificationService.historyModel
 
                         delegate: Rectangle {
                             required property var notif
@@ -275,10 +250,7 @@ PanelWindow {
                                         MouseArea {
                                             id: xMa; anchors.fill: parent
                                             hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                            onClicked: {
-                                                if (notif) notif.dismiss()
-                                                histModel.remove(index)
-                                            }
+                                            onClicked: Root.NotificationService.removeFromHistory(index)
                                         }
                                     }
                                 }

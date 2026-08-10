@@ -28,25 +28,18 @@ PanelWindow {
     WlrLayershell.exclusiveZone:   0
     WlrLayershell.keyboardFocus:   WlrKeyboardFocus.None
 
-    // ── Notification server ───────────────────────────────────────────────
-    NotificationServer {
-        id: server
-        actionsSupported:    true
-        bodySupported:       true
-        bodyMarkupSupported: false
-        imageSupported:      false
-        keepOnReload:        false
+    // ── Model untuk popup (notifikasi sementara) ──────────────────────────
+    ListModel { id: notifModel }
 
-        onNotification: notif => {
-            notif.tracked = true
+    // ── Koneksi ke NotificationService ────────────────────────────────────
+    Connections {
+        target: Root.NotificationService
+        function onNewNotification(notif) {
             // DND: blokir popup kecuali notif Critical
             if (root.dnd && notif.urgency !== NotificationUrgency.Critical) return
             notifModel.append({ "notif": notif })
         }
     }
-
-    // ── Model ─────────────────────────────────────────────────────────────
-    ListModel { id: notifModel }
 
     // ── Stack kartu (tumbuh ke atas) ──────────────────────────────────────
     Column {
