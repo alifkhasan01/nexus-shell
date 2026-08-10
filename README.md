@@ -101,14 +101,14 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 ## Instalasi
 
 ```bash
-git clone <repo> ~/.config/quickshell
+git clone https://github.com/alifkhasan01/qs.git ~/.config/quickshell
 qs
 ```
 
 Tambahkan ke `hyprland.conf` untuk autostart:
 
 ```ini
-exec-once = qs
+hl.exec_cmd("qs") or hl.exec_cmd("quickshell")
 ```
 
 Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk panduan lengkap keybinding.
