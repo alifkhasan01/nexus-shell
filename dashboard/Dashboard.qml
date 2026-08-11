@@ -67,44 +67,62 @@ PanelWindow {
         border.width: 2
         clip: true
 
-        // ── Animasi slide dari atas + fade ─────────────────────────────
+        // ── Animasi slide dari atas + fade + scale ────────────────────
+        // Initial state: card tersembunyi, sedikit scale down, dan posisi di atas
         opacity: 0
-        transform: Translate { id: cardSlide; y: -30 }
+        scale: 0.96
+        transform: Translate { id: cardSlide; y: -40 }
 
+        // State management untuk animasi open/close
         states: State {
             name: "open"
             when: root.open
-            PropertyChanges { target: card;      opacity: 1 }
+            PropertyChanges { target: card;      opacity: 1; scale: 1 }
             PropertyChanges { target: cardSlide; y: 0 }
         }
 
+        // Transisi untuk animasi open dan close
         transitions: [
+            // Animasi OPEN: Card slide down dari atas dengan fade in dan scale up
+            // Duration: 400ms untuk smooth entrance
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
                     NumberAnimation {
                         target: cardSlide; property: "y"
-                        duration: 260; easing.type: Easing.OutCubic
+                        duration: 400; easing.type: Easing.OutCubic
                     }
-                    OpacityAnimator {
-                        target: card
-                        duration: 220; easing.type: Easing.OutCubic
+                    NumberAnimation {
+                        target: card; property: "scale"
+                        duration: 400; easing.type: Easing.OutCubic
+                    }
+                    NumberAnimation {
+                        target: card; property: "opacity"
+                        duration: 350; easing.type: Easing.OutQuad
                     }
                 }
             },
+            // Animasi CLOSE: Card slide up ke atas dengan fade out dan scale down
+            // Duration: 350ms untuk responsive tapi tetap smooth
+            // PauseAnimation memastikan animasi selesai sebelum panel disembunyikan
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
                         NumberAnimation {
                             target: cardSlide; property: "y"
-                            duration: 180; easing.type: Easing.InCubic
+                            duration: 350; easing.type: Easing.InOutQuad
                         }
-                        OpacityAnimator {
-                            target: card
-                            duration: 160; easing.type: Easing.InCubic
+                        NumberAnimation {
+                            target: card; property: "scale"
+                            duration: 350; easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: card; property: "opacity"
+                            duration: 300; easing.type: Easing.InQuad
                         }
                     }
+                    PauseAnimation { duration: 50 }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
@@ -122,6 +140,53 @@ PanelWindow {
             y: root._pad
             width: root._lw
             spacing: 10
+            
+            // Initial state untuk staggered animation
+            opacity: 0
+            transform: Translate { id: leftSlide; y: 10 }
+
+            // State untuk kolom kiri
+            states: State {
+                name: "visible"
+                when: root.open
+                PropertyChanges { target: leftCol; opacity: 1 }
+                PropertyChanges { target: leftSlide; y: 0 }
+            }
+
+            // Transisi dengan delay 100ms untuk cascade effect
+            transitions: [
+                // Animasi OPEN: Delay 100ms, lalu slide up + fade in
+                Transition {
+                    to: "visible"
+                    SequentialAnimation {
+                        PauseAnimation { duration: 100 }  // Cascade delay
+                        ParallelAnimation {
+                            NumberAnimation {
+                                target: leftSlide; property: "y"
+                                duration: 350; easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: leftCol; property: "opacity"
+                                duration: 350; easing.type: Easing.OutQuad
+                            }
+                        }
+                    }
+                },
+                // Animasi CLOSE: Slide up + fade out bersamaan dengan card
+                Transition {
+                    from: "visible"; to: ""
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: leftSlide; property: "y"
+                            duration: 300; easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: leftCol; property: "opacity"
+                            duration: 300; easing.type: Easing.InQuad
+                        }
+                    }
+                }
+            ]
 
             // Jam & tanggal + profile picture
             Rectangle {
@@ -273,6 +338,53 @@ PanelWindow {
             y: root._pad
             width:  root._rw
             height: leftCol.height
+            
+            // Initial state untuk staggered animation
+            opacity: 0
+            transform: Translate { id: rightSlide; y: 10 }
+
+            // State untuk kolom tengah (media)
+            states: State {
+                name: "visible"
+                when: root.open
+                PropertyChanges { target: rightCol; opacity: 1 }
+                PropertyChanges { target: rightSlide; y: 0 }
+            }
+
+            // Transisi dengan delay 150ms untuk cascade effect (setelah leftCol)
+            transitions: [
+                // Animasi OPEN: Delay 150ms, lalu slide up + fade in
+                Transition {
+                    to: "visible"
+                    SequentialAnimation {
+                        PauseAnimation { duration: 150 }  // Cascade delay
+                        ParallelAnimation {
+                            NumberAnimation {
+                                target: rightSlide; property: "y"
+                                duration: 350; easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: rightCol; property: "opacity"
+                                duration: 350; easing.type: Easing.OutQuad
+                            }
+                        }
+                    }
+                },
+                // Animasi CLOSE: Slide up + fade out bersamaan dengan card
+                Transition {
+                    from: "visible"; to: ""
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: rightSlide; property: "y"
+                            duration: 300; easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: rightCol; property: "opacity"
+                            duration: 300; easing.type: Easing.InQuad
+                        }
+                    }
+                }
+            ]
 
             // Media card — full height kolom kanan
             Rectangle {
@@ -754,6 +866,53 @@ PanelWindow {
             y: root._pad
             width:  root._iw
             height: leftCol.height
+            
+            // Initial state untuk staggered animation
+            opacity: 0
+            transform: Translate { id: infoSlide; y: 10 }
+
+            // State untuk kolom kanan (system info)
+            states: State {
+                name: "visible"
+                when: root.open
+                PropertyChanges { target: infoCol; opacity: 1 }
+                PropertyChanges { target: infoSlide; y: 0 }
+            }
+
+            // Transisi dengan delay 200ms untuk cascade effect (paling terakhir)
+            transitions: [
+                // Animasi OPEN: Delay 200ms, lalu slide up + fade in
+                Transition {
+                    to: "visible"
+                    SequentialAnimation {
+                        PauseAnimation { duration: 200 }  // Cascade delay
+                        ParallelAnimation {
+                            NumberAnimation {
+                                target: infoSlide; property: "y"
+                                duration: 350; easing.type: Easing.OutCubic
+                            }
+                            NumberAnimation {
+                                target: infoCol; property: "opacity"
+                                duration: 350; easing.type: Easing.OutQuad
+                            }
+                        }
+                    }
+                },
+                // Animasi CLOSE: Slide up + fade out bersamaan dengan card
+                Transition {
+                    from: "visible"; to: ""
+                    ParallelAnimation {
+                        NumberAnimation {
+                            target: infoSlide; property: "y"
+                            duration: 300; easing.type: Easing.InOutQuad
+                        }
+                        NumberAnimation {
+                            target: infoCol; property: "opacity"
+                            duration: 300; easing.type: Easing.InQuad
+                        }
+                    }
+                }
+            ]
 
             Dash.SystemInfo {
                 anchors.fill: parent

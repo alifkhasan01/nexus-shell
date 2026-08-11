@@ -29,7 +29,7 @@ Item {
         font.pixelSize: 14
         text: {
             const p = root.percent
-            const icon = p >= 67 ? "󰃞" : (p >= 34 ? "󰃝" : "󰃜")
+            const icon = p >= 67 ? "󰃠" : (p >= 34 ? "󰃝" : "󰃞")
             return icon + "  " + p + "%"
         }
         Behavior on color { ColorAnimation { duration: 150 } }

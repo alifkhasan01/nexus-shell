@@ -343,10 +343,12 @@ PanelWindow {
                         panelOpen: bar.batteryPanelOpen
                         onTogglePanel: {
                             bar.batteryPanelOpen = !bar.batteryPanelOpen
+                            bar.shellState.menuOpen = false
                             bar.shellState.connectionOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.shellState.wallpaperPanelOpen = false
+                            bar.shellState.powerMenuOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false

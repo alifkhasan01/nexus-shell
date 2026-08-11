@@ -128,15 +128,21 @@ PanelWindow {
         focus: true
 
         // ── Animasi masuk / keluar ─────────────────────────────────────
+        // Initial state: card tersembunyi dan sedikit di atas posisi final
         opacity: 0
         transform: Translate { id: cardTx; y: -10 }
 
+        // State management untuk animasi open/close
         states: State {
             name: "open"; when: root.open
             PropertyChanges { target: card;   opacity: 1        }
             PropertyChanges { target: cardTx; y: 0              }
         }
+        
+        // Transisi animasi untuk menu panel
         transitions: [
+            // Animasi OPEN: Slide down dari atas dengan fade in
+            // Duration: 200ms untuk entrance yang cepat dan responsive
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
@@ -144,6 +150,9 @@ PanelWindow {
                     OpacityAnimator  { target: card;                         duration: 180; easing.type: Easing.OutCubic }
                 }
             },
+            // Animasi CLOSE: Slide up ke atas dengan fade out
+            // Duration: 150ms untuk exit yang cepat
+            // ScriptAction menyembunyikan panel setelah animasi selesai
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {

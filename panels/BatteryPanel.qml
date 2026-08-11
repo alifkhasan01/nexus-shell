@@ -23,6 +23,13 @@ PanelWindow {
     visible: showPanel
 
     property bool showPanel: false
+    onOpenChanged: {
+        if (open) {
+            showPanel = true
+            profileReadProc.running = false
+            profileReadProc.running = true
+        }
+    }
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
@@ -57,15 +64,6 @@ PanelWindow {
     }
 
     property Process profileSetProc: Process {}
-
-    // ── Satu handler onOpenChanged — showPanel + refresh profile ──────────
-    onOpenChanged: {
-        if (open) {
-            showPanel = true
-            profileReadProc.running = false
-            profileReadProc.running = true
-        }
-    }
 
     function setProfile(profile) {
         root.currentProfile = profile
@@ -120,9 +118,11 @@ PanelWindow {
         border.width: 2
 
         // ── Animasi muncul / hilang ────────────────────────────────────────
+        // Initial state: card tersembunyi dan posisi di atas (y: -50)
         opacity: 0
         transform: Translate { id: cardTranslate; y: -50 }
 
+        // State management untuk animasi open/close battery panel
         states: State {
             name: "open"
             when: root.open
@@ -130,12 +130,18 @@ PanelWindow {
             PropertyChanges { target: cardTranslate; y: 0 }
         }
 
+        // Transisi animasi untuk battery panel
         transitions: [
+            // Animasi OPEN: Slide down dari atas dengan fade in
+            // Duration: 220ms untuk smooth entrance
             Transition {
                 from: ""; to: "open"
                 NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
                 OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
             },
+            // Animasi CLOSE: Slide up ke atas dengan fade out
+            // Duration: 160ms untuk responsive exit
+            // ScriptAction menyembunyikan panel setelah animasi selesai
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {

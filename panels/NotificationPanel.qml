@@ -54,9 +54,12 @@ PanelWindow {
         border.color: Root.Colors.surface2
         border.width: 2
 
+        // ── Animasi slide dari atas ────────────────────────────────────────
+        // Initial state: card tersembunyi dan posisi di atas (y: -50)
         opacity: 0
         transform: Translate { id: cardTranslate; y: -50 }
 
+        // State management untuk animasi open/close notification panel
         states: State {
             name: "open"
             when: root.open
@@ -64,12 +67,18 @@ PanelWindow {
             PropertyChanges { target: cardTranslate; y: 0 }
         }
 
+        // Transisi animasi untuk notification panel
         transitions: [
+            // Animasi OPEN: Slide down dari atas dengan fade in
+            // Duration: 220ms untuk smooth entrance
             Transition {
                 from: ""; to: "open"
                 NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
                 OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
             },
+            // Animasi CLOSE: Slide up ke atas dengan fade out
+            // Duration: 160ms untuk responsive exit
+            // ScriptAction menyembunyikan panel setelah animasi selesai
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {

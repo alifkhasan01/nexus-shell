@@ -207,7 +207,7 @@ GridLayout {
             anchors.left: parent.left
             anchors.bottom: parent.bottom
             anchors.margins: 6
-            text: recorderBtn.recordingWithMic ? "󰕾󰍬" : "󰕾"
+            text: recorderBtn.recordingWithMic ? "󰕾 󰍬" : "󰕾"
             font.pixelSize: 9
             color: Root.Colors.base
         }

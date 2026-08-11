@@ -135,6 +135,7 @@ PanelWindow {
         border.width: 2
 
         // ── Animasi masuk/keluar ───────────────────────────────────────────
+        // Initial state: card tersembunyi, scaled down, dan di atas posisi final
         opacity: 0
         transform: [
             Scale {
@@ -147,6 +148,7 @@ PanelWindow {
             Translate { id: cardTranslate; y: -20 }
         ]
 
+        // State management untuk animasi open/close calendar
         states: State {
             name: "open"
             when: root.open
@@ -155,7 +157,11 @@ PanelWindow {
             PropertyChanges { target: cardTranslate; y: 0 }
         }
 
+        // Transisi animasi untuk calendar panel
         transitions: [
+            // Animasi OPEN: Scale up + slide down dengan bounce effect
+            // Duration: 240ms dengan OutBack easing untuk efek "pop"
+            // Overshoot 0.6 memberikan bounce yang subtle
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
@@ -164,6 +170,8 @@ PanelWindow {
                     OpacityAnimator { target: card;             duration: 180; easing.type: Easing.OutCubic }
                 }
             },
+            // Animasi CLOSE: Scale down + slide up
+            // Duration: 160ms untuk exit yang cepat dan clean
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
