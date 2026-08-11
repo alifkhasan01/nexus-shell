@@ -198,84 +198,102 @@ PanelWindow {
                     Repeater {
                         model: Root.NotificationService.historyModel
 
-                        delegate: Rectangle {
+                        delegate: Loader {
                             required property var notif
                             required property int index
-
+                            
                             width: notifCol.width
-                            implicitHeight: itemCol.implicitHeight + 18
-                            radius: 10
-                            color: itemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            asynchronous: true
+                            
+                            sourceComponent: Rectangle {
+                                width: notifCol.width
+                                implicitHeight: itemCol.implicitHeight + 18
+                                radius: 10
+                                color: itemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
+                                Behavior on color { ColorAnimation { duration: 100 } }
 
-                            border.color: {
-                                if (!notif) return Root.Colors.surface1
-                                switch (notif.urgency) {
-                                    case NotificationUrgency.Critical: return Root.Colors.red
-                                    default: return Root.Colors.surface1
+                                border.color: {
+                                    try {
+                                        if (!notif) return Root.Colors.surface1
+                                        switch (notif.urgency) {
+                                            case NotificationUrgency.Critical: return Root.Colors.red
+                                            default: return Root.Colors.surface1
+                                        }
+                                    } catch(e) {
+                                        return Root.Colors.surface1
+                                    }
                                 }
-                            }
-                            border.width: 1
+                                border.width: 1
 
-                            ColumnLayout {
-                                id: itemCol
-                                anchors {
-                                    top: parent.top; left: parent.left; right: parent.right
-                                    margins: 10
-                                }
-                                spacing: 2
+                                ColumnLayout {
+                                    id: itemCol
+                                    anchors {
+                                        top: parent.top; left: parent.left; right: parent.right
+                                        margins: 10
+                                    }
+                                    spacing: 2
 
-                                // Header: app name + dismiss
-                                RowLayout {
-                                    Layout.fillWidth: true
+                                    // Header: app name + dismiss
+                                    RowLayout {
+                                        Layout.fillWidth: true
+
+                                        Text {
+                                            text: {
+                                                try { return notif?.appName ?? "" }
+                                                catch(e) { return "" }
+                                            }
+                                            font.pixelSize: 10
+                                            font.bold: true
+                                            color: Root.Colors.subtext
+                                            elide: Text.ElideRight
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Rectangle {
+                                            width: 18; height: 18; radius: 5
+                                            color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
+                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                            Text {
+                                                anchors.centerIn: parent
+                                                text: "󰅖"; font.pixelSize: 10
+                                                color: Root.Colors.subtext
+                                            }
+                                            MouseArea {
+                                                id: xMa; anchors.fill: parent
+                                                hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                                onClicked: Root.NotificationService.removeFromHistory(index)
+                                            }
+                                        }
+                                    }
 
                                     Text {
-                                        text: notif?.appName ?? ""
-                                        font.pixelSize: 10
-                                        font.bold: true
-                                        color: Root.Colors.subtext
-                                        elide: Text.ElideRight
+                                        text: {
+                                            try { return notif?.summary ?? "" }
+                                            catch(e) { return "" }
+                                        }
+                                        visible: text !== ""
+                                        font.pixelSize: 12; font.bold: true
+                                        color: Root.Colors.text
+                                        wrapMode: Text.WordWrap
                                         Layout.fillWidth: true
                                     }
 
-                                    Rectangle {
-                                        width: 18; height: 18; radius: 5
-                                        color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                                        Behavior on color { ColorAnimation { duration: 100 } }
-                                        Text {
-                                            anchors.centerIn: parent
-                                            text: "󰅖"; font.pixelSize: 10
-                                            color: Root.Colors.subtext
+                                    Text {
+                                        text: {
+                                            try { return notif?.body ?? "" }
+                                            catch(e) { return "" }
                                         }
-                                        MouseArea {
-                                            id: xMa; anchors.fill: parent
-                                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                            onClicked: Root.NotificationService.removeFromHistory(index)
-                                        }
+                                        visible: text !== ""
+                                        font.pixelSize: 11
+                                        color: Root.Colors.subtext
+                                        wrapMode: Text.WordWrap
+                                        textFormat: Text.PlainText
+                                        Layout.fillWidth: true
                                     }
                                 }
 
-                                Text {
-                                    text: notif?.summary ?? ""
-                                    visible: text !== ""
-                                    font.pixelSize: 12; font.bold: true
-                                    color: Root.Colors.text
-                                    wrapMode: Text.WordWrap
-                                    Layout.fillWidth: true
-                                }
-
-                                Text {
-                                    text: notif?.body ?? ""
-                                    visible: text !== ""
-                                    font.pixelSize: 11
-                                    color: Root.Colors.subtext
-                                    wrapMode: Text.WordWrap
-                                    textFormat: Text.PlainText
-                                    Layout.fillWidth: true
-                                }
+                                HoverHandler { id: itemHover }
                             }
-
-                            HoverHandler { id: itemHover }
                         }
                     }
                 }

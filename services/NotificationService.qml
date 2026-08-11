@@ -14,30 +14,34 @@ QtObject {
         keepOnReload:        true
 
         onNotification: notif => {
-            notif.tracked = true
+            try {
+                notif.tracked = true
 
-            // Salin data notif ke plain object sebelum notif di-expire,
-            // agar history panel tetap bisa baca summary/body/appName
-            // meski objek Notification aslinya sudah expire.
-            const snapshot = {
-                appName: notif.appName  || "",
-                summary: notif.summary  || "",
-                body:    notif.body     || "",
-                urgency: notif.urgency,
-                // Simpan referensi asli hanya untuk keperluan dismiss
-                _ref: notif
-            }
+                // Salin data notif ke plain object sebelum notif di-expire,
+                // agar history panel tetap bisa baca summary/body/appName
+                // meski objek Notification aslinya sudah expire.
+                const snapshot = {
+                    appName: notif.appName  || "",
+                    summary: notif.summary  || "",
+                    body:    notif.body     || "",
+                    urgency: notif.urgency  || 1, // Default: Normal
+                    // Simpan referensi asli hanya untuk keperluan dismiss
+                    _ref: notif
+                }
 
-            // Tambah ke history
-            historyModel.insert(0, { "notif": snapshot })
-            
-            // Potong kalau terlalu banyak (max 50)
-            while (historyModel.count > 50) {
-                historyModel.remove(historyModel.count - 1)
+                // Tambah ke history
+                historyModel.insert(0, { "notif": snapshot })
+                
+                // Potong kalau terlalu banyak (max 50)
+                while (historyModel.count > 50) {
+                    historyModel.remove(historyModel.count - 1)
+                }
+                
+                // Emit signal untuk popup (kirim objek asli)
+                root.newNotification(notif)
+            } catch(e) {
+                console.error("Error handling notification:", e)
             }
-            
-            // Emit signal untuk popup (kirim objek asli)
-            root.newNotification(notif)
         }
     }
 

@@ -143,7 +143,9 @@ PanelWindow {
                 highlighted: root.focusedIndex === 1
                 onTriggered: {
                     root.closeRequested()
+                    // Lock dulu
                     root.lockFn()
+                    // Tunggu sebentar lalu suspend
                     suspendDelayTimer.restart()
                 }
             }
@@ -205,13 +207,33 @@ PanelWindow {
     // Delay singkat agar lock screen sempat render sebelum sistem di-suspend
     Timer {
         id: suspendDelayTimer
-        interval: 300
+        interval: 500
         repeat: false
-        onTriggered: suspendProc.running = true
+        onTriggered: {
+            // Coba beberapa cara suspend, fallback jika yang pertama gagal
+            suspendProc.running = true
+        }
     }
 
     Process {
         id: suspendProc
-        command: ["systemctl", "suspend"]
+        // Gunakan loginctl suspend sebagai prioritas pertama (lebih modern dan reliable)
+        // Fallback ke systemctl suspend jika loginctl tidak ada
+        command: ["sh", "-c", "loginctl suspend || systemctl suspend"]
+        
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode !== 0) {
+                console.warn("Suspend gagal dengan exit code:", exitCode)
+                // Coba fallback alternatif
+                suspendFallback.running = true
+            }
+        }
+    }
+
+    // Fallback jika command utama gagal
+    Process {
+        id: suspendFallback
+        // Coba dengan dbus sebagai alternatif terakhir
+        command: ["sh", "-c", "dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager.Suspend boolean:true || systemctl suspend"]
     }
 }
