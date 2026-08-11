@@ -504,7 +504,7 @@ Scope {
                                 id: faceImg
                                 anchors.fill: parent
                                 anchors.margins: 3
-                                source: "file:///home/xans/.face"
+                                source: "file://" + Quickshell.env("HOME") + "/.face"
                                 fillMode: Image.PreserveAspectCrop
                                 smooth: true
                                 mipmap: true
@@ -543,7 +543,7 @@ Scope {
                             font.pixelSize: 14
                             font.weight: Font.Medium
                             color: Root.Colors.text
-                            text: "xans"
+                            text: Quickshell.env("USER") || Quickshell.env("LOGNAME") || "User"
                         }
 
                         Item { Layout.preferredHeight: 20 }

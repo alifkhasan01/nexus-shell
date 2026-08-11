@@ -123,7 +123,7 @@ PanelWindow {
 
         x:      12
         y:      6      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
-        width:  590
+        width:  620
         height: Math.min(660, root.height - y - 12)
         focus: true
 
