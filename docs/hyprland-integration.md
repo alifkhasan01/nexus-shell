@@ -2,6 +2,8 @@
 
 Panduan menghubungkan Quickshell ke keybinding Hyprland.
 
+> **Catatan**: Panduan ini menggunakan sintaks Lua untuk konfigurasi Hyprland. Jika Anda masih menggunakan format `.conf` lama, lihat bagian legacy di akhir dokumen.
+
 Quickshell berkomunikasi dengan Hyprland lewat dua mekanisme:
 
 - **GlobalShortcut** — shortcut diregistrasi langsung ke compositor Hyprland. Hyprland yang handle keypress, lalu memanggil handler di Quickshell.
@@ -11,25 +13,25 @@ Quickshell berkomunikasi dengan Hyprland lewat dua mekanisme:
 
 ## Referensi Cepat
 
-Tambahkan blok ini ke `~/.config/hypr/hyprland.conf` (atau file yang di-`source`):
+Tambahkan blok ini ke `~/.config/hypr/hyprland.lua` (atau file yang di-`source`):
 
-```ini
-# ── Quickshell ────────────────────────────────────────────────────────────
+```lua
+-- ── Quickshell ────────────────────────────────────────────────────────────
 
-# Dashboard (GlobalShortcut — diregistrasi ke compositor)
-bind = $mod, D, global, quickshell:dashboard
+-- Dashboard (GlobalShortcut — diregistrasi ke compositor)
+hl.bind("$mod, D", "global", "quickshell:dashboard")
 
-# Lock screen
-bind = $mod, L, exec, quickshell ipc call lockscreen lock
+-- Lock screen
+hl.bind("$mod, L", "exec", "quickshell ipc call lockscreen lock")
 
-# Power menu
-bind = $mod, P, exec, quickshell ipc call powermenu toggle
+-- Power menu
+hl.bind("$mod, P", "exec", "quickshell ipc call powermenu toggle")
 
-# Wallpaper panel
-bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
+-- Wallpaper panel
+hl.bind("$mod, W", "exec", "quickshell ipc call wallpaper toggle")
 
-# Wallpaper acak (tanpa membuka panel)
-bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+-- Wallpaper acak (tanpa membuka panel)
+hl.bind("$mod SHIFT, W", "exec", "quickshell ipc call wallpaper random")
 ```
 
 ---
@@ -40,8 +42,8 @@ bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
 
 Menggunakan **GlobalShortcut** — Hyprland langsung dispatch event ke Quickshell tanpa spawn proses baru.
 
-```ini
-bind = $mod, D, global, quickshell:dashboard
+```lua
+hl.bind("$mod, D", "global", "quickshell:dashboard")
 ```
 
 `appid` dan `name` didefinisikan di `shell.qml`:
@@ -62,8 +64,8 @@ GlobalShortcut {
 
 IPC handler didefinisikan di `lockscreen/LockScreen.qml`:
 
-```ini
-bind = $mod, L, exec, quickshell ipc call lockscreen lock
+```lua
+hl.bind("$mod, L", "exec", "quickshell ipc call lockscreen lock")
 ```
 
 Fungsi `lock()` akan:
@@ -82,8 +84,8 @@ quickshell ipc call lockscreen lock
 
 IPC handler di `shell.qml`:
 
-```ini
-bind = $mod, P, exec, quickshell ipc call powermenu toggle
+```lua
+hl.bind("$mod, P", "exec", "quickshell ipc call powermenu toggle")
 ```
 
 Item-item di power menu menjalankan perintah berikut:
@@ -102,12 +104,12 @@ Item-item di power menu menjalankan perintah berikut:
 
 IPC handler di `shell.qml` dengan beberapa fungsi:
 
-```ini
-# Toggle panel wallpaper
-bind = $mod, W, exec, quickshell ipc call wallpaper toggle
+```lua
+-- Toggle panel wallpaper
+hl.bind("$mod, W", "exec", "quickshell ipc call wallpaper toggle")
 
-# Wallpaper acak langsung (tanpa buka panel)
-bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+-- Wallpaper acak langsung (tanpa buka panel)
+hl.bind("$mod SHIFT, W", "exec", "quickshell ipc call wallpaper random")
 ```
 
 Fungsi yang tersedia via IPC:
@@ -125,26 +127,26 @@ Fungsi yang tersedia via IPC:
 
 ## Autostart
 
-```ini
-exec-once = qs
+```lua
+hl.exec_cmd("qs")
 ```
 
-Letakkan di bagian atas `hyprland.conf` agar shell langsung berjalan saat login.
+Letakkan di bagian atas `hyprland.lua` agar shell langsung berjalan saat login.
 
 ---
 
 ## Contoh Config Lengkap
 
-```ini
-# Autostart
-exec-once = qs
+```lua
+-- Autostart
+hl.exec_cmd("qs")
 
-# ── Quickshell keybindings ────────────────────────────────────────────────
-bind = $mod, D,       global, quickshell:dashboard
-bind = $mod, L,       exec,   quickshell ipc call lockscreen lock
-bind = $mod, P,       exec,   quickshell ipc call powermenu toggle
-bind = $mod, W,       exec,   quickshell ipc call wallpaper toggle
-bind = $mod SHIFT, W, exec,   quickshell ipc call wallpaper random
+-- ── Quickshell keybindings ────────────────────────────────────────────────
+hl.bind("$mod, D",       "global", "quickshell:dashboard")
+hl.bind("$mod, L",       "exec",   "quickshell ipc call lockscreen lock")
+hl.bind("$mod, P",       "exec",   "quickshell ipc call powermenu toggle")
+hl.bind("$mod, W",       "exec",   "quickshell ipc call wallpaper toggle")
+hl.bind("$mod SHIFT, W", "exec",   "quickshell ipc call wallpaper random")
 ```
 
 ---
@@ -159,8 +161,8 @@ bind = $mod SHIFT, W, exec,   quickshell ipc call wallpaper random
   ```
 
 - Kalau GlobalShortcut untuk dashboard tidak bekerja, coba fallback ke IPC:
-  ```ini
-  bind = $mod, D, exec, quickshell ipc call dashboard toggle
+  ```lua
+  hl.bind("$mod, D", "exec", "quickshell ipc call dashboard toggle")
   ```
   Tapi perlu ditambahkan IpcHandler `dashboard` di `shell.qml` terlebih dulu.
 
@@ -168,3 +170,23 @@ bind = $mod SHIFT, W, exec,   quickshell ipc call wallpaper random
   ```bash
   pgrep -x qs
   ```
+
+---
+
+## Legacy Format (.conf)
+
+Jika Anda masih menggunakan format `.conf` lama, berikut sintaksnya:
+
+```ini
+# Autostart
+exec-once = qs
+
+# Keybindings
+bind = $mod, D,       global, quickshell:dashboard
+bind = $mod, L,       exec,   quickshell ipc call lockscreen lock
+bind = $mod, P,       exec,   quickshell ipc call powermenu toggle
+bind = $mod, W,       exec,   quickshell ipc call wallpaper toggle
+bind = $mod SHIFT, W, exec,   quickshell ipc call wallpaper random
+```
+
+> **Rekomendasi**: Migrasikan ke format Lua untuk fitur dan fleksibilitas yang lebih baik.

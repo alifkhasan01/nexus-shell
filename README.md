@@ -1,9 +1,3 @@
-[
-  ![Demo Quickshell Config](https://youtu.be/NyO79qD3V_0?si=WNzwPuLjSuKLYqbZ)
-](https://youtu.be/NyO79qD3V_0?si=ss2lzZ9lB_0RUlRz)
-
-
-
 # Quickshell Config
 
 Shell desktop berbasis [Quickshell](https://quickshell.outfoxxed.me) untuk Hyprland.
@@ -111,9 +105,9 @@ git clone https://github.com/alifkhasan01/qs.git ~/.config/quickshell
 qs
 ```
 
-Tambahkan ke `hyprland.conf` untuk autostart:
+Tambahkan ke `hyprland.lua` untuk autostart:
 
-```ini
+```lua
 hl.exec_cmd("qs") or hl.exec_cmd("quickshell")
 ```
 
@@ -126,16 +120,16 @@ Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk panduan
 Quickshell berkomunikasi dengan Hyprland lewat dua mekanisme:
 
 **GlobalShortcut** (diregistrasi ke Hyprland compositor):
-```ini
-bind = $mod, D, global, quickshell:dashboard
+```lua
+hl.bind("$mod, D", "global", "quickshell:dashboard")
 ```
 
 **IPC call** (dipanggil via `exec`):
-```ini
-bind = $mod, L,       exec, quickshell ipc call lockscreen lock
-bind = $mod, P,       exec, quickshell ipc call powermenu toggle
-bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
-bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
+```lua
+hl.bind("$mod, L",       "exec", "quickshell ipc call lockscreen lock")
+hl.bind("$mod, P",       "exec", "quickshell ipc call powermenu toggle")
+hl.bind("$mod, W",       "exec", "quickshell ipc call wallpaper toggle")
+hl.bind("$mod SHIFT, W", "exec", "quickshell ipc call wallpaper random")
 ```
 
 Lihat [docs/hyprland-integration.md](docs/hyprland-integration.md) untuk referensi lengkap.
