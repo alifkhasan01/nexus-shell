@@ -20,6 +20,7 @@ PanelWindow {
     onOpenChanged: {
         if (open) {
             showPanel = true
+            grid.forceActiveFocus()
             if (root.wallpapers.length === 0)
                 loadConfigProc.running = true
             else
@@ -49,6 +50,8 @@ PanelWindow {
     // path wallpaper yang sedang di-preview (hover / klik)
     property string previewPath:    ""
     property string currentWallpaperPath: ""  // wallpaper aktif saat ini
+    // index yang diseleksi lewat keyboard (panah). -1 = belum ada seleksi.
+    property int selectedIndex: -1
 
     // ── Thumbnail cache (disk) ─────────────────────────────────────────────
     // Map: origPath (string) → thumbPath (string).
@@ -209,6 +212,38 @@ PanelWindow {
                 p.split("/").pop().toLowerCase().includes(q))
     }
     onSearchQueryChanged: applyFilter()
+    onFilteredChanged: root.selectedIndex = -1
+
+    // ── Navigasi keyboard (panah + Enter) ───────────────────────────────
+    function moveSelection(dx, dy) {
+        const n = root.filtered.length
+        if (n === 0) return
+        let idx = (root.selectedIndex >= 0 && root.selectedIndex < n) ? root.selectedIndex : 0
+        const cols = Math.max(1, grid.cols)
+        let row = Math.floor(idx / cols)
+        let col = idx % cols
+        col += dx
+        row += dy
+        if (col < 0) { col = cols - 1; row -= 1 }
+        if (col >= cols) { col = 0; row += 1 }
+        if (row < 0) row = 0
+        root.setSelection(Math.max(0, Math.min(n - 1, row * cols + col)))
+    }
+
+    function setSelection(i) {
+        if (i < 0 || i >= root.filtered.length) return
+        root.selectedIndex = i
+        root.previewPath = root.filtered[i]
+        grid.positionViewAtIndex(i, GridView.Center)
+    }
+
+    function activateSelection() {
+        const i = root.selectedIndex
+        if (i >= 0 && i < root.filtered.length) {
+            root.previewPath = root.filtered[i]
+            root.setWallpaper(root.filtered[i])
+        }
+    }
 
     // ── Set wallpaper ─────────────────────────────────────────────────────
     function setWallpaper(path) {
@@ -626,6 +661,16 @@ PanelWindow {
                     cellWidth:  thumbW + pad
                     cellHeight: thumbH + 20
 
+                    focus: true
+                    activeFocusOnTab: true
+
+                    Keys.onUpPressed:    root.moveSelection(0, -1)
+                    Keys.onDownPressed:  root.moveSelection(0, 1)
+                    Keys.onLeftPressed:  root.moveSelection(-1, 0)
+                    Keys.onRightPressed: root.moveSelection(1, 0)
+                    Keys.onReturnPressed: root.activateSelection()
+                    Keys.onEnterPressed:  root.activateSelection()
+
                     model: root.filtered
 
                     ScrollBar.vertical: ScrollBar {
@@ -716,9 +761,10 @@ PanelWindow {
                             // Border aktif
                             Rectangle {
                                 anchors.fill: parent; radius: parent.radius; color: "transparent"
-                                border.color: root.currentWallpaperPath === modelData ? Root.Colors.green
+                                border.color: root.selectedIndex === index ? Root.Colors.blue
+                                            : root.currentWallpaperPath === modelData ? Root.Colors.green
                                             : (tMa.containsMouse ? Root.Colors.blue : "transparent")
-                                border.width: 2
+                                border.width: root.selectedIndex === index ? 3 : 2
                                 Behavior on border.color { ColorAnimation { duration: 120 } }
                             }
 
@@ -726,7 +772,10 @@ PanelWindow {
                                 id: tMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                 onEntered:  root.previewPath = modelData
                                 onExited:   root.previewPath = root.currentWallpaperPath
-                                onClicked:  { root.previewPath = modelData; root.setWallpaper(modelData) }
+                                onClicked:  {
+                                    root.setSelection(index)
+                                    root.setWallpaper(modelData)
+                                }
                             }
                         }
                     }
