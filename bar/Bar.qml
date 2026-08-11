@@ -20,7 +20,7 @@ PanelWindow {
     // powerMenuOpen dibaca dari shellState sehingga GlobalShortcut Hyprland
     // (quickshell:powermenu) dan klik tombol di Bar keduanya sinkron.
     property bool powerMenuOpen: shellState ? shellState.powerMenuOpen : false
-    // menuOpen dibaca dari shellState sehingga IPC call dan klik tombol di Bar
+    // menuOpen dibaca dari shellState sehingga GlobalShortcut dan klik tombol di Bar
     // keduanya sinkron.
     property bool menuOpen: shellState ? shellState.menuOpen : false
     // Satu panel gabungan Wi-Fi + Bluetooth (tag dipilih via connectTab).
@@ -384,6 +384,7 @@ PanelWindow {
         PowerMenu {
             open: bar.powerMenuOpen
             onCloseRequested: bar.shellState.powerMenuOpen = false
+            lockFn: bar.shellState ? bar.shellState.lockFn : function() {}
         }
     }
 

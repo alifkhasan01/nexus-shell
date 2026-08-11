@@ -22,6 +22,7 @@ PanelWindow {
             showPanel = true
             menuModel.searchText = ""
             searchInput.text = ""
+            menuModel.update()  // refresh lagi saat dibuka, kalau DesktopEntries belum selesai dimuat
             navState.focusArea = "search"
             searchInput.forceActiveFocus()
         }
@@ -67,6 +68,9 @@ PanelWindow {
         property var    results:    []
 
         readonly property var all: DesktopEntries.applications
+        // DesktopEntries.applications terisi asinkron; count berubah → panggil update()
+        property int appCount: DesktopEntries.applications.count || 0
+        onAppCountChanged: update()
 
         function update() {
             const q    = searchText.trim().toLowerCase()

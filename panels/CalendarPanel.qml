@@ -760,7 +760,7 @@ PanelWindow {
                             return dayNames[d.getDay()] + ", " + root.selectedDay + " " +
                                    root.monthNames[root.selectedMonth].substring(0, 3) + " " + root.selectedYear
                         }
-                        font.pixelSize: 11
+                        font.pixelSize: 12
                         font.bold: true
                         color: Root.Colors.text
                         Behavior on color { ColorAnimation { duration: 150 } }
@@ -771,7 +771,7 @@ PanelWindow {
                             const hijri = CalendarService.toHijri(root.selectedYear, root.selectedMonth, root.selectedDay)
                             return `${hijri.day} ${hijri.monthName.substring(0, 10)} ${hijri.year} H`
                         }
-                        font.pixelSize: 9
+                        font.pixelSize: 12
                         color: Root.Colors.green
                         Behavior on color { ColorAnimation { duration: 150 } }
                     }

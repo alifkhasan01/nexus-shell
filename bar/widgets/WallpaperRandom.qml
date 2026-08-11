@@ -3,8 +3,8 @@ import Quickshell.Io
 
 // Handler wallpaper acak yang SELALU aktif di background.
 // Tidak bergantung pada WallpaperPanel (yang load-nya lazy), sehingga
-// bisa dipanggil kapan saja lewat IpcHandler `wallpaper random` maupun
-// klik kanan tombol wallpaper di Bar — tanpa perlu membuka panel.
+// bisa dipanggil kapan saja lewat GlobalShortcut `quickshell:wallpaper-random`
+// maupun klik kanan tombol wallpaper di Bar — tanpa perlu membuka panel.
 Item {
     id: root
 

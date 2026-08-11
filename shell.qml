@@ -12,7 +12,7 @@ import "./notifications" as Notif
 ShellRoot {
     id: root
 
-    // Handler wallpaper acak yang selalu hidup; dipakai oleh IpcHandler dan
+    // Handler wallpaper acak yang selalu hidup; dipakai oleh GlobalShortcut dan
     // klik kanan tombol wallpaper di Bar, tanpa bergantung pada panel.
     Widgets.WallpaperRandom {
         id: wpRandom
@@ -29,6 +29,9 @@ ShellRoot {
         property bool menuOpen:          false
         property bool dnd:               false
         property var wallpaperRandom: wpRandom
+        // Fungsi lock — dipanggil oleh PowerMenu.qml (itemLock & suspend)
+        // tanpa perlu IPC; di-wire ke lockScreenRef.lock() setelah LockScreen load.
+        property var lockFn: function() { lockScreenRef.lock() }
     }
 
     // ── Global shortcut: Dashboard ─────────────────────────────────────────
@@ -40,48 +43,38 @@ ShellRoot {
         onPressed: shellStateObj.dashboardOpen = !shellStateObj.dashboardOpen
     }
 
-    // ── IPC call: Power Menu ───────────────────────────────────────────────
-    // Panggil dari hyprland.conf:
-    //   bind = $mod, P, exec, quickshell ipc call powermenu toggle
-    // Atau dari terminal / script:
-    //   quickshell ipc call powermenu toggle
-    IpcHandler {
-        target: "powermenu"
-
-        function toggle() {
-            shellStateObj.powerMenuOpen = !shellStateObj.powerMenuOpen
-        }
+    // ── Global shortcut: Power Menu ────────────────────────────────────────
+    // Bind di hyprland.conf:  bind = $mod, P, global, quickshell:powermenu
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "powermenu"
+        description: "Toggle power menu"
+        onPressed: shellStateObj.powerMenuOpen = !shellStateObj.powerMenuOpen
     }
 
-    // ── IPC call: Menu Panel ──────────────────────────────────────────────
-    // Panggil dari hyprland.conf:
-    //   bind = $mod, M, exec, quickshell ipc call menu toggle
-    //   bind = $mod, M, exec, quickshell ipc call menu open
-    //   bind = $mod, M, exec, quickshell ipc call menu close
-    // Atau dari terminal / script:
-    //   quickshell ipc call menu toggle
-    IpcHandler {
-        target: "menu"
-
-        function toggle() {
-            shellStateObj.menuOpen = !shellStateObj.menuOpen
-        }
-
-        function open() {
-            shellStateObj.menuOpen = true
-        }
-
-        function close() {
-            shellStateObj.menuOpen = false
-        }
+    // ── Global shortcut: Menu Panel ────────────────────────────────────────
+    // Bind di hyprland.conf:  bind = $mod, M, global, quickshell:menu
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "menu"
+        description: "Toggle menu panel"
+        onPressed: shellStateObj.menuOpen = !shellStateObj.menuOpen
     }
 
+    // ── Global shortcut: Lock Screen ───────────────────────────────────────
+    // Bind di hyprland.conf:  bind = $mod, L, global, quickshell:lock
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "lock"
+        description: "Lock screen"
+        onPressed: lockScreenRef.lock()
+    }
 
-    // ── Screenshot processes (root-level agar bisa dipanggil dari IPC) ───
+    // ── Screenshot processes (root-level agar bisa dipanggil dari shortcut) ─
     // Dipisah dari Bar.qml supaya keybind Hyprland tidak bergantung pada
     // instance Bar tertentu.
     Process {
-        id: ipcScreenshotSelectProc
+        id: screenshotSelectProc
         command: ["sh", "-c",
             "DIR=~/Pictures/Screenshots; " +
             "mkdir -p \"$DIR\"; " +
@@ -91,22 +84,22 @@ ShellRoot {
             onStreamFinished: {
                 const file = text.trim()
                 if (file !== "")
-                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=camera-photo",
                         "Screenshot Tersimpan",
                         file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
                 else
-                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=dialog-error",
                         "Screenshot Dibatalkan",
                         "Area tidak dipilih atau gagal menyimpan."]
-                ipcNotifProc.running = true
+                screenshotNotifProc.running = true
             }
         }
     }
 
     Process {
-        id: ipcScreenshotFullProc
+        id: screenshotFullProc
         command: ["sh", "-c",
             "DIR=~/Pictures/Screenshots; " +
             "mkdir -p \"$DIR\"; " +
@@ -116,62 +109,56 @@ ShellRoot {
             onStreamFinished: {
                 const file = text.trim()
                 if (file !== "")
-                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=camera-photo",
                         "Screenshot Tersimpan",
                         file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
                 else
-                    ipcNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=dialog-error",
                         "Screenshot Gagal",
                         "Tidak dapat mengambil screenshot."]
-                ipcNotifProc.running = true
+                screenshotNotifProc.running = true
             }
         }
     }
 
-    Process { id: ipcNotifProc }
+    Process { id: screenshotNotifProc }
 
-    // ── IPC call: Screenshot ──────────────────────────────────────────────
-    // Dari hyprland.conf:
-    //   bind = , Print,       exec, quickshell ipc call screenshot full
-    //   bind = SHIFT, Print,  exec, quickshell ipc call screenshot select
-    IpcHandler {
-        target: "screenshot"
-
-        function full(): void {
-            ipcScreenshotFullProc.running = true
-        }
-
-        function select(): void {
-            ipcScreenshotSelectProc.running = true
-        }
+    // ── Global shortcut: Screenshot ────────────────────────────────────────
+    // Bind di hyprland.conf:
+    //   bind = , Print,       global, quickshell:screenshot-full
+    //   bind = SHIFT, Print,  global, quickshell:screenshot-select
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "screenshot-full"
+        description: "Screenshot seluruh layar"
+        onPressed: screenshotFullProc.running = true
     }
 
-    // ── IPC call: Wallpaper Panel & Random ────────────────────────────────
-    // Dari hyprland.conf:
-    //   bind = $mod, W,       exec, quickshell ipc call wallpaper toggle
-    //   bind = $mod SHIFT, W, exec, quickshell ipc call wallpaper random
-    // `random` selalu aktif via WallpaperRandom (background), jadi bisa
-    // dipanggil tanpa membuka panel.
-    IpcHandler {
-        target: "wallpaper"
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "screenshot-select"
+        description: "Screenshot area pilihan"
+        onPressed: screenshotSelectProc.running = true
+    }
 
-        function toggle(): void {
-            shellStateObj.wallpaperPanelOpen = !shellStateObj.wallpaperPanelOpen
-        }
+    // ── Global shortcut: Wallpaper Panel & Random ──────────────────────────
+    // Bind di hyprland.conf:
+    //   bind = $mod, W,       global, quickshell:wallpaper-toggle
+    //   bind = $mod SHIFT, W, global, quickshell:wallpaper-random
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "wallpaper-toggle"
+        description: "Toggle wallpaper panel"
+        onPressed: shellStateObj.wallpaperPanelOpen = !shellStateObj.wallpaperPanelOpen
+    }
 
-        function open(): void {
-            shellStateObj.wallpaperPanelOpen = true
-        }
-
-        function close(): void {
-            shellStateObj.wallpaperPanelOpen = false
-        }
-
-        function random(): void {
-            wpRandom.pickRandom()
-        }
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "wallpaper-random"
+        description: "Ganti wallpaper acak"
+        onPressed: wpRandom.pickRandom()
     }
 
     // Satu Bar per monitor
@@ -188,8 +175,10 @@ ShellRoot {
     // ── Lock Screen ───────────────────────────────────────────────────────
     // WlSessionLock harus ada satu instance di root (bukan di dalam Bar),
     // karena ia menutup SEMUA monitor sekaligus via ext_session_lock_v1.
-    // IpcHandler (target: "lockscreen") sudah ada di dalam LockScreen.qml.
-    Lock.LockScreen {}
+    // GlobalShortcut (quickshell:lock) memanggil lockScreenRef.lock().
+    Lock.LockScreen {
+        id: lockScreenRef
+    }
 
     // ── Notification Popup — root level agar selalu di atas semua ────────
     // Diletakkan di sini (bukan di dalam Bar) supaya render di atas

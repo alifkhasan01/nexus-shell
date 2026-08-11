@@ -17,8 +17,8 @@ import "../" as Root
 // Bergaya caelestia: blur screencopy background, jam dua-warna besar,
 // tanggal, profile picture, password dots animated, state message.
 //
-// Trigger: quickshell ipc call lockscreen lock
-// Hyprland: bind = $mod, L, exec, quickshell ipc call lockscreen lock
+// Trigger: GlobalShortcut quickshell:lock  →  lockScreenRef.lock()
+// Hyprland: bind = $mod, L, global, quickshell:lock
 
 Scope {
     id: root
@@ -851,16 +851,12 @@ Scope {
             }   // ── end Item (focus handler)       // ── end WlSessionLockSurface
     }           // ── end WlSessionLock
 
-    // ── IPC Handler ──────────────────────────────────────────────────────
-    IpcHandler {
-        target: "lockscreen"
-
-        function lock(): void {
-            root._buffer       = ""
-            root._message      = ""
-            root._checking     = false
-            root._messageIsErr = false
-            sessionLock.locked = true
-        }
+    // ── Fungsi publik: dipanggil dari shell.qml via lockScreenRef.lock() ──
+    function lock(): void {
+        root._buffer       = ""
+        root._message      = ""
+        root._checking     = false
+        root._messageIsErr = false
+        sessionLock.locked = true
     }
 }

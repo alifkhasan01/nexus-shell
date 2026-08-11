@@ -10,6 +10,8 @@ PanelWindow {
 
     property bool open: false
     property int focusedIndex: -1
+    // Fungsi lock — di-wire dari Bar.qml via shellState.lockFn
+    property var lockFn: function() {}
 
     // Jumlah item yang bisa dinavigasi (Lock, Suspend, Reboot, Logout, Shutdown)
     readonly property int itemCount: 5
@@ -118,11 +120,14 @@ PanelWindow {
                 icon: "󰍁"
                 label: "Lock"
                 iconColor: Root.Colors.blue
-                command: ["quickshell", "ipc", "call", "lockscreen", "lock"]
+                command: []
                 notifyTitle: "Mengunci layar"
                 notifyBody:  "Layar akan dikunci."
                 highlighted: root.focusedIndex === 0
-                onTriggered: root.closeRequested()
+                onTriggered: {
+                    root.closeRequested()
+                    root.lockFn()
+                }
             }
 
             PowerMenuItem {
@@ -131,14 +136,15 @@ PanelWindow {
                 icon: "󰒲"
                 label: "Suspend"
                 iconColor: Root.Colors.lavender
-                // command dikosongkan — aksi dihandle manual oleh suspendProc
+                // command dikosongkan — aksi dihandle manual
                 command: []
                 notifyTitle: "Masuk mode tidur"
                 notifyBody:  "Layar dikunci lalu sistem di-suspend."
                 highlighted: root.focusedIndex === 1
                 onTriggered: {
                     root.closeRequested()
-                    suspendLockProc.running = true
+                    root.lockFn()
+                    suspendDelayTimer.restart()
                 }
             }
 
@@ -195,13 +201,13 @@ PanelWindow {
         }
     }
 
-    // ── Suspend: lock via IPC lalu langsung suspend ───────────────────────
-    Process {
-        id: suspendLockProc
-        command: ["quickshell", "ipc", "call", "lockscreen", "lock"]
-        onRunningChanged: {
-            if (!running) suspendProc.running = true
-        }
+    // ── Suspend ───────────────────────────────────────────────────────────
+    // Delay singkat agar lock screen sempat render sebelum sistem di-suspend
+    Timer {
+        id: suspendDelayTimer
+        interval: 300
+        repeat: false
+        onTriggered: suspendProc.running = true
     }
 
     Process {

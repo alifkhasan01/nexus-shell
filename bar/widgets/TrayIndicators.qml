@@ -40,7 +40,7 @@ Row {
         property color  iconColor: Root.Colors.blue
 
         width: 22; height: 22; radius: 6
-        color: ma.containsMouse
+        color: ma.hovered
                ? Root.Colors.surface1
                : Qt.rgba(iconColor.r, iconColor.g, iconColor.b, 0.15)
         Behavior on color { ColorAnimation { duration: 120 } }
@@ -55,7 +55,7 @@ Row {
 
         // Tooltip inline — popup kecil di atas ikon
         Rectangle {
-            visible: ma.containsMouse
+            visible: ma.hovered
             anchors.bottom: parent.top
             anchors.bottomMargin: 5
             anchors.horizontalCenter: parent.horizontalCenter
