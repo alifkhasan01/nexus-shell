@@ -24,14 +24,14 @@ PanelWindow {
     // keduanya sinkron.
     property bool menuOpen: shellState ? shellState.menuOpen : false
     // Satu panel gabungan Wi-Fi + Bluetooth (tag dipilih via connectTab).
-    property bool connectPanelOpen: false
+    property bool connectPanelOpen: shellState ? shellState.connectionOpen : false
     property int connectTab: 0  // 0 = Wi-Fi, 1 = Bluetooth
     property bool volumePanelOpen: false
     property bool batteryPanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
     property bool notifPanelOpen: false
-    property bool clipboardPanelOpen: false
-    property bool calendarPanelOpen: false
+    property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
+    property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -96,13 +96,13 @@ PanelWindow {
                         onToggleMenu: {
                             bar.shellState.menuOpen = !bar.shellState.menuOpen
                             bar.shellState.dashboardOpen      = false
-                            bar.connectPanelOpen              = false
+                            bar.shellState.connectionOpen     = false
                             bar.volumePanelOpen               = false
                             bar.batteryPanelOpen              = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen                = false
-                            bar.clipboardPanelOpen            = false
-                            bar.calendarPanelOpen             = false
+                            bar.shellState.clipboardOpen      = false
+                            bar.shellState.calendarOpen       = false
                         }
                     }
                     Workspaces {}
@@ -124,25 +124,25 @@ PanelWindow {
                     Clock {
                         // Left click → kalender
                         onClicked: {
-                            bar.calendarPanelOpen = !bar.calendarPanelOpen
+                            bar.shellState.calendarOpen = !bar.shellState.calendarOpen
                             bar.shellState.dashboardOpen = false
-                            bar.connectPanelOpen = false
+                            bar.shellState.connectionOpen = false
                             bar.volumePanelOpen = false
                             bar.batteryPanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
+                            bar.shellState.clipboardOpen = false
                         }
                         // Right click → dashboard
                         onRightClicked: {
                             bar.shellState.dashboardOpen = !bar.shellState.dashboardOpen
-                            bar.calendarPanelOpen = false
-                            bar.connectPanelOpen = false
+                            bar.shellState.calendarOpen = false
+                            bar.shellState.connectionOpen = false
                             bar.volumePanelOpen = false
                             bar.batteryPanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
+                            bar.shellState.clipboardOpen = false
                         }
                     }
 
@@ -169,13 +169,13 @@ PanelWindow {
                         panelOpen: bar.connectPanelOpen && bar.connectTab === 0
                         onTogglePanel: {
                             bar.connectTab = 0
-                            bar.connectPanelOpen = !bar.connectPanelOpen
+                            bar.shellState.connectionOpen = !bar.shellState.connectionOpen
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
-                            bar.calendarPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -185,13 +185,13 @@ PanelWindow {
                         panelOpen: bar.connectPanelOpen && bar.connectTab === 1
                         onTogglePanel: {
                             bar.connectTab = 1
-                            bar.connectPanelOpen = !bar.connectPanelOpen
+                            bar.shellState.connectionOpen = !bar.shellState.connectionOpen
                             bar.shellState.dashboardOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
-                            bar.calendarPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
                     }
@@ -225,13 +225,13 @@ PanelWindow {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
-                                bar.clipboardPanelOpen = !bar.clipboardPanelOpen
-                                bar.connectPanelOpen = false
+                                bar.shellState.clipboardOpen = !bar.shellState.clipboardOpen
+                                bar.shellState.connectionOpen = false
                                 bar.volumePanelOpen = false
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.notifPanelOpen = false
-                                bar.calendarPanelOpen = false
+                                bar.shellState.calendarOpen = false
                             }
                         }
                     }
@@ -266,12 +266,12 @@ PanelWindow {
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
                                 bar.notifPanelOpen = !bar.notifPanelOpen
-                                bar.connectPanelOpen = false
+                                bar.shellState.connectionOpen = false
                                 bar.volumePanelOpen = false
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
-                                bar.clipboardPanelOpen = false
-                                bar.calendarPanelOpen = false
+                                bar.shellState.clipboardOpen = false
+                                bar.shellState.calendarOpen = false
                             }
                         }
                     }
@@ -310,12 +310,12 @@ PanelWindow {
                                     bar.shellState.wallpaperRandom.pickRandom()
                                 } else {
                                     bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
-                                    bar.connectPanelOpen   = false
+                                    bar.shellState.connectionOpen   = false
                                     bar.volumePanelOpen    = false
                                     bar.shellState.dashboardOpen = false
                                     bar.notifPanelOpen = false
-                                    bar.clipboardPanelOpen = false
-                                    bar.calendarPanelOpen = false
+                                    bar.shellState.clipboardOpen = false
+                                    bar.shellState.calendarOpen = false
                                 }
                             }
                         }
@@ -326,12 +326,12 @@ PanelWindow {
                         panelOpen: bar.volumePanelOpen
                         onTogglePanel: {
                             bar.volumePanelOpen = !bar.volumePanelOpen
-                            bar.connectPanelOpen = false
+                            bar.shellState.connectionOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
-                            bar.calendarPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -343,26 +343,26 @@ PanelWindow {
                         panelOpen: bar.batteryPanelOpen
                         onTogglePanel: {
                             bar.batteryPanelOpen = !bar.batteryPanelOpen
-                            bar.connectPanelOpen = false
+                            bar.shellState.connectionOpen = false
                             bar.volumePanelOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
-                            bar.calendarPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
                         }
                     }
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
                         onToggleMenu: {
                             bar.shellState.powerMenuOpen = !bar.shellState.powerMenuOpen
-                            bar.connectPanelOpen  = false
+                            bar.shellState.connectionOpen  = false
                             bar.volumePanelOpen  = false
                             bar.shellState.wallpaperPanelOpen = false
                             bar.shellState.dashboardOpen = false
                             bar.notifPanelOpen = false
-                            bar.clipboardPanelOpen = false
-                            bar.calendarPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
                         }
                     }
                 }
@@ -429,7 +429,7 @@ PanelWindow {
 
         CalendarPanel {
             open: bar.calendarPanelOpen
-            onCloseRequested: bar.calendarPanelOpen = false
+            onCloseRequested: bar.shellState.calendarOpen = false
         }
     }
 
@@ -441,7 +441,7 @@ PanelWindow {
         ConnectPanel {
             open: bar.connectPanelOpen
             requestedTab: bar.connectTab
-            onCloseRequested: bar.connectPanelOpen = false
+            onCloseRequested: bar.shellState.connectionOpen = false
         }
     }
 
@@ -496,7 +496,7 @@ PanelWindow {
 
         ClipboardPanel {
             open: bar.clipboardPanelOpen
-            onCloseRequested: bar.clipboardPanelOpen = false
+            onCloseRequested: bar.shellState.clipboardOpen = false
         }
     }
 

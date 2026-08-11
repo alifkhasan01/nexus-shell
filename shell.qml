@@ -8,6 +8,7 @@ import "./bar" as Bar
 import "./bar/widgets" as Widgets
 import "./lockscreen" as Lock
 import "./notifications" as Notif
+import "./services"
 
 ShellRoot {
     id: root
@@ -26,8 +27,11 @@ ShellRoot {
         property bool dashboardOpen:      false
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
-        property bool menuOpen:          false
-        property bool dnd:               false
+        property bool menuOpen:           false
+        property bool calendarOpen:       false
+        property bool connectionOpen:     false
+        property bool clipboardOpen:      false
+        property bool dnd:                false
         property var wallpaperRandom: wpRandom
         // Fungsi lock — dipanggil oleh PowerMenu.qml (itemLock & suspend)
         // tanpa perlu IPC; di-wire ke lockScreenRef.lock() setelah LockScreen load.
@@ -144,9 +148,9 @@ ShellRoot {
     }
 
     // ── Global shortcut: Wallpaper Panel & Random ──────────────────────────
-    // Bind di hyprland.conf:
-    //   bind = $mod, W,       global, quickshell:wallpaper-toggle
-    //   bind = $mod SHIFT, W, global, quickshell:wallpaper-random
+    // Bind di hyprland.lua:
+    //   hl.bind("$mod, W",       "global", "quickshell:wallpaper-toggle")
+    //   hl.bind("$mod SHIFT, W", "global", "quickshell:wallpaper-random")
     GlobalShortcut {
         appid: "quickshell"
         name: "wallpaper-toggle"
@@ -159,6 +163,142 @@ ShellRoot {
         name: "wallpaper-random"
         description: "Ganti wallpaper acak"
         onPressed: wpRandom.pickRandom()
+    }
+
+    // ── Global shortcut: Panel Shortcuts ───────────────────────────────────
+    // Bind di hyprland.lua:
+    //   hl.bind("$mod, C", "global", "quickshell:calendar")
+    //   hl.bind("$mod, N", "global", "quickshell:connection")
+    //   hl.bind("$mod, V", "global", "quickshell:clipboard")
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "calendar"
+        description: "Toggle calendar panel"
+        onPressed: shellStateObj.calendarOpen = !shellStateObj.calendarOpen
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "connection"
+        description: "Toggle connection panel (Network/Bluetooth)"
+        onPressed: shellStateObj.connectionOpen = !shellStateObj.connectionOpen
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "clipboard"
+        description: "Toggle clipboard panel"
+        onPressed: shellStateObj.clipboardOpen = !shellStateObj.clipboardOpen
+    }
+
+    // ── Global shortcut: Volume Controls ───────────────────────────────────
+    // Bind di hyprland.lua:
+    //   hl.bind(", XF86AudioRaiseVolume", "global", "quickshell:volume:up")
+    //   hl.bind(", XF86AudioLowerVolume", "global", "quickshell:volume:down")
+    //   hl.bind(", XF86AudioMute",        "global", "quickshell:volume:mute")
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "volume:up"
+        description: "Volume up"
+        onPressed: volumeControlObj.volumeUp()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "volume:down"
+        description: "Volume down"
+        onPressed: volumeControlObj.volumeDown()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "volume:mute"
+        description: "Toggle mute"
+        onPressed: volumeControlObj.toggleMute()
+    }
+
+    // ── Global shortcut: Brightness Controls ───────────────────────────────
+    // Bind di hyprland.lua:
+    //   hl.bind(", XF86MonBrightnessUp",   "global", "quickshell:brightness:up")
+    //   hl.bind(", XF86MonBrightnessDown", "global", "quickshell:brightness:down")
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "brightness:up"
+        description: "Brightness up"
+        onPressed: brightnessControlObj.brightnessUp()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "brightness:down"
+        description: "Brightness down"
+        onPressed: brightnessControlObj.brightnessDown()
+    }
+
+    // ── Volume Control Object ──────────────────────────────────────────────
+    // Handler untuk global shortcuts volume — mengakses default audio sink
+    // dengan prioritas ke bluetooth device jika tersedia
+    Item {
+        id: volumeControlObj
+        visible: false
+
+        property var _defaultSink: Pipewire.defaultAudioSink
+        property var _btSink: {
+            const nodes = Pipewire.nodes.values
+            for (let i = 0; i < nodes.length; i++) {
+                const n = nodes[i]
+                if (!n || !n.audio || !n.isSink || n.isStream) continue
+                const props = n.properties || {}
+                if (props["device.api"] === "bluez5" ||
+                    (n.name || "").startsWith("bluez_output."))
+                    return n
+            }
+            return null
+        }
+
+        property var sink: {
+            if (_btSink && _defaultSink && _btSink.id === _defaultSink.id)
+                return _btSink
+            return _defaultSink
+        }
+
+        // Track sink changes untuk auto-update
+        PwObjectTracker {
+            objects: [volumeControlObj._defaultSink, volumeControlObj._btSink].filter(n => n != null)
+        }
+
+        function volumeUp() {
+            if (!sink || !sink.audio) return
+            const step = 0.05
+            sink.audio.volume = Math.min(1.0, sink.audio.volume + step)
+        }
+
+        function volumeDown() {
+            if (!sink || !sink.audio) return
+            const step = 0.05
+            sink.audio.volume = Math.max(0.0, sink.audio.volume - step)
+        }
+
+        function toggleMute() {
+            if (!sink || !sink.audio) return
+            sink.audio.muted = !sink.audio.muted
+        }
+    }
+
+    // ── Brightness Control Object ──────────────────────────────────────────
+    // Handler untuk global shortcuts brightness — via BrightnessService
+    QtObject {
+        id: brightnessControlObj
+
+        function brightnessUp() {
+            const step = Math.round(BrightnessService.maxBrightness * 0.05)
+            BrightnessService.setRaw(BrightnessService.brightness + step)
+        }
+
+        function brightnessDown() {
+            const step = Math.round(BrightnessService.maxBrightness * 0.05)
+            BrightnessService.setRaw(BrightnessService.brightness - step)
+        }
     }
 
     // Satu Bar per monitor

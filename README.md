@@ -121,7 +121,20 @@ Quickshell berkomunikasi dengan Hyprland lewat dua mekanisme:
 
 **GlobalShortcut** (diregistrasi ke Hyprland compositor):
 ```lua
+-- Main panels
 hl.bind("$mod, D", "global", "quickshell:dashboard")
+hl.bind("$mod, C", "global", "quickshell:calendar")
+hl.bind("$mod, N", "global", "quickshell:connection")
+hl.bind("$mod, V", "global", "quickshell:clipboard")
+
+-- Media controls
+hl.bind(", XF86AudioRaiseVolume", "global", "quickshell:volume:up")
+hl.bind(", XF86AudioLowerVolume", "global", "quickshell:volume:down")
+hl.bind(", XF86AudioMute",        "global", "quickshell:volume:mute")
+
+-- Brightness controls
+hl.bind(", XF86MonBrightnessUp",   "global", "quickshell:brightness:up")
+hl.bind(", XF86MonBrightnessDown", "global", "quickshell:brightness:down")
 ```
 
 **IPC call** (dipanggil via `exec`):

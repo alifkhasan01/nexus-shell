@@ -32,6 +32,28 @@ hl.bind("$mod, W", "exec", "quickshell ipc call wallpaper toggle")
 
 -- Wallpaper acak (tanpa membuka panel)
 hl.bind("$mod SHIFT, W", "exec", "quickshell ipc call wallpaper random")
+
+-- ── Panel Shortcuts ───────────────────────────────────────────────────────
+
+-- Calendar panel
+hl.bind("$mod, C", "global", "quickshell:calendar")
+
+-- Connection panel (Network/Bluetooth)
+hl.bind("$mod, N", "global", "quickshell:connection")
+
+-- Clipboard panel
+hl.bind("$mod, V", "global", "quickshell:clipboard")
+
+-- ── Media & System Controls ───────────────────────────────────────────────
+
+-- Volume controls
+hl.bind(", XF86AudioRaiseVolume", "global", "quickshell:volume:up")
+hl.bind(", XF86AudioLowerVolume", "global", "quickshell:volume:down")
+hl.bind(", XF86AudioMute",        "global", "quickshell:volume:mute")
+
+-- Brightness controls
+hl.bind(", XF86MonBrightnessUp",   "global", "quickshell:brightness:up")
+hl.bind(", XF86MonBrightnessDown", "global", "quickshell:brightness:down")
 ```
 
 ---
@@ -44,6 +66,40 @@ Menggunakan **GlobalShortcut** — Hyprland langsung dispatch event ke Quickshel
 
 ```lua
 hl.bind("$mod, D", "global", "quickshell:dashboard")
+```
+
+### Panel Shortcuts
+
+GlobalShortcut untuk berbagai panel:
+
+```lua
+-- Calendar panel
+hl.bind("$mod, C", "global", "quickshell:calendar")
+
+-- Connection panel (Network/Bluetooth)
+hl.bind("$mod, N", "global", "quickshell:connection")
+
+-- Clipboard panel
+hl.bind("$mod, V", "global", "quickshell:clipboard")
+```
+
+### Volume Controls
+
+GlobalShortcut untuk kontrol volume dengan media keys:
+
+```lua
+hl.bind(", XF86AudioRaiseVolume", "global", "quickshell:volume:up")
+hl.bind(", XF86AudioLowerVolume", "global", "quickshell:volume:down")
+hl.bind(", XF86AudioMute",        "global", "quickshell:volume:mute")
+```
+
+### Brightness Controls
+
+GlobalShortcut untuk kontrol brightness dengan media keys:
+
+```lua
+hl.bind(", XF86MonBrightnessUp",   "global", "quickshell:brightness:up")
+hl.bind(", XF86MonBrightnessDown", "global", "quickshell:brightness:down")
 ```
 
 `appid` dan `name` didefinisikan di `shell.qml`:
@@ -141,12 +197,28 @@ Letakkan di bagian atas `hyprland.lua` agar shell langsung berjalan saat login.
 -- Autostart
 hl.exec_cmd("qs")
 
--- ── Quickshell keybindings ────────────────────────────────────────────────
+-- ── Quickshell Keybindings ────────────────────────────────────────────────
+
+-- Main shortcuts
 hl.bind("$mod, D",       "global", "quickshell:dashboard")
 hl.bind("$mod, L",       "exec",   "quickshell ipc call lockscreen lock")
 hl.bind("$mod, P",       "exec",   "quickshell ipc call powermenu toggle")
 hl.bind("$mod, W",       "exec",   "quickshell ipc call wallpaper toggle")
 hl.bind("$mod SHIFT, W", "exec",   "quickshell ipc call wallpaper random")
+
+-- Panel shortcuts
+hl.bind("$mod, C", "global", "quickshell:calendar")
+hl.bind("$mod, N", "global", "quickshell:connection")
+hl.bind("$mod, V", "global", "quickshell:clipboard")
+
+-- Volume controls
+hl.bind(", XF86AudioRaiseVolume", "global", "quickshell:volume:up")
+hl.bind(", XF86AudioLowerVolume", "global", "quickshell:volume:down")
+hl.bind(", XF86AudioMute",        "global", "quickshell:volume:mute")
+
+-- Brightness controls
+hl.bind(", XF86MonBrightnessUp",   "global", "quickshell:brightness:up")
+hl.bind(", XF86MonBrightnessDown", "global", "quickshell:brightness:down")
 ```
 
 ---
@@ -181,12 +253,26 @@ Jika Anda masih menggunakan format `.conf` lama, berikut sintaksnya:
 # Autostart
 exec-once = qs
 
-# Keybindings
+# Main shortcuts
 bind = $mod, D,       global, quickshell:dashboard
 bind = $mod, L,       exec,   quickshell ipc call lockscreen lock
 bind = $mod, P,       exec,   quickshell ipc call powermenu toggle
 bind = $mod, W,       exec,   quickshell ipc call wallpaper toggle
 bind = $mod SHIFT, W, exec,   quickshell ipc call wallpaper random
+
+# Panel shortcuts
+bind = $mod, C, global, quickshell:calendar
+bind = $mod, N, global, quickshell:connection
+bind = $mod, V, global, quickshell:clipboard
+
+# Volume controls
+bind = , XF86AudioRaiseVolume, global, quickshell:volume:up
+bind = , XF86AudioLowerVolume, global, quickshell:volume:down
+bind = , XF86AudioMute,        global, quickshell:volume:mute
+
+# Brightness controls
+bind = , XF86MonBrightnessUp,   global, quickshell:brightness:up
+bind = , XF86MonBrightnessDown, global, quickshell:brightness:down
 ```
 
 > **Rekomendasi**: Migrasikan ke format Lua untuk fitur dan fleksibilitas yang lebih baik.
