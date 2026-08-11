@@ -706,20 +706,42 @@ PanelWindow {
 
                     // Volume slider — selalu terhubung ke Pipewire (sink aktif),
                     // set volumenya lewat pactl agar sampai ke hardware.
-                    Dash.SliderRow {
+                    Item {
                         width: parent.width
-                        icon: {
-                            const s = mediaCard.defaultSink?.audio
-                            if (!s || s.muted || s.volume <= 0) return "󰝟"
-                            return s.volume < 0.5 ? "󰕿" : "󰕾"
+                        height: 34
+
+                        Dash.SliderRow {
+                            id: volumeSlider
+                            anchors.left: parent.left
+                            anchors.right: volumePctLabel.left
+                            anchors.rightMargin: 6
+                            anchors.verticalCenter: parent.verticalCenter
+                            height: parent.height
+                            icon: {
+                                const s = mediaCard.defaultSink?.audio
+                                if (!s || s.muted || s.volume <= 0) return "󰝟"
+                                return s.volume < 0.5 ? "󰕿" : "󰕾"
+                            }
+                            // Nilai sumber: baca dari sink aktif (reactive ke Pipewire)
+                            readonly property real sourceVolume:
+                                mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0
+
+                            value: sourceVolume
+
+                            onMoved: v => mediaCard.setSinkVolume(v)
                         }
-                        // Nilai sumber: baca dari sink aktif (reactive ke Pipewire)
-                        readonly property real sourceVolume:
-                            mediaCard.defaultSink?.audio ? mediaCard.defaultSink.audio.volume : 0
 
-                        value: sourceVolume
-
-                        onMoved: v => mediaCard.setSinkVolume(v)
+                        Text {
+                            id: volumePctLabel
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: Math.round(volumeSlider.value * 100) + "%"
+                            font.pixelSize: 11
+                            color: Root.Colors.subtext
+                            horizontalAlignment: Text.AlignRight
+                            width: 34
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
                     }
                 }
             }
