@@ -28,10 +28,10 @@ ShellRoot {
         property bool powerMenuOpen:      false
         property bool wallpaperPanelOpen: false
         property bool menuOpen:           false
+        property bool calendarOpen:       false
+        property bool connectionOpen:     false
+        property bool clipboardOpen:      false
         property bool dnd:                false
-        // Control center — tab aktif & sub-tab network yang diminta bar/shortcut
-        property int dashboardTab:        0   // 0 Overview, 1 Media, 2 Volume, 3 Battery, 4 Network, 5 Clipboard, 6 Notif, 7 Kalender, 8 Info
-        property int dashboardConnectSubTab: 0  // 0 = Wi-Fi, 1 = Bluetooth
         property var wallpaperRandom: wpRandom
         // Fungsi lock — dipanggil oleh PowerMenu.qml (itemLock & suspend)
         // tanpa perlu IPC; di-wire ke lockScreenRef.lock() setelah LockScreen load.
@@ -165,53 +165,30 @@ ShellRoot {
         onPressed: wpRandom.pickRandom()
     }
 
-    // ── Global shortcut: Panel Shortcuts → buka tab Dashboard ─────────────
+    // ── Global shortcut: Panel Shortcuts ───────────────────────────────────
     // Bind di hyprland.lua:
-    //   hl.bind("$mod, C", "global", "quickshell:calendar")   → tab Kalender
-    //   hl.bind("$mod, N", "global", "quickshell:connection") → tab Network
-    //   hl.bind("$mod, V", "global", "quickshell:clipboard")  → tab Clipboard
+    //   hl.bind("$mod, C", "global", "quickshell:calendar")
+    //   hl.bind("$mod, N", "global", "quickshell:connection")
+    //   hl.bind("$mod, V", "global", "quickshell:clipboard")
     GlobalShortcut {
         appid: "quickshell"
         name: "calendar"
-        description: "Open calendar tab di control center"
-        onPressed: {
-            if (shellStateObj.dashboardOpen && shellStateObj.dashboardTab === 7) {
-                shellStateObj.dashboardOpen = false
-            } else {
-                shellStateObj.dashboardTab = 7
-                shellStateObj.dashboardOpen = true
-            }
-        }
+        description: "Toggle calendar panel"
+        onPressed: shellStateObj.calendarOpen = !shellStateObj.calendarOpen
     }
 
     GlobalShortcut {
         appid: "quickshell"
         name: "connection"
-        description: "Open network tab di control center"
-        onPressed: {
-            if (shellStateObj.dashboardOpen && shellStateObj.dashboardTab === 4 &&
-                shellStateObj.dashboardConnectSubTab === 0) {
-                shellStateObj.dashboardOpen = false
-            } else {
-                shellStateObj.dashboardTab = 4
-                shellStateObj.dashboardConnectSubTab = 0
-                shellStateObj.dashboardOpen = true
-            }
-        }
+        description: "Toggle connection panel (Network/Bluetooth)"
+        onPressed: shellStateObj.connectionOpen = !shellStateObj.connectionOpen
     }
 
     GlobalShortcut {
         appid: "quickshell"
         name: "clipboard"
-        description: "Open clipboard tab di control center"
-        onPressed: {
-            if (shellStateObj.dashboardOpen && shellStateObj.dashboardTab === 5) {
-                shellStateObj.dashboardOpen = false
-            } else {
-                shellStateObj.dashboardTab = 5
-                shellStateObj.dashboardOpen = true
-            }
-        }
+        description: "Toggle clipboard panel"
+        onPressed: shellStateObj.clipboardOpen = !shellStateObj.clipboardOpen
     }
 
     // ── Global shortcut: Volume Controls ───────────────────────────────────
