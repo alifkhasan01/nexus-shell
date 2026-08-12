@@ -139,8 +139,10 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                }
             },
             Transition {
                 from: "open"; to: ""

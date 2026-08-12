@@ -2,7 +2,7 @@
   "wallpaper_dir": "/home/youtta/Pictures/Wallpapers",
   "transition_type": "random",
   "transition_duration": 1,
-  "transition_fps": 60,
+  "transition_fps": 120,
   "thumb_size": 220,
   "columns": 4,
   "slideshow_enabled": false,

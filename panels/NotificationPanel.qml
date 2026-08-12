@@ -73,8 +73,10 @@ PanelWindow {
             // Duration: 220ms untuk smooth entrance
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
             // Duration: 160ms untuk responsive exit
@@ -207,102 +209,83 @@ PanelWindow {
                     Repeater {
                         model: Root.NotificationService.historyModel
 
-                        delegate: Loader {
-                            required property var notif
+                        delegate: Rectangle {
+                            required property string appName
+                            required property string summary
+                            required property string body
+                            required property int urgency
                             required property int index
-                            
+
                             width: notifCol.width
-                            asynchronous: true
-                            
-                            sourceComponent: Rectangle {
-                                width: notifCol.width
-                                implicitHeight: itemCol.implicitHeight + 18
-                                radius: 10
-                                color: itemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                            implicitHeight: itemCol.implicitHeight + 18
+                            radius: 10
+                            color: itemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
+                            Behavior on color { ColorAnimation { duration: 100 } }
 
-                                border.color: {
-                                    try {
-                                        if (!notif) return Root.Colors.surface1
-                                        switch (notif.urgency) {
-                                            case NotificationUrgency.Critical: return Root.Colors.red
-                                            default: return Root.Colors.surface1
-                                        }
-                                    } catch(e) {
-                                        return Root.Colors.surface1
-                                    }
+                            border.color: urgency === NotificationUrgency.Critical
+                                ? Root.Colors.red
+                                : Root.Colors.surface1
+                            border.width: 1
+
+                            ColumnLayout {
+                                id: itemCol
+                                anchors {
+                                    top: parent.top; left: parent.left; right: parent.right
+                                    margins: 10
                                 }
-                                border.width: 1
+                                spacing: 2
 
-                                ColumnLayout {
-                                    id: itemCol
-                                    anchors {
-                                        top: parent.top; left: parent.left; right: parent.right
-                                        margins: 10
-                                    }
-                                    spacing: 2
-
-                                    // Header: app name + dismiss
-                                    RowLayout {
-                                        Layout.fillWidth: true
-
-                                        Text {
-                                            text: {
-                                                try { return notif?.appName ?? "" }
-                                                catch(e) { return "" }
-                                            }
-                                            font.pixelSize: 10
-                                            font.bold: true
-                                            color: Root.Colors.subtext
-                                            elide: Text.ElideRight
-                                            Layout.fillWidth: true
-                                        }
-
-                                        Rectangle {
-                                            width: 18; height: 18; radius: 5
-                                            color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                                            Behavior on color { ColorAnimation { duration: 100 } }
-                                            Text {
-                                                anchors.centerIn: parent
-                                                text: "󰅖"; font.pixelSize: 10
-                                                color: Root.Colors.subtext
-                                            }
-                                            MouseArea {
-                                                id: xMa; anchors.fill: parent
-                                                hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                                onClicked: Root.NotificationService.removeFromHistory(index)
-                                            }
-                                        }
-                                    }
+                                // Header: app name + dismiss
+                                RowLayout {
+                                    Layout.fillWidth: true
 
                                     Text {
-                                        text: {
-                                            try { return notif?.summary ?? "" }
-                                            catch(e) { return "" }
-                                        }
-                                        visible: text !== ""
-                                        font.pixelSize: 12; font.bold: true
-                                        color: Root.Colors.text
-                                        wrapMode: Text.WordWrap
-                                        Layout.fillWidth: true
-                                    }
-
-                                    Text {
-                                        text: {
-                                            try { return notif?.body ?? "" }
-                                            catch(e) { return "" }
-                                        }
-                                        visible: text !== ""
-                                        font.pixelSize: 11
+                                        text: appName
+                                        font.pixelSize: 10
+                                        font.bold: true
                                         color: Root.Colors.subtext
-                                        wrapMode: Text.WordWrap
-                                        textFormat: Text.PlainText
+                                        elide: Text.ElideRight
                                         Layout.fillWidth: true
+                                    }
+
+                                    Rectangle {
+                                        width: 18; height: 18; radius: 5
+                                        color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
+                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: "󰅖"; font.pixelSize: 10
+                                            color: Root.Colors.subtext
+                                        }
+                                        MouseArea {
+                                            id: xMa; anchors.fill: parent
+                                            hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                            onClicked: Root.NotificationService.removeFromHistory(index)
+                                        }
                                     }
                                 }
 
-                                HoverHandler { id: itemHover }
+                                Text {
+                                    text: summary
+                                    visible: text !== ""
+                                    font.pixelSize: 12; font.bold: true
+                                    color: Root.Colors.text
+                                    wrapMode: Text.WordWrap
+                                    Layout.fillWidth: true
+                                }
+
+                                Text {
+                                    text: body
+                                    visible: text !== ""
+                                    font.pixelSize: 11
+                                    color: Root.Colors.subtext
+                                    wrapMode: Text.WordWrap
+                                    textFormat: Text.PlainText
+                                    Layout.fillWidth: true
+                                }
                             }
+
+                            HoverHandler { id: itemHover }
                         }
                     }
                 }

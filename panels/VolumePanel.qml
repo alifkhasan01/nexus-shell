@@ -180,8 +180,10 @@ PanelWindow {
             // Menggunakan ParallelAnimation untuk sinkronisasi slide + fade
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
             // Duration: 160ms untuk responsive exit

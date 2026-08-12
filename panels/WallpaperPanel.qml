@@ -246,8 +246,25 @@ PanelWindow {
     }
 
     // ── Set wallpaper ─────────────────────────────────────────────────────
+    // Saat dipanggil: sembunyikan card → jalankan awww → tampilkan lagi
+    property bool hiddenForTransition: false
+
+    // Durasi sembunyi = durasi transisi awww + 200 ms buffer (dalam ms)
+    Timer {
+        id: reshowTimer
+        repeat: false
+        onTriggered: root.hiddenForTransition = false
+    }
+
     function setWallpaper(path) {
         root.statusText = "Menerapkan " + path.split("/").pop() + "..."
+
+        // Sembunyikan panel selama transisi awww berlangsung
+        // durasi transisi × 1000 + 800ms buffer agar transisi benar-benar selesai dulu
+        root.hiddenForTransition = true
+        reshowTimer.interval = Math.round(root.transitionDuration * 1000) + 800
+        reshowTimer.restart()
+
         const esc = path.replace(/'/g, "'\\''")
         setProc.command = ["sh", "-c",
             "(awww query >/dev/null 2>&1 || (awww-daemon >/dev/null 2>&1 & sleep 0.4)) && " +
@@ -271,7 +288,11 @@ PanelWindow {
                     root.statusText = "✓ Wallpaper diset: " + root.previewPath.split("/").pop()
                 } else {
                     root.statusText = "⚠ Gagal set wallpaper."
+                    // Gagal? tampilkan panel langsung jangan tunggu timer
+                    reshowTimer.stop()
+                    root.hiddenForTransition = false
                 }
+                // Panel akan muncul kembali via reshowTimer (biarkan timer jalan penuh)
             }
         }
     }
@@ -341,27 +362,32 @@ PanelWindow {
         border.color: Root.Colors.surface2
         border.width: 2
 
-        opacity: 0
+        // opacity dikontrol: 0 saat belum open, 1 saat open, 0 sementara saat transisi wallpaper
+        opacity: root.open && !root.hiddenForTransition ? 1 : 0
         transform: Translate { id: cardTranslate; y: -50 }
+
+        // Animasi opacity — cepat saat transisi wallpaper, normal saat buka/tutup panel
+        Behavior on opacity {
+            NumberAnimation {
+                duration: root.hiddenForTransition ? 120 : 200
+                easing.type: Easing.Bezier
+                easing.bezierCurve: root.open ? Root.Motion.enter : Root.Motion.exit
+            }
+        }
 
         states: State {
             name: "open"; when: root.open
-            PropertyChanges { target: card;          opacity: 1 }
             PropertyChanges { target: cardTranslate; y: 0 }
         }
         transitions: [
             Transition {
                 from: ""; to: "open"
                 NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
-                    ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                    }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     ScriptAction { script: root.showPanel = false }
                 }
             }

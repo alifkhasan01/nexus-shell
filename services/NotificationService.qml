@@ -17,26 +17,20 @@ QtObject {
             try {
                 notif.tracked = true
 
-                // Salin data notif ke plain object sebelum notif di-expire,
-                // agar history panel tetap bisa baca summary/body/appName
-                // meski objek Notification aslinya sudah expire.
-                const snapshot = {
-                    appName: notif.appName  || "",
-                    summary: notif.summary  || "",
-                    body:    notif.body     || "",
-                    urgency: notif.urgency  || 1, // Default: Normal
-                    // Simpan referensi asli hanya untuk keperluan dismiss
-                    _ref: notif
-                }
+                // Simpan sebagai flat roles — ListModel tidak bisa menyimpan
+                // nested JS object yang mengandung QObject pointer dengan aman.
+                historyModel.insert(0, {
+                    "appName": notif.appName || "",
+                    "summary": notif.summary || "",
+                    "body":    notif.body    || "",
+                    "urgency": notif.urgency !== undefined ? notif.urgency : 1
+                })
 
-                // Tambah ke history
-                historyModel.insert(0, { "notif": snapshot })
-                
                 // Potong kalau terlalu banyak (max 50)
                 while (historyModel.count > 50) {
                     historyModel.remove(historyModel.count - 1)
                 }
-                
+
                 // Emit signal untuk popup (kirim objek asli)
                 root.newNotification(notif)
             } catch(e) {
@@ -56,23 +50,11 @@ QtObject {
 
     // ── Functions ─────────────────────────────────────────────────────────
     function clearHistory() {
-        for (let i = 0; i < historyModel.count; i++) {
-            const item = historyModel.get(i)
-            const ref = item?.notif?._ref ?? (item?.notif?.dismiss ? item.notif : null)
-            if (ref) try { ref.dismiss() } catch(e) {}
-        }
         historyModel.clear()
     }
 
     function removeFromHistory(index) {
         if (index >= 0 && index < historyModel.count) {
-            const item = historyModel.get(index)
-            // Coba dismiss via referensi asli jika masih ada
-            if (item?.notif?._ref) {
-                try { item.notif._ref.dismiss() } catch(e) {}
-            } else if (item?.notif?.dismiss) {
-                try { item.notif.dismiss() } catch(e) {}
-            }
             historyModel.remove(index)
         }
     }

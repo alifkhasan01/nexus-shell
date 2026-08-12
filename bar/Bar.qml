@@ -56,9 +56,9 @@ PanelWindow {
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
-    margins.top: 2
-    margins.left: 4
-    margins.right: 4
+    margins.top: 4
+    margins.left: 8
+    margins.right: 8
 
     implicitHeight: 45
     color: "transparent"

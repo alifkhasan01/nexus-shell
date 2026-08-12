@@ -813,30 +813,6 @@ PanelWindow {
                         }
                     }
 
-                    // Add note button
-                    Rectangle {
-                        width: 28; height: 28; radius: 7
-                        color: addNoteMa.containsMouse ? Root.Colors.yellow : Root.Colors.surface0
-                        Behavior on color { ColorAnimation { duration: 100 } }
-                        
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰷈"
-                            font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 14
-                            color: addNoteMa.containsMouse ? Root.Colors.base : Root.Colors.yellow
-                            Behavior on color { ColorAnimation { duration: 100 } }
-                        }
-
-                        MouseArea {
-                            id: addNoteMa
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: noteDialog.showing = true
-                        }
-                    }
-
                     // Today button
                     Rectangle {
                         visible: !(root.viewMonth === root.thisMonth && root.viewYear === root.thisYear)
@@ -1025,68 +1001,6 @@ PanelWindow {
                     }
                 }
 
-                Rectangle {
-                    Layout.fillWidth: true
-                    height: 1
-                    color: Root.Colors.surface1
-                }
-
-                // Notes section
-                Column {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    spacing: 8
-
-                    Text {
-                        text: "󰠮 Catatan"
-                        font.pixelSize: 11
-                        font.bold: true
-                        color: Root.Colors.subtext
-                        font.family: "CaskaydiaCove Nerd Font"
-                    }
-
-                    // Note display or empty state
-                    Rectangle {
-                        visible: CalendarService.hasNote(root.selectedYear, root.selectedMonth, root.selectedDay)
-                        width: parent.width
-                        height: Math.min(notePreviewText.implicitHeight + 16, 200)
-                        radius: 8
-                        color: Root.Colors.surface0
-
-                        Flickable {
-                            anchors {
-                                fill: parent
-                                margins: 8
-                            }
-                            contentHeight: notePreviewText.implicitHeight
-                            clip: true
-
-                            Text {
-                                id: notePreviewText
-                                width: parent.width
-                                text: CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay)
-                                font.pixelSize: 10
-                                color: Root.Colors.text
-                                wrapMode: Text.Wrap
-                            }
-                        }
-
-                        MouseArea {
-                            anchors.fill: parent
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: noteDialog.showing = true
-                        }
-                    }
-
-                    Text {
-                        visible: !CalendarService.hasNote(root.selectedYear, root.selectedMonth, root.selectedDay)
-                        text: "Tidak ada catatan"
-                        font.pixelSize: 10
-                        color: Root.Colors.overlay0
-                        font.italic: true
-                    }
-                }
-
                 Item { Layout.fillHeight: true }
             }  // End rightCol
         }  // End mainRow
@@ -1111,30 +1025,4 @@ PanelWindow {
         }
     }
 
-    NoteDialog {
-        id: noteDialog
-        anchors.fill: parent
-        year: root.selectedYear
-        month: root.selectedMonth
-        day: root.selectedDay
-        noteText: CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay)
-        showing: false
-
-        onAccepted: {
-            CalendarService.setNote(year, month, day, noteText)
-            showing = false
-        }
-
-        onCancelled: {
-            showing = false
-        }
-    }
-
-    // Connection to refresh dialogs when date changes
-    Connections {
-        target: root
-        function onSelectedDayChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
-        function onSelectedMonthChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
-        function onSelectedYearChanged() { noteDialog.noteText = CalendarService.getNote(root.selectedYear, root.selectedMonth, root.selectedDay) }
-    }
 }

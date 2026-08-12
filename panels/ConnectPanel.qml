@@ -21,6 +21,20 @@ PanelWindow {
     visible: showPanel
 
     property bool showPanel: false
+    onOpenChanged: {
+        if (open) {
+            showPanel = true
+            root.currentTab = root.requestedTab
+            wifiStatusProc.running = true
+            wifiListProc.running = true
+            btStatusProc.running = true
+            btListProc.running = true
+        } else {
+            // Reset state password saat panel ditutup
+            root.pendingSsid = ""
+            root.pendingPassword = ""
+        }
+    }
 
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
@@ -103,8 +117,10 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                }
             },
             Transition {
                 from: "open"; to: ""
@@ -1160,21 +1176,6 @@ PanelWindow {
     }
 
     // ── Lifecycle ─────────────────────────────────────────────────────────
-    onOpenChanged: {
-        if (open) {
-            showPanel = true
-            root.currentTab = root.requestedTab
-            wifiStatusProc.running = true
-            wifiListProc.running = true
-            btStatusProc.running = true
-            btListProc.running = true
-        } else {
-            // Reset state password saat panel ditutup
-            root.pendingSsid = ""
-            root.pendingPassword = ""
-        }
-    }
-
     Timer {
         interval: 8000
         running: root.open

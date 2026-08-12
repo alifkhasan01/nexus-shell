@@ -61,9 +61,9 @@ Item {
         acceptedButtons: Qt.LeftButton | Qt.RightButton
         onClicked: mouse => {
             if (mouse.button === Qt.RightButton)
-                root.togglePanel()
-            else
                 root.toggleWifi()
+            else
+                root.togglePanel()
         }
     }
 
