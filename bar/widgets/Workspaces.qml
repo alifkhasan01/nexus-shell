@@ -67,7 +67,7 @@ RowLayout {
 
             opacity: (ws.isActive || ws.occupied || wsMouse.containsMouse) ? 1 : 0.4
             Behavior on opacity {
-                NumberAnimation { duration: 300; easing.type: Easing.OutQuint }
+                NumberAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
             }
 
             color: ws.isActive
@@ -78,10 +78,10 @@ RowLayout {
             border.width: ws.isActive ? 0 : 1
 
             Behavior on color {
-                ColorAnimation { duration: 300; easing.type: Easing.OutQuint }
+                ColorAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
             }
             Behavior on border.width {
-                NumberAnimation { duration: 300; easing.type: Easing.OutQuint }
+                NumberAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
             }
 
             Text {
@@ -91,7 +91,7 @@ RowLayout {
                 color: ws.isActive ? Root.Colors.base : Root.Colors.text
 
                 Behavior on color {
-                    ColorAnimation { duration: 300; easing.type: Easing.OutQuint }
+                    ColorAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
                 }
             }
 

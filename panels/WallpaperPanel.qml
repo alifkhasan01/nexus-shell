@@ -112,7 +112,7 @@ PanelWindow {
         }
     }
 
-    function _home() { return "/home/xans" }
+    function _home() { return "/home/youtta" }
 
     function saveConfig() {
         const cfg = {
@@ -157,7 +157,7 @@ PanelWindow {
     // Output per baris: "<thumbPath>|<origPath>" → diisi ke thumbCache.
     function loadExistingThumbs(paths) {
         if (paths.length === 0) return
-        const scriptPath = "/home/xans/.config/quickshell/scripts/gen-thumbs.sh"
+        const scriptPath = "/home/youtta/.config/quickshell/scripts/gen-thumbs.sh"
         const escaped = paths.map(p => p.replace(/'/g, "'\\''")).join("\\n")
         // Jalankan script — entri yang thumb-nya sudah baru langsung return
         // tanpa regenerate; entri yang belum ada atau stale akan di-generate.
@@ -352,15 +352,15 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -499,7 +499,7 @@ PanelWindow {
                     Layout.preferredHeight: root.settingsOpen ? settingsInner.height : 0
                     clip: true
                     visible: Layout.preferredHeight > 0
-                    Behavior on Layout.preferredHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                    Behavior on Layout.preferredHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
 
                     Rectangle {
                         id: settingsInner
@@ -845,8 +845,8 @@ PanelWindow {
                 layer.enabled: true
                 opacity: root.settingsOpen ? 0 : 1
 
-                Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-                Behavior on Layout.maximumWidth   { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                Behavior on Layout.maximumWidth   { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
                 Behavior on opacity               { NumberAnimation { duration: 180 } }
                 Behavior on color { ColorAnimation { duration: 150 } }
 

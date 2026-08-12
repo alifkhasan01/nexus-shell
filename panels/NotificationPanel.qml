@@ -73,8 +73,8 @@ PanelWindow {
             // Duration: 220ms untuk smooth entrance
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
             // Duration: 160ms untuk responsive exit
@@ -83,8 +83,8 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }

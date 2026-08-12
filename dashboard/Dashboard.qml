@@ -90,15 +90,15 @@ PanelWindow {
                 ParallelAnimation {
                     NumberAnimation {
                         target: cardSlide; property: "y"
-                        duration: 400; easing.type: Easing.OutCubic
+                        duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                     }
                     NumberAnimation {
                         target: card; property: "scale"
-                        duration: 400; easing.type: Easing.OutCubic
+                        duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                     }
                     NumberAnimation {
                         target: card; property: "opacity"
-                        duration: 350; easing.type: Easing.OutQuad
+                        duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                     }
                 }
             },
@@ -111,15 +111,15 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: cardSlide; property: "y"
-                            duration: 350; easing.type: Easing.InOutQuad
+                            duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                         NumberAnimation {
                             target: card; property: "scale"
-                            duration: 350; easing.type: Easing.InOutQuad
+                            duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                         NumberAnimation {
                             target: card; property: "opacity"
-                            duration: 300; easing.type: Easing.InQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                     }
                     PauseAnimation { duration: 50 }
@@ -163,11 +163,11 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: leftSlide; property: "y"
-                                duration: 350; easing.type: Easing.OutCubic
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                             NumberAnimation {
                                 target: leftCol; property: "opacity"
-                                duration: 350; easing.type: Easing.OutQuad
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                         }
                     }
@@ -178,11 +178,11 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: leftSlide; property: "y"
-                            duration: 300; easing.type: Easing.InOutQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                         NumberAnimation {
                             target: leftCol; property: "opacity"
-                            duration: 300; easing.type: Easing.InQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                     }
                 }
@@ -228,7 +228,7 @@ PanelWindow {
                             id: dashFaceImg
                             anchors.fill: parent
                             anchors.margins: 3
-                            source: "file:///home/xans/.face"
+                            source: "file:///home/youtta/.face"
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
                             mipmap: true
@@ -361,11 +361,11 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: rightSlide; property: "y"
-                                duration: 350; easing.type: Easing.OutCubic
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                             NumberAnimation {
                                 target: rightCol; property: "opacity"
-                                duration: 350; easing.type: Easing.OutQuad
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                         }
                     }
@@ -376,11 +376,11 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: rightSlide; property: "y"
-                            duration: 300; easing.type: Easing.InOutQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                         NumberAnimation {
                             target: rightCol; property: "opacity"
-                            duration: 300; easing.type: Easing.InQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                     }
                 }
@@ -889,11 +889,11 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: infoSlide; property: "y"
-                                duration: 350; easing.type: Easing.OutCubic
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                             NumberAnimation {
                                 target: infoCol; property: "opacity"
-                                duration: 350; easing.type: Easing.OutQuad
+                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                             }
                         }
                     }
@@ -904,11 +904,11 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: infoSlide; property: "y"
-                            duration: 300; easing.type: Easing.InOutQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                         NumberAnimation {
                             target: infoCol; property: "opacity"
-                            duration: 300; easing.type: Easing.InQuad
+                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
                         }
                     }
                 }

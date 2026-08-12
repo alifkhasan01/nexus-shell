@@ -560,7 +560,7 @@ Scope {
                                            ? Math.min(root._buffer.length * 16 + 100, 300)
                                            : 220
                             Behavior on implicitWidth {
-                                NumberAnimation { duration: 200; easing.type: Easing.OutCubic }
+                                NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
                             }
 
                             border.color: root._messageIsErr ? Root.Colors.red
@@ -648,7 +648,7 @@ Scope {
                                                     property: "scale"
                                                     from: 0; to: 1
                                                     duration: 150
-                                                    easing.type: Easing.OutBack
+                                                    easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
                                                 }
                                             }
                                         }

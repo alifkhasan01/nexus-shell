@@ -103,15 +103,15 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -270,7 +270,7 @@ PanelWindow {
                                 x: root.wifiEnabled ? parent.width - width - 4 : 4
                                 y: 4; width: 18; height: 18; radius: 9
                                 color: Root.Colors.base
-                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
 
@@ -336,7 +336,7 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     // tinggi normal 52, melebar saat input password muncul
                                     implicitHeight: pwRow.visible ? 52 + pwRow.implicitHeight + 8 : 52
-                                    Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                                    Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
 
                                     readonly property bool isPending: root.pendingSsid === modelData.ssid
 
@@ -669,7 +669,7 @@ PanelWindow {
                                 x: root.btEnabled ? parent.width - width - 4 : 4
                                 y: 4; width: 18; height: 18; radius: 9
                                 color: Root.Colors.base
-                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
+                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
                                 Behavior on color { ColorAnimation { duration: 150 } }
                             }
 

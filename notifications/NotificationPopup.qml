@@ -87,16 +87,16 @@ PanelWindow {
         ParallelAnimation {
             id: enterAnim
             running: false
-            NumberAnimation { target: card;   property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.OutCubic }
-            NumberAnimation { target: slideT; property: "y";       from: -12; to: 0; duration: 220; easing.type: Easing.OutCubic }
+            NumberAnimation { target: card;   property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+            NumberAnimation { target: slideT; property: "y";       from: -12; to: 0; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
         }
 
         // ── Animasi keluar ────────────────────────────────────────────────
         ParallelAnimation {
             id: exitAnim
             running: false
-            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: 120; easing.type: Easing.InCubic }
-            NumberAnimation { target: slideT; property: "y";       to: -10; duration: 120; easing.type: Easing.InCubic }
+            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: 120; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+            NumberAnimation { target: slideT; property: "y";       to: -10; duration: 120; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
             onFinished: card.dismissed()
         }
 

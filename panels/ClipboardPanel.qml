@@ -139,15 +139,15 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }

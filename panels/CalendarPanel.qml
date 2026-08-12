@@ -165,9 +165,9 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 240; easing.type: Easing.OutBack; easing.overshoot: 0.6 }
-                    NumberAnimation { target: cardTranslate;   property: "y";              duration: 220; easing.type: Easing.OutCubic }
-                    OpacityAnimator { target: card;             duration: 180; easing.type: Easing.OutCubic }
+                    NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 240; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate;   property: "y";              duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card;             duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
                 }
             },
             // Animasi CLOSE: Scale down + slide up
@@ -176,9 +176,9 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 160; easing.type: Easing.InCubic }
-                        NumberAnimation { target: cardTranslate;   property: "y";              duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card;             duration: 140; easing.type: Easing.InCubic }
+                        NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { target: cardTranslate;   property: "y";              duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card;             duration: 140; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }

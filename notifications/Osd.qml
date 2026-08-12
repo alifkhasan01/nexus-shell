@@ -70,7 +70,7 @@ PanelWindow {
         property: "opacity"
         from: 0; to: 1
         duration: 160
-        easing.type: Easing.OutCubic
+        easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
     }
 
     // ── Animasi keluar ────────────────────────────────────────────────────
@@ -80,7 +80,7 @@ PanelWindow {
         property: "opacity"
         from: 1; to: 0
         duration: 220
-        easing.type: Easing.InCubic
+        easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
         onFinished: root.visible = false
     }
 
@@ -142,7 +142,7 @@ PanelWindow {
                         if (root.osdType === "brightness") return Root.Colors.yellow
                         return Root.Colors.blue
                     }
-                    Behavior on width { NumberAnimation { duration: 80; easing.type: Easing.OutCubic } }
+                    Behavior on width { NumberAnimation { duration: 80; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
                     Behavior on color { ColorAnimation { duration: 120 } }
                 }
             }

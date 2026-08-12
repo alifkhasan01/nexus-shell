@@ -178,7 +178,7 @@ component StatRow: Item {
     property real   ramUsage:  0
     property string cpuName:   "AMD Ryzen 5 7530U"
     property string gpuName:   "AMD Radeon (iGPU)"
-    property string faceSource: "file:///home/xans/.face"
+    property string faceSource: "file:///home/youtta/.face"
 
     property string diskText:  "—"
     property real   diskUsage: 0

@@ -43,7 +43,7 @@ Rectangle {
         border.width: 2
 
         scale: dialog.showing ? 1 : 0.9
-        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutBack } }
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter } }
 
         MouseArea {
             anchors.fill: parent

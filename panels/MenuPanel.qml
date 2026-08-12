@@ -146,8 +146,8 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation  { target: cardTx; property: "y";       duration: 200; easing.type: Easing.OutCubic }
-                    OpacityAnimator  { target: card;                         duration: 180; easing.type: Easing.OutCubic }
+                    NumberAnimation  { target: cardTx; property: "y";       duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator  { target: card;                         duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
@@ -157,8 +157,8 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation  { target: cardTx; property: "y";   duration: 150; easing.type: Easing.InCubic }
-                        OpacityAnimator  { target: card;                     duration: 140; easing.type: Easing.InCubic }
+                        NumberAnimation  { target: cardTx; property: "y";   duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator  { target: card;                     duration: 140; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }

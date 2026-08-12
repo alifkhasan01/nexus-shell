@@ -180,8 +180,8 @@ PanelWindow {
             // Menggunakan ParallelAnimation untuk sinkronisasi slide + fade
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.OutCubic }
-                OpacityAnimator { target: card; duration: 200; easing.type: Easing.OutCubic }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
             // Duration: 160ms untuk responsive exit
@@ -190,8 +190,8 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.InCubic }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.InCubic }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -287,7 +287,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 implicitHeight: root.currentTab === 0 ? devicesCol.implicitHeight : appsCol.implicitHeight
 
-                Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
+                Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
 
                 // ── TAB 0: PERANGKAT ──────────────────────────────────────
                 ColumnLayout {
