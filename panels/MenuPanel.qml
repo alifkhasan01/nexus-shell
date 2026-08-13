@@ -121,8 +121,8 @@ PanelWindow {
     FocusScope {
         id: card
 
-        x:      12
-        y:      6      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
+        x:      650
+        y:      200      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
         width:  590
         height: Math.min(660, root.height - y - 12)
         focus: true

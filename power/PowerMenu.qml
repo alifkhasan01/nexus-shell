@@ -143,10 +143,9 @@ PanelWindow {
                 highlighted: root.focusedIndex === 1
                 onTriggered: {
                     root.closeRequested()
-                    // Lock dulu
+                    // Lock dulu lalu langsung suspend tanpa delay
                     root.lockFn()
-                    // Tunggu sebentar lalu suspend
-                    suspendDelayTimer.restart()
+                    suspendProc.running = true
                 }
             }
 
@@ -204,17 +203,6 @@ PanelWindow {
     }
 
     // ── Suspend ───────────────────────────────────────────────────────────
-    // Delay singkat agar lock screen sempat render sebelum sistem di-suspend
-    Timer {
-        id: suspendDelayTimer
-        interval: 500
-        repeat: false
-        onTriggered: {
-            // Coba beberapa cara suspend, fallback jika yang pertama gagal
-            suspendProc.running = true
-        }
-    }
-
     Process {
         id: suspendProc
         // Gunakan loginctl suspend sebagai prioritas pertama (lebih modern dan reliable)

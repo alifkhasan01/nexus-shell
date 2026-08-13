@@ -56,9 +56,9 @@ PanelWindow {
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
-    margins.top: 6
-    margins.left: 8
-    margins.right: 8
+    margins.top: 0
+    margins.left: 98
+    margins.right: 98
 
     implicitHeight: 45
     color: "transparent"
@@ -69,12 +69,16 @@ PanelWindow {
 
     Rectangle {
         anchors.fill: parent
-        radius: 12
         color: Root.Colors.mantle
-        border.color: Root.Colors.surface2
-        border.width: 2
+        
+        // Rounded corners hanya di bottom (left dan right)
+        radius: 0
+        bottomLeftRadius: 12
+        bottomRightRadius: 12
+        topLeftRadius: 0
+        topRightRadius: 0
+        
         Behavior on color { ColorAnimation { duration: 200 } }
-        Behavior on border.color { ColorAnimation { duration: 200 } }
 
         RowLayout {
             anchors.fill: parent
