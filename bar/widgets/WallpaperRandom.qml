@@ -1,5 +1,6 @@
 import QtQuick
 import Quickshell.Io
+import "../../services" as Services
 
 // Handler wallpaper acak yang SELALU aktif di background.
 // Tidak bergantung pada WallpaperPanel (yang load-nya lazy), sehingga
@@ -20,24 +21,25 @@ Item {
     // ── Config ────────────────────────────────────────────────────────────
     Process {
         id: loadConfigProc
-        command: ["sh", "-c", "cat ~/.config/quickshell/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
+        command: ["sh", "-c", "cat " + Services.PathService.configDir + "/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
                     const c = JSON.parse(text)
-                    root.wallpaperDir       = c.wallpaper_dir         || (root.home() + "/Pictures/Wallpapers")
+                    // Expand $HOME jika ada
+                    let wallDir = c.wallpaper_dir || (Services.PathService.wallpapersDir)
+                    wallDir = wallDir.replace("$HOME", Services.PathService.homeDir)
+                    root.wallpaperDir       = wallDir
                     root.transitionType     = c.transition_type       || "wipe"
                     root.transitionDuration = c.transition_duration   || 1.0
                     root.transitionFps      = c.transition_fps        || 60
                 } catch(e) {
-                    root.wallpaperDir = root._home() + "/Pictures/Wallpapers"
+                    root.wallpaperDir = Services.PathService.wallpapersDir
                 }
                 root.scanWallpapers()
             }
         }
     }
-
-    function _home() { return "/home/xans" }
 
     // ── Scan folder wallpaper ─────────────────────────────────────────────
     function scanWallpapers() {

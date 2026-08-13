@@ -56,7 +56,7 @@ PanelWindow {
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
-    margins.top: 4
+    margins.top: 6
     margins.left: 8
     margins.right: 8
 

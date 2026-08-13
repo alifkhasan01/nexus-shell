@@ -271,17 +271,20 @@ ShellRoot {
             if (!sink || !sink.audio) return
             const step = 0.05
             sink.audio.volume = Math.min(1.0, sink.audio.volume + step)
+            osdRef.showVolume(sink.audio.volume, sink.audio.muted)
         }
 
         function volumeDown() {
             if (!sink || !sink.audio) return
             const step = 0.05
             sink.audio.volume = Math.max(0.0, sink.audio.volume - step)
+            osdRef.showVolume(sink.audio.volume, sink.audio.muted)
         }
 
         function toggleMute() {
             if (!sink || !sink.audio) return
             sink.audio.muted = !sink.audio.muted
+            osdRef.showVolume(sink.audio.volume, sink.audio.muted)
         }
     }
 
@@ -293,11 +296,15 @@ ShellRoot {
         function brightnessUp() {
             const step = Math.round(BrightnessService.maxBrightness * 0.05)
             BrightnessService.setRaw(BrightnessService.brightness + step)
+            const normalized = BrightnessService.brightness / BrightnessService.maxBrightness
+            osdRef.showBrightness(normalized)
         }
 
         function brightnessDown() {
             const step = Math.round(BrightnessService.maxBrightness * 0.05)
             BrightnessService.setRaw(BrightnessService.brightness - step)
+            const normalized = BrightnessService.brightness / BrightnessService.maxBrightness
+            osdRef.showBrightness(normalized)
         }
     }
 
@@ -310,6 +317,11 @@ ShellRoot {
             screen: modelData
             shellState: shellStateObj
         }
+    }
+
+    // ── OSD untuk Volume & Brightness ─────────────────────────────────────
+    Notif.Osd {
+        id: osdRef
     }
 
     // ── Lock Screen ───────────────────────────────────────────────────────
