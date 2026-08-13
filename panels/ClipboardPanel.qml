@@ -116,7 +116,7 @@ PanelWindow {
         anchors.top: parent.top
         anchors.topMargin: 5
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: 100
 
         width: 420
         height: Math.min(Math.max(480, root.height - 20), root.height - 20)

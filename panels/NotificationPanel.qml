@@ -41,7 +41,7 @@ PanelWindow {
         anchors.top: parent.top
         anchors.topMargin: 5
         anchors.right: parent.right
-        anchors.rightMargin: 10
+        anchors.rightMargin: 100
 
         width: 380
         height: Math.min(

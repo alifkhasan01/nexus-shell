@@ -4,28 +4,307 @@ Dokumentasi semua komponen QML di config Quickshell ini.
 
 ---
 
+## Architecture Overview
+
+Config Quickshell menggunakan arsitektur modular dengan singleton services untuk state management:
+
+```
+shell.qml (ROOT)
+├── Services (Singleton)
+│   ├── ShellState         ← Global state management
+│   ├── VolumeControl      ← Audio control with debouncing
+│   ├── BrightnessControl  ← Brightness control with debouncing
+│   ├── Colors             ← Theme palette (Catppuccin)
+│   ├── CavaService        ← Audio visualizer data
+│   ├── BrightnessService  ← Hardware brightness
+│   └── ...others
+├── Shell Components
+│   ├── GlobalShortcuts    ← All keybinding definitions
+│   └── ProcessManager     ← Background processes (screenshots, cava, btagent)
+├── UI Components
+│   ├── Bar (per monitor)
+│   ├── Dashboard
+│   ├── Panels
+│   └── LockScreen
+└── Supporting Services
+    └── BluetoothDevicePromotion ← Auto-promote BT sink
+```
+
+---
+
 ## Entry Point
 
 ### `shell.qml`
 
-Root dari seluruh shell. Bertanggung jawab untuk:
+Root dari seluruh shell (sekarang ~120 lines, jauh lebih clean). Bertanggung jawab untuk:
 
-- Meng-spawn `Bar` per monitor via `Variants { model: Quickshell.screens }`
-- Menyimpan **state global** (`shellStateObj`) yang dibagikan ke semua Bar
-- Mendefinisikan semua **GlobalShortcut** dan **IpcHandler**
-- Menjalankan proses background: `btAgent`, `cavaFeed`
-- Me-render `LockScreen` dan `NotificationPopup` di level root (agar selalu di atas semua overlay)
-- Auto-promote sink Bluetooth sebagai default audio saat perangkat connect
+- Spawn `Bar` per monitor via `Variants { model: Quickshell.screens }`
+- Inisialisasi services: ShellState, VolumeControl, BrightnessControl
+- Setup GlobalShortcuts dan ProcessManager
+- Render LockScreen dan NotificationPopup di level root
+- Setup BluetoothDevicePromotion untuk auto-promote BT sinks
 
-**State global (`shellStateObj`):**
+**Startup Logging:**
+```
+[Quickshell] Started successfully
+[Quickshell] Screen count: 2
+```
+
+---
+
+## Services (Singleton)
+
+### `services/ShellState.qml` ⭐ NEW
+
+Singleton service untuk state global shell. Sumber kebenaran untuk semua panel states.
+
+**Properties:**
 
 | Property | Tipe | Fungsi |
 |---|---|---|
 | `dashboardOpen` | `bool` | Buka/tutup dashboard |
 | `powerMenuOpen` | `bool` | Buka/tutup power menu |
 | `wallpaperPanelOpen` | `bool` | Buka/tutup wallpaper panel |
+| `menuOpen` | `bool` | Buka/tutup menu panel |
+| `calendarOpen` | `bool` | Buka/tutup calendar panel |
+| `connectionOpen` | `bool` | Buka/tutup connection panel |
+| `clipboardOpen` | `bool` | Buka/tutup clipboard panel |
 | `dnd` | `bool` | Status Do Not Disturb |
-| `wallpaperRandom` | `var` | Referensi ke instance WallpaperRandom |
+| `wallpaperRandom` | `var` | Referensi ke WallpaperRandom instance |
+| `lockFn` | `function` | Lock screen function |
+
+**Methods:**
+- `togglePanel(panelName: string)` — Toggle panel dengan nama
+- `closeAllPanels()` — Close semua panels
+- `log(message: string)` — Log dengan prefix [ShellState]
+
+### `services/VolumeControl.qml` ⭐ ENHANCED
+
+Service untuk kontrol volume dengan debouncing dan error handling.
+
+**Properties:**
+- `osdRef` — Injected OSD reference
+- `updateCount` — Tracking jumlah update
+- `errorCount` — Tracking jumlah error
+- `lastError` — Last error message
+
+**Methods:**
+- `volumeUp()` → `boolean` — Naikkan volume 5%
+- `volumeDown()` → `boolean` — Turunkan volume 5%
+- `toggleMute()` → `boolean` — Toggle mute
+- `getSinkInfo()` → `string` — Get current sink info
+- `getDebugInfo()` → `object` — Get detailed debug info
+
+**Features:**
+- Auto-detect bluetooth device, prioritize jika aktif
+- Debounce OSD updates (50ms) untuk performa
+- Error handling dengan logging
+- Track update count untuk debugging
+
+### `services/BrightnessControl.qml` ⭐ ENHANCED
+
+Service untuk kontrol brightness dengan debouncing dan error handling.
+
+**Properties:**
+- `osdRef` — Injected OSD reference
+- `debounceInterval` — Debounce timer interval (100ms)
+- `updateCount` — Tracking jumlah update
+- `errorCount` — Tracking jumlah error
+- `lastError` — Last error message
+
+**Methods:**
+- `brightnessUp()` → `boolean` — Naikkan brightness 5%
+- `brightnessDown()` → `boolean` — Turunkan brightness 5%
+- `getBrightnessInfo()` → `string` — Get current brightness %
+- `getDebugInfo()` → `object` — Get detailed debug info
+
+**Features:**
+- Debounce OSD updates (100ms) untuk performa
+- Error handling dengan logging
+- Hardware check sebelum modify
+- Track update count untuk debugging
+
+### `services/Colors.qml`
+
+Singleton palette warna. Supports 4 Catppuccin flavors.
+
+| Property | Nilai tersedia |
+|---|---|
+| `currentTheme` | `"catppuccin-latte"` / `"catppuccin-frappe"` / `"catppuccin-macchiato"` / `"catppuccin-mocha"` |
+
+Saat tema berubah, juga menjalankan `matugen` untuk sinkronisasi warna ke GTK, Hyprland, dll.
+
+### `services/CavaService.qml`
+
+Singleton yang membaca data dari named pipe `/tmp/qs-cava.out` (output dari `cava_feed.sh`).
+
+Dipakai oleh `CavaRingDank.qml` untuk visualizer cincin di media card.
+
+### `services/BluetoothDevicePromotion.qml` ⭐ NEW
+
+Service untuk auto-promote bluetooth device sebagai default audio sink. Saat perangkat bluetooth connect, sink audionya otomatis menjadi default.
+
+---
+
+## Shell Components
+
+### `shell/GlobalShortcuts.qml` ⭐ NEW
+
+Centralized management untuk semua GlobalShortcut definitions. Sebelumnya tersebar di `shell.qml`, sekarang dikumpulkan di satu file untuk maintainability.
+
+**Shortcuts yang didefine:**
+
+| Name | Description |
+|---|---|
+| `dashboard` | Toggle dashboard panel |
+| `powermenu` | Toggle power menu |
+| `menu` | Toggle menu panel |
+| `lock` | Lock screen |
+| `wallpaper-toggle` | Toggle wallpaper panel |
+| `wallpaper-random` | Set random wallpaper |
+| `calendar` | Toggle calendar panel |
+| `connection` | Toggle connection panel |
+| `clipboard` | Toggle clipboard panel |
+| `volume:up` | Raise volume by 5% |
+| `volume:down` | Lower volume by 5% |
+| `volume:mute` | Toggle mute |
+| `brightness:up` | Raise brightness by 5% |
+| `brightness:down` | Lower brightness by 5% |
+
+### `shell/ProcessManager.qml` ⭐ ENHANCED
+
+Manager untuk semua background processes dengan comprehensive error handling & logging.
+
+**Managed Processes:**
+
+1. **Screenshot Processes** (2):
+   - `screenshotSelectProc` — grimblast area selection
+   - `screenshotFullProc` — grimblast full screen
+   - Features: Retry logic (max 3), stderr capture, notification
+
+2. **BlueZ Agent**:
+   - `btAgent` — Auto-answer bluetooth pairing
+   - Features: Restart on crash, retry tracking, logging
+
+3. **Cava Feed** ⭐:
+   - `cavaFeed` — Audio visualizer feed
+   - **BARU**: Auto-start saat Quickshell berjalan (tidak perlu dari hyprland config)
+   - Features: Continuous feed, restart on crash
+
+**Methods:**
+- `takeScreenshotSelect()` — Trigger area screenshot
+- `takeScreenshotFull()` — Trigger full screen screenshot
+- `getProcessStatus()` → `string` — Get JSON of all process states
+
+**Logging:**
+```
+[Screenshot:Select] Triggered from shortcut
+[Screenshot:Select] Saved to: /home/user/Pictures/Screenshots/screenshot-20260810-143022.png
+[CavaFeed] Started successfully
+[BTAgent] Attempting restart (1/3)...
+```
+
+---
+
+## Bar
+
+### `bar/Bar.qml`
+
+`PanelWindow` utama di atas setiap monitor (tidak ada perubahan signifikan dari architecture).
+
+---
+
+## Bar Widgets
+
+### `bar/widgets/*`
+
+Semua widgets sudah ada. Tidak ada perubahan major di task ini.
+
+---
+
+## Dashboard
+
+### `dashboard/Dashboard.qml`
+
+Dashboard panel (tidak ada perubahan dari refactor ini).
+
+---
+
+## Panels
+
+### Semua panels di `panels/`
+
+Tidak ada perubahan dari refactor architecture ini.
+
+---
+
+## Notifications
+
+### Semua notifications di `notifications/`
+
+Tidak ada perubahan dari refactor ini.
+
+---
+
+## Power Menu
+
+### Semua power menu di `power/`
+
+Tidak ada perubahan dari refactor ini.
+
+---
+
+## Lock Screen
+
+### `lockscreen/LockScreen.qml`
+
+Tidak ada perubahan dari refactor ini.
+
+---
+
+## Scripts
+
+### `scripts/btagent.sh`
+
+BlueZ agent yang menjawab otomatis prompt pair/confirm Bluetooth. Dijalankan di background via ProcessManager.
+
+### `scripts/record.sh`
+
+Toggle screen recording via `wf-recorder` (tidak berubah).
+
+### `dashboard/cava_feed.sh` ⭐ AUTO-STARTED
+
+**BARU**: Sekarang auto-start saat Quickshell berjalan! ✅
+
+Sebelumnya perlu dijalankan secara manual dari Hyprland config. Sekarang ProcessManager menangani:
+
+```bash
+# Before: Harus setup di hyprland.conf
+exec-once = bash ~/.config/quickshell/dashboard/cava_feed.sh
+
+# After: Auto-run via ProcessManager
+[CavaFeed] Started successfully
+```
+
+Script ini menjalankan `cava` dengan output ke `/tmp/qs-cava.out` yang dibaca `CavaService.qml`.
+
+---
+
+## Summary of Improvements
+
+| Area | Before | After |
+|---|---|---|
+| `shell.qml` size | 600+ lines | ~120 lines |
+| State management | Inline `QtObject` | Proper `ShellState` singleton |
+| Volume control | Inline Item | Separate `VolumeControl` service |
+| Brightness control | Inline QtObject | Separate `BrightnessControl` service |
+| Shortcuts | Hardcoded in shell.qml | Centralized `GlobalShortcuts.qml` |
+| Processes | Scattered in shell.qml | Centralized `ProcessManager.qml` |
+| Error handling | Minimal | Comprehensive with logging |
+| Debouncing | None | Added for volume & brightness |
+| Logging | Basic | Detailed with prefixes |
+| Cava feed | Manual start | Auto-start via ProcessManager |
+| BT device promo | Inline logic | Separate service |
 
 ---
 

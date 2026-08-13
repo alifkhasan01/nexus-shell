@@ -1,5 +1,10 @@
 module services
 
+BrightnessControl 1.0 BrightnessControl.qml
+BluetoothDevicePromotion 1.0 BluetoothDevicePromotion.qml
+ShellState 1.0 ShellState.qml
+VolumeControl 1.0 VolumeControl.qml
+
 singleton BrightnessService 1.0 BrightnessService.qml
 singleton CalendarService 1.0 CalendarService.qml
 singleton CavaService 1.0 CavaService.qml

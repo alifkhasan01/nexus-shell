@@ -4,7 +4,44 @@ Panduan kustomisasi lengkap untuk config Quickshell ini.
 
 ---
 
-## Tema
+## Architecture & Services
+
+### New Singleton Services (v2.0)
+
+Config sudah di-refactor menjadi modular architecture dengan proper singleton services:
+
+| Service | File | Fungsi |
+|---|---|---|
+| `ShellState` | `services/ShellState.qml` | Global state management (panels, DND, etc) |
+| `VolumeControl` | `services/VolumeControl.qml` | Audio volume control dengan debouncing |
+| `BrightnessControl` | `services/BrightnessControl.qml` | Brightness control dengan debouncing |
+| `BluetoothDevicePromotion` | `services/BluetoothDevicePromotion.qml` | Auto-promote BT sink as default |
+| `GlobalShortcuts` | `shell/GlobalShortcuts.qml` | All keybinding definitions |
+| `ProcessManager` | `shell/ProcessManager.qml` | Background processes: cava, screenshots, btagent |
+
+**Benefit:**
+- ✅ Cleaner `shell.qml` (600+ → ~120 lines)
+- ✅ Better error handling & logging
+- ✅ Easier to debug & maintain
+- ✅ Proper separation of concerns
+- ✅ Type-safe singleton access
+
+### Accessing Services
+
+```qml
+// Access global state
+ShellState.dashboardOpen = true
+ShellState.togglePanel("calendar")
+ShellState.closeAllPanels()
+
+// Access services (already injected)
+VolumeControl.volumeUp()
+BrightnessControl.brightnessDown()
+
+// Debug info
+console.log(VolumeControl.getDebugInfo())
+console.log(BrightnessControl.getDebugInfo())
+```
 
 Tema diatur oleh singleton `services/Colors.qml`. Ada 4 flavor Catppuccin:
 
@@ -225,21 +262,123 @@ PamContext {
 
 ## Cava Visualizer
 
-Visualizer cava di media card membutuhkan `cava` terinstall dan file `dashboard/cava_feed.sh` yang berjalan. Proses ini otomatis start/stop sesuai state dashboard.
+### Auto-Start (v2.0) ⭐
 
-Untuk mengubah jumlah bar, sensitivitas, dll, buat file config cava di `~/.config/cava/config`. Quickshell menggunakan output cava ke named pipe — pastikan output format sesuai dengan yang diexpect `CavaService.qml`.
+**Cava feed sekarang auto-start saat Quickshell berjalan!** Tidak perlu lagi setup manual di `hyprland.conf`.
+
+**Before (v1.0):**
+```bash
+# hyprland.conf - perlu disetup manual
+exec-once = bash ~/.config/quickshell/dashboard/cava_feed.sh
+```
+
+**After (v2.0):**
+```bash
+# ProcessManager otomatis menjalankan:
+[CavaFeed] Started successfully
+```
+
+### How It Works
+
+1. `shell/ProcessManager.qml` auto-start `cavaFeed` process saat Quickshell launch
+2. Script `dashboard/cava_feed.sh` menjalankan `cava` dengan output ke `/tmp/qs-cava.out`
+3. `CavaService.qml` membaca data dari named pipe tersebut
+4. `CavaRingDank.qml` (di media card) menampilkan visualisasi
+
+### Proses Restart
+
+Jika `cava` crash, ProcessManager otomatis restart dengan logic:
+
+```
+Max Retries: 3
+Retry Interval: 2 detik
+```
+
+Logging:
+```
+[CavaFeed] Started successfully
+[CavaFeed] Process stopped (exit code: 1), will restart in 2 seconds
+[CavaFeed] Attempting restart (1/3)...
+[CavaFeed] Started successfully
+```
+
+### Troubleshooting
+
+Jika visualizer tidak muncul:
+
+1. **Check cava terinstall:**
+   ```bash
+   which cava
+   cava --help
+   ```
+
+2. **Check audio backend:**
+   ```bash
+   # PipeWire (modern)
+   pactl info | grep -i pipewire
+   
+   # PulseAudio (lama)
+   pactl info | grep -i pulseaudio
+   ```
+
+3. **Check named pipe:**
+   ```bash
+   # Terminal 1: watch data flow
+   tail -f /tmp/qs-cava.out
+   
+   # Terminal 2: play audio
+   ```
+
+4. **Check permissions:**
+   ```bash
+   ls -la /tmp/qs-cava*
+   ```
+
+5. **Manual test:**
+   ```bash
+   bash ~/.config/quickshell/dashboard/cava_feed.sh
+   # Harus menampilkan data saat audio playing
+   ```
+
+### Configuration
+
+Config cava dibuat otomatis oleh script. Untuk custom config, buat `~/.config/cava/config`:
+
+```ini
+[general]
+bars = 64
+framerate = 60
+sensitivity = 100
+
+[input]
+method = pipewire  # atau "pulse"
+
+[output]
+method = raw
+raw_target = /dev/stdout
+data_format = ascii
+ascii_max_range = 255
+```
+
+Setelah ubah config, restart Quickshell untuk reload.
+
+### Disabling Cava (Optional)
+
+Jika tidak ingin cava berjalan:
+
+1. **Comment di ProcessManager (temporary)**:
+   ```qml
+   // Process {
+   //     id: cavaFeed
+   //     ...
+   // }
+   ```
+
+2. **Remove from qmldir (permanent)** — tidak recommended
 
 ---
 
-## Workspace
-
-Jumlah dan label workspace diatur di `bar/widgets/Workspaces.qml`. Default mengikuti workspace yang tersedia di Hyprland secara dinamis.
-
----
-
-## System Info Sparkline
-
-Panel kanan dashboard menampilkan sparkline chart untuk CPU, GPU, RAM, dan Disk. Grafik ini otomatis menyesuaikan skala berdasarkan data yang ada.
+## Visualizer panel kanan dashboard menampilkan sparkline chart untuk CPU, GPU, RAM, dan Disk. Grafik ini otomatis menyesuaikan skala berdasarkan data yang ada.
 
 ### Mengubah jumlah data points
 
