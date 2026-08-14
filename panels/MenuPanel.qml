@@ -39,7 +39,8 @@ PanelWindow {
         property string focusArea: "search"  // "search", "categories", "applist"
         property int categoryIndex: 0
         property var categoryList: ["All","AudioVideo","Development","Game",
-                                     "Graphics","Network","Office","Settings","Utility"]
+                                     "Graphics","Network","Office","Settings","Utility","WebApps"]
+        property bool showWebApps: true  // toggle untuk show/hide PWA
     }
 
     // ── Background sync apps saat startup ──────────────────────────────────
@@ -72,6 +73,46 @@ PanelWindow {
         property int appCount: DesktopEntries.applications.count || 0
         onAppCountChanged: update()
 
+        // Helper function untuk deteksi PWA/Web apps dari berbagai browser
+        function isWebApp(app) {
+            if (!app) return false
+            
+            // Cek dari path .desktop file
+            const desktopId = app.id || ""
+            // Chrome, Chromium, Brave, Edge, Vivaldi, Opera
+            if (desktopId.includes("chrome-") || 
+                desktopId.includes("chromium-") || 
+                desktopId.includes("brave-") ||
+                desktopId.includes("msedge-") ||
+                desktopId.includes("vivaldi-") ||
+                desktopId.includes("opera-")) {
+                return true
+            }
+            
+            // Cek dari exec command
+            const exec = app.exec || ""
+            // Flag apps dari Chromium-based browsers
+            if (exec.includes("--app-id=") || 
+                exec.includes("--app=") ||
+                exec.includes("--profile-directory=")) {
+                return true
+            }
+            
+            // Cek dari icon path (PWA biasanya punya icon di browser profile)
+            const icon = app.icon || ""
+            if ((icon.includes("chrome") || 
+                 icon.includes("chromium") || 
+                 icon.includes("brave") || 
+                 icon.includes("edge") || 
+                 icon.includes("vivaldi") ||
+                 icon.includes("opera")) && 
+                (icon.includes("Profile") || icon.includes("Default"))) {
+                return true
+            }
+            
+            return false
+        }
+
         function update() {
             const q    = searchText.trim().toLowerCase()
             const src  = [...DesktopEntries.applications.values]
@@ -81,8 +122,14 @@ PanelWindow {
                 const a = src[i]
                 if (!a) continue
 
+                const isWebAppEntry = isWebApp(a)
+
                 // filter kategori
-                if (category !== "All") {
+                if (category === "WebApps") {
+                    // Kategori WebApps: hanya tampilkan PWA
+                    if (!isWebAppEntry) continue
+                } else if (category !== "All") {
+                    // Kategori lain: filter berdasarkan categories
                     const cats = a.categories || []
                     let found  = false
                     for (let j = 0; j < cats.length; j++) {
@@ -91,6 +138,9 @@ PanelWindow {
                         }
                     }
                     if (!found) continue
+                } else {
+                    // Kategori "All": filter PWA berdasarkan toggle
+                    if (isWebAppEntry && !navState.showWebApps) continue
                 }
 
                 // filter search
@@ -116,6 +166,12 @@ PanelWindow {
         onAllChanged:          update()
         Component.onCompleted: update()
     }
+    
+    // Update saat toggle WebApps berubah
+    Connections {
+        target: navState
+        function onShowWebAppsChanged() { menuModel.update() }
+    }
 
     // ── Kartu ─────────────────────────────────────────────────────────────
     FocusScope {
@@ -123,7 +179,7 @@ PanelWindow {
 
         x:      650
         y:      200      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
-        width:  590
+        width:  700
         height: Math.min(660, root.height - y - 12)
         focus: true
 
@@ -239,6 +295,58 @@ PanelWindow {
                             Layout.fillWidth: true
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
+                        
+                        // Toggle button untuk PWA
+                        Rectangle {
+                            visible: menuModel.category === "All"  // hanya tampil di kategori "All"
+                            width: 28
+                            height: 28
+                            radius: 8
+                            color: navState.showWebApps ? Root.Colors.green : Root.Colors.surface1
+                            Behavior on color { ColorAnimation { duration: 120 } }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "󰖟"  // icon Chrome/web
+                                font.pixelSize: 14
+                                color: navState.showWebApps ? Root.Colors.base : Root.Colors.subtext
+                                Behavior on color { ColorAnimation { duration: 120 } }
+                            }
+                            
+                            MouseArea {
+                                id: webAppToggle
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: navState.showWebApps = !navState.showWebApps
+                                
+                                ToolTip {
+                                    visible: webAppToggle.containsMouse
+                                    delay: 500
+                                    text: navState.showWebApps ? "Hide Web Apps" : "Show Web Apps"
+                                    contentItem: Text {
+                                        text: parent.text
+                                        font.pixelSize: 11
+                                        color: Root.Colors.text
+                                    }
+                                    background: Rectangle {
+                                        color: Root.Colors.surface2
+                                        border.color: Root.Colors.surface1
+                                        border.width: 1
+                                        radius: 6
+                                    }
+                                }
+                            }
+                            
+                            // Hover effect
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: parent.radius
+                                color: webAppToggle.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
+                                Behavior on color { ColorAnimation { duration: 100 } }
+                            }
+                        }
+                        
                         Text {
                             text: menuModel.results.length + " apps"
                             font.pixelSize: 11
@@ -490,15 +598,40 @@ PanelWindow {
                                 Layout.fillWidth: true
                                 spacing: 2
 
-                                Text {
+                                RowLayout {
                                     Layout.fillWidth: true
-                                    text: modelData ? (modelData.name || "") : ""
-                                    font.pixelSize: 13
-                                    font.bold: true
-                                    color: Root.Colors.text
-                                    elide: Text.ElideRight
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    spacing: 6
+                                    
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: modelData ? (modelData.name || "") : ""
+                                        font.pixelSize: 13
+                                        font.bold: true
+                                        color: Root.Colors.text
+                                        elide: Text.ElideRight
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+                                    
+                                    // Badge PWA
+                                    Rectangle {
+                                        visible: modelData && menuModel.isWebApp(modelData)
+                                        Layout.preferredWidth: pwaText.implicitWidth + 8
+                                        Layout.preferredHeight: 16
+                                        radius: 4
+                                        color: Root.Colors.green
+                                        opacity: 0.9
+                                        
+                                        Text {
+                                            id: pwaText
+                                            anchors.centerIn: parent
+                                            text: "PWA"
+                                            font.pixelSize: 8
+                                            font.bold: true
+                                            color: Root.Colors.base
+                                        }
+                                    }
                                 }
+                                
                                 Text {
                                     Layout.fillWidth: true
                                     text: modelData ? (modelData.genericName || "") : ""

@@ -456,8 +456,6 @@ PanelWindow {
             onCloseRequested: bar.shellState.dashboardOpen = false
             onScreenshotRequested: bar.takeScreenshot()
             onGrimRequested: bar.takeGrim()
-            onRecorderToggleRequested: bar.toggleRecorder()
-            onRecorderMicToggleRequested: bar.toggleRecorderMic()
             onSetFaceRequested: bar.startFacePicker()
             onNotifyRequested: (icon, summary, body) => bar.sendNotif(icon, summary, body)
             onDndToggleRequested: {
@@ -621,28 +619,8 @@ PanelWindow {
         onTriggered: grimProc.running = true
     }
 
-    // gpu-screen-recorder — desktop only (left click, default)
-    // Script fork GSR lalu langsung exit, jadi onRunningChanged tidak dipakai
-    // untuk deteksi stop. Deteksi stop dilakukan via pidfile di recCheckProc.
-    Process {
-        id: recorderProc
-        command: ["sh", "-c",
-            "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "bash ~/.config/quickshell/scripts/record.sh desktop-only"]
-    }
-
-    // gpu-screen-recorder — desktop + mic gabungan (right click)
-    Process {
-        id: recorderMicProc
-        command: ["sh", "-c",
-            "env XDG_RUNTIME_DIR=/run/user/$(id -u) WAYLAND_DISPLAY=$WAYLAND_DISPLAY " +
-            "bash ~/.config/quickshell/scripts/record.sh both"]
-    }
-
     function takeScreenshot()    { screenshotProc.running = true }
     function takeGrim()          { bar.shellState.dashboardOpen = false; grimDelayTimer.restart() }
-    function toggleRecorder()    { recorderProc.running = true }
-    function toggleRecorderMic() { recorderMicProc.running = true }
 
     // Kirim notifikasi via notify-send (dipanggil dari dashboard)
     Process {

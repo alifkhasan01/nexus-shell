@@ -114,7 +114,7 @@ PanelWindow {
                     return Root.Colors.blue
                 }
                 text: {
-                    if (root.osdType === "mute") return "󰸈"
+                    if (root.osdType === "mute") return ""
                     if (root.osdType === "brightness") {
                         const p = root.osdValue
                         return p >= 0.67 ? "󰃞" : (p >= 0.34 ? "󰃝" : "󰃜")

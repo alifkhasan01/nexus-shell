@@ -16,8 +16,6 @@ PanelWindow {
     signal closeRequested()
     signal screenshotRequested()
     signal grimRequested()
-    signal recorderToggleRequested()
-    signal recorderMicToggleRequested()
     signal setFaceRequested()
     signal notifyRequested(string icon, string summary, string body)
     signal dndToggleRequested()
