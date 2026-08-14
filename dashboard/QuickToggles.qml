@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Io
+import "../services" as Services
 import "../" as Root
 
 GridLayout {
@@ -12,23 +13,54 @@ GridLayout {
 
     property var dashboardRoot: null
 
-    // ── Hypridle toggle ───────────────────────────────────────────────────
-    QuickToggle {
+    // ── Idle Monitor toggle ───────────────────────────────────────────────
+    // Toggle idle monitoring (screen off, lock, suspend)
+    // Saat OFF: sistem tidak akan auto screen-off/lock/suspend
+    Rectangle {
         Layout.fillWidth: true
-        label: "IDLE"
-        icon: "󰒲"
-        dashboardRoot: quickTogglesRoot.dashboardRoot
-        checkCommand: "pgrep -x hypridle > /dev/null && echo yes || echo no"
-        checkMatch: "yes"
-        onCommand:  "nohup hypridle </dev/null >/dev/null 2>&1 &"
-        offCommand: "pkill -x hypridle"
-        managerCommand: ""
-        notifIconOn:  "display"
-        notifIconOff: "display"
-        notifSummaryOn:  "Idle Monitor Aktif"
-        notifSummaryOff: "Idle Monitor Nonaktif"
-        notifBodyOn:  "Monitor akan otomatis mati saat idle."
-        notifBodyOff: "Monitor tidak akan mati saat idle."
+        implicitWidth: 84
+        implicitHeight: 60
+        radius: 14
+
+        readonly property bool monitorOn: Services.IdleManager.monitoringEnabled
+
+        color: monitorOn ? Root.Colors.blue : Root.Colors.surface0
+        Behavior on color { ColorAnimation { duration: 150 } }
+
+        Column {
+            anchors.centerIn: parent
+            spacing: 4
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: parent.parent.monitorOn ? "󰅶" : "󰒲"
+                font.pixelSize: 18
+                color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.text
+                Behavior on color { ColorAnimation { duration: 100 } }
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "IDLE"
+                font.pixelSize: 11
+                color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.subtext
+                Behavior on color { ColorAnimation { duration: 100 } }
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            cursorShape: Qt.PointingHandCursor
+            onClicked: {
+                Services.IdleManager.toggle()
+                if (!quickTogglesRoot.dashboardRoot) return
+                
+                const isActive = Services.IdleManager.monitoringEnabled
+                quickTogglesRoot.dashboardRoot.notifyRequested(
+                    isActive ? "display" : "display",
+                    isActive ? "Idle Monitor Aktif" : "Idle Monitor Nonaktif",
+                    isActive ? "Auto screen-off/lock/suspend diaktifkan." : "Auto screen-off/lock/suspend dinonaktifkan."
+                )
+            }
+        }
     }
 
     // ── Screenshot select ─────────────────────────────────────────────────

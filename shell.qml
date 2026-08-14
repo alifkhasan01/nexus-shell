@@ -34,6 +34,15 @@ ShellRoot {
         lockFn: function() { lockScreenRef.lock() }
     }
 
+    // ── Idle Manager Setup ────────────────────────────────────────────────
+    // Inject lock function ke IdleManager untuk digunakan saat lock timeout
+    Connections {
+        target: IdleManager
+        Component.onCompleted: {
+            IdleManager.lockFn = function() { lockScreenRef.lock() }
+        }
+    }
+
     // ── Global Shortcuts ──────────────────────────────────────────────────
     // All shortcuts inline for simplicity - ProcessManager handles background processes
     
@@ -159,9 +168,17 @@ ShellRoot {
         model: Quickshell.screens
 
         Bar.Bar {
+            id: barInstance
             required property var modelData
             screen: modelData
             shellState: shellStateObj
+
+            // Inject window reference ke IdleInhibitService saat bar pertama dibuat
+            Component.onCompleted: {
+                if (!IdleInhibitService.targetWindow) {
+                    IdleInhibitService.targetWindow = barInstance
+                }
+            }
         }
     }
 

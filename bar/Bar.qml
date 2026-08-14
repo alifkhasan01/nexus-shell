@@ -32,6 +32,7 @@ PanelWindow {
     property bool notifPanelOpen: false
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
+    property bool idlePanelOpen: shellState ? shellState.idlePanelOpen : false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -45,6 +46,7 @@ PanelWindow {
     onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
+    onIdlePanelOpenChanged:      if (!idlePanelOpen)      idleCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
     Timer { id: powerCloseTimer;     interval: 300; repeat: false }
@@ -55,6 +57,7 @@ PanelWindow {
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
+    Timer { id: idleCloseTimer;      interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
     margins.top: 0
     margins.left: 98
@@ -235,6 +238,48 @@ PanelWindow {
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.notifPanelOpen = false
+                                bar.shellState.calendarOpen = false
+                                bar.shellState.idlePanelOpen = false
+                            }
+                        }
+                    }
+
+                    // ── Idle Settings Button ──────────────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: idleArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.idlePanelOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰒲"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 15
+                            color: bar.idlePanelOpen ? Root.Colors.blue : Root.Colors.text
+                            Behavior on color { ColorAnimation { duration: 150 } }
+                        }
+
+                        MouseArea {
+                            id: idleArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                bar.shellState.idlePanelOpen = !bar.shellState.idlePanelOpen
+                                bar.shellState.connectionOpen = false
+                                bar.volumePanelOpen = false
+                                bar.shellState.dashboardOpen = false
+                                bar.shellState.wallpaperPanelOpen = false
+                                bar.notifPanelOpen = false
+                                bar.shellState.clipboardOpen = false
                                 bar.shellState.calendarOpen = false
                             }
                         }
@@ -503,6 +548,16 @@ PanelWindow {
         ClipboardPanel {
             open: bar.clipboardPanelOpen
             onCloseRequested: bar.shellState.clipboardOpen = false
+        }
+    }
+
+    // ── Idle Settings Panel ───────────────────────────────────────────────
+    LazyLoader {
+        id: idlePanelLoader
+        active: bar.idlePanelOpen || idleCloseTimer.running
+
+        IdlePanel {
+            visible: bar.idlePanelOpen
         }
     }
 

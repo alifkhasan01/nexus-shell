@@ -15,6 +15,7 @@ QtObject {
     property bool calendarOpen:       false
     property bool connectionOpen:     false
     property bool clipboardOpen:      false
+    property bool idlePanelOpen:      false
 
     // Settings
     property bool dnd:                false
@@ -32,7 +33,8 @@ QtObject {
             "menu": function() { menuOpen = !menuOpen },
             "calendar": function() { calendarOpen = !calendarOpen },
             "connection": function() { connectionOpen = !connectionOpen },
-            "clipboard": function() { clipboardOpen = !clipboardOpen }
+            "clipboard": function() { clipboardOpen = !clipboardOpen },
+            "idlePanel": function() { idlePanelOpen = !idlePanelOpen }
         }
 
         if (panels[panelName]) {
@@ -51,6 +53,7 @@ QtObject {
         calendarOpen = false
         connectionOpen = false
         clipboardOpen = false
+        idlePanelOpen = false
     }
 
     // Logging helper
