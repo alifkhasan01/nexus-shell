@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import QtQuick.Effects
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
@@ -10,10 +11,7 @@ PanelWindow {
 
     property bool open: false
     property int focusedIndex: -1
-    // Fungsi lock — di-wire dari Bar.qml via shellState.lockFn
     property var lockFn: function() {}
-
-    // Jumlah item yang bisa dinavigasi (Lock, Suspend, Reboot, Logout, Shutdown)
     readonly property int itemCount: 5
 
     signal closeRequested()
@@ -27,17 +25,20 @@ PanelWindow {
     WlrLayershell.namespace: "quickshell-powermenu"
     WlrLayershell.exclusiveZone: 0
 
-    // Reset fokus tiap kali menu dibuka/ditutup
     onOpenChanged: {
         if (open) {
             focusedIndex = 0
             keyHandler.forceActiveFocus()
+            card.scale = 0.9
+            card.opacity = 0
+            scaleAnim.start()
+            fadeAnim.start()
         } else {
             focusedIndex = -1
         }
     }
 
-    // ── Keyboard handler ───────────────────────────────────────────────────
+    // Keyboard handler
     Item {
         id: keyHandler
         focus: true
@@ -45,10 +46,10 @@ PanelWindow {
         Keys.onPressed: event => {
             if (!root.open) return
 
-            if (event.key === Qt.Key_Up) {
+            if (event.key === Qt.Key_Left || event.key === Qt.Key_Up) {
                 root.focusedIndex = (root.focusedIndex - 1 + root.itemCount) % root.itemCount
                 event.accepted = true
-            } else if (event.key === Qt.Key_Down) {
+            } else if (event.key === Qt.Key_Right || event.key === Qt.Key_Down) {
                 root.focusedIndex = (root.focusedIndex + 1) % root.itemCount
                 event.accepted = true
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -67,161 +68,216 @@ PanelWindow {
             items[idx].activate()
     }
 
-    // Klik di luar kartu → tutup
-    MouseArea {
+    // Background blur overlay
+    Rectangle {
         anchors.fill: parent
-        onClicked: root.closeRequested()
+        color: "#80000000"
+        opacity: root.open ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
+        
+        MouseArea {
+            anchors.fill: parent
+            onClicked: root.closeRequested()
+        }
     }
 
-    // ── Kartu popup ────────────────────────────────────────────────────────
+    // Main card - centered
     Rectangle {
         id: card
-        anchors.top: parent.top
-        anchors.right: parent.right
-        anchors.topMargin: 5
-        anchors.rightMargin: 10
-        width: 180
-        height: col.implicitHeight + 16
-        radius: 14
-        color: Root.Colors.mantle
+        anchors.centerIn: parent
+        width: 620
+        height: content.implicitHeight + 80
+        radius: 24
+        color: Root.Colors.base
         border.color: Root.Colors.surface2
-        border.width: 2
-        Behavior on color { ColorAnimation { duration: 200 } }
-        Behavior on border.color { ColorAnimation { duration: 200 } }
+        border.width: 1
+        
+        opacity: 0
+        scale: 0.9
+        
+        NumberAnimation on scale {
+            id: scaleAnim
+            to: 1.0
+            duration: 300
+            easing.type: Easing.OutBack
+            running: false
+        }
+        
+        NumberAnimation on opacity {
+            id: fadeAnim
+            to: 1.0
+            duration: 250
+            easing.type: Easing.OutCubic
+            running: false
+        }
 
-        // Klik di dalam kartu → jangan propagate ke overlay
-        MouseArea { anchors.fill: parent; onClicked: {} }
+        // Subtle gradient overlay
+        Rectangle {
+            anchors.fill: parent
+            radius: parent.radius
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#10ffffff" }
+                GradientStop { position: 1.0; color: "#05ffffff" }
+            }
+        }
+
+        MouseArea { 
+            anchors.fill: parent
+            onClicked: {} 
+        }
 
         ColumnLayout {
-            id: col
+            id: content
             anchors {
                 top: parent.top
                 left: parent.left
                 right: parent.right
-                margins: 12
+                margins: 40
             }
-            spacing: 2
+            spacing: 32
 
-            // ── Header ─────────────────────────────────────────────────────
+            // Header
+            ColumnLayout {
+                Layout.alignment: Qt.AlignHCenter
+                spacing: 8
+
+                Text {
+                    text: "⏻"
+                    font.pixelSize: 48
+                    color: Root.Colors.text
+                    Layout.alignment: Qt.AlignHCenter
+                    opacity: 0.9
+                }
+
+                Text {
+                    text: "Power Options"
+                    font.pixelSize: 24
+                    font.weight: Font.DemiBold
+                    color: Root.Colors.text
+                    Layout.alignment: Qt.AlignHCenter
+                }
+
+                Text {
+                    text: "Choose an action"
+                    font.pixelSize: 13
+                    color: Root.Colors.subtext
+                    Layout.alignment: Qt.AlignHCenter
+                    opacity: 0.8
+                }
+            }
+
+            // Power options grid
+            GridLayout {
+                Layout.alignment: Qt.AlignHCenter
+                columns: 3
+                rowSpacing: 16
+                columnSpacing: 16
+
+                PowerMenuItem {
+                    id: itemLock
+                    icon: "󰍁"
+                    label: "Lock"
+                    accentColor: Root.Colors.blue
+                    command: []
+                    notifyTitle: "Mengunci layar"
+                    notifyBody: "Layar akan dikunci."
+                    highlighted: root.focusedIndex === 0
+                    onTriggered: {
+                        root.closeRequested()
+                        root.lockFn()
+                    }
+                }
+
+                PowerMenuItem {
+                    id: itemSuspend
+                    icon: "󰒲"
+                    label: "Suspend"
+                    accentColor: Root.Colors.lavender
+                    command: []
+                    notifyTitle: "Masuk mode tidur"
+                    notifyBody: "Layar dikunci lalu sistem di-suspend."
+                    highlighted: root.focusedIndex === 1
+                    onTriggered: {
+                        root.closeRequested()
+                        root.lockFn()
+                        suspendProc.running = true
+                    }
+                }
+
+                PowerMenuItem {
+                    id: itemReboot
+                    icon: "󰑙"
+                    label: "Reboot"
+                    accentColor: Root.Colors.yellow
+                    command: ["systemctl", "reboot"]
+                    notifyTitle: "Merestart sistem"
+                    notifyBody: "Sistem akan di-restart sekarang."
+                    highlighted: root.focusedIndex === 2
+                    onTriggered: root.closeRequested()
+                }
+
+                PowerMenuItem {
+                    id: itemLogout
+                    icon: "󰗼"
+                    label: "Logout"
+                    accentColor: Root.Colors.peach
+                    command: ["hyprctl", "dispatch", "exit"]
+                    notifyTitle: "Keluar dari sesi"
+                    notifyBody: "Sesi Hyprland akan diterminasi."
+                    highlighted: root.focusedIndex === 3
+                    onTriggered: root.closeRequested()
+                }
+
+                PowerMenuItem {
+                    id: itemShutdown
+                    icon: "󰐥"
+                    label: "Shutdown"
+                    accentColor: Root.Colors.red
+                    command: ["systemctl", "poweroff"]
+                    notifyTitle: "Mematikan sistem"
+                    notifyBody: "Sistem akan dimatikan sekarang."
+                    highlighted: root.focusedIndex === 4
+                    onTriggered: root.closeRequested()
+                }
+            }
+
+            // Hint text
             Text {
-                text: "Power"
+                text: "Use arrow keys to navigate • Enter to select • Esc to cancel"
                 font.pixelSize: 11
                 color: Root.Colors.subtext
-                Layout.leftMargin: 4
-                Layout.topMargin: 2
-                Layout.bottomMargin: 4
-                Behavior on color { ColorAnimation { duration: 200 } }
+                opacity: 0.6
+                Layout.alignment: Qt.AlignHCenter
+                Layout.topMargin: 8
             }
+        }
 
-            // ── Items ──────────────────────────────────────────────────────
-            PowerMenuItem {
-                id: itemLock
-                Layout.fillWidth: true
-                icon: "󰍁"
-                label: "Lock"
-                iconColor: Root.Colors.blue
-                command: []
-                notifyTitle: "Mengunci layar"
-                notifyBody:  "Layar akan dikunci."
-                highlighted: root.focusedIndex === 0
-                onTriggered: {
-                    root.closeRequested()
-                    root.lockFn()
-                }
-            }
-
-            PowerMenuItem {
-                id: itemSuspend
-                Layout.fillWidth: true
-                icon: "󰒲"
-                label: "Suspend"
-                iconColor: Root.Colors.lavender
-                // command dikosongkan — aksi dihandle manual
-                command: []
-                notifyTitle: "Masuk mode tidur"
-                notifyBody:  "Layar dikunci lalu sistem di-suspend."
-                highlighted: root.focusedIndex === 1
-                onTriggered: {
-                    root.closeRequested()
-                    // Lock dulu lalu langsung suspend tanpa delay
-                    root.lockFn()
-                    suspendProc.running = true
-                }
-            }
-
-            PowerMenuItem {
-                id: itemReboot
-                Layout.fillWidth: true
-                icon: "󰑙"
-                label: "Reboot"
-                iconColor: Root.Colors.yellow
-                command: ["systemctl", "reboot"]
-                notifyTitle: "Merestart sistem"
-                notifyBody:  "Sistem akan di-restart sekarang."
-                highlighted: root.focusedIndex === 2
-                onTriggered: root.closeRequested()
-            }
-
-            // Pemisah
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.leftMargin: 4
-                Layout.rightMargin: 4
-                Layout.topMargin: 2
-                Layout.bottomMargin: 2
-                height: 1
-                color: Root.Colors.surface0
-                Behavior on color { ColorAnimation { duration: 200 } }
-            }
-
-            PowerMenuItem {
-                id: itemLogout
-                Layout.fillWidth: true
-                icon: "󰗼"
-                label: "Logout"
-                iconColor: Root.Colors.peach
-                command: ["hyprctl", "dispatch", "hl.dsp.exit()"]
-                notifyTitle: "Keluar dari sesi"
-                notifyBody:  "Sesi Hyprland akan diterminasi."
-                highlighted: root.focusedIndex === 3
-                onTriggered: root.closeRequested()
-            }
-
-            PowerMenuItem {
-                id: itemShutdown
-                Layout.fillWidth: true
-                icon: "󰐥"
-                label: "Shutdown"
-                iconColor: Root.Colors.red
-                command: ["systemctl", "poweroff"]
-                notifyTitle: "Mematikan sistem"
-                notifyBody:  "Sistem akan dimatikan sekarang."
-                highlighted: root.focusedIndex === 4
-                onTriggered: root.closeRequested()
-            }
+        // Drop shadow simulation
+        Rectangle {
+            anchors.fill: parent
+            anchors.margins: -8
+            radius: parent.radius + 8
+            color: "transparent"
+            border.color: "#20000000"
+            border.width: 8
+            z: -1
         }
     }
 
-    // ── Suspend ───────────────────────────────────────────────────────────
     Process {
         id: suspendProc
-        // Gunakan loginctl suspend sebagai prioritas pertama (lebih modern dan reliable)
-        // Fallback ke systemctl suspend jika loginctl tidak ada
         command: ["sh", "-c", "loginctl suspend || systemctl suspend"]
         
         onExited: (exitCode, exitStatus) => {
             if (exitCode !== 0) {
                 console.warn("Suspend gagal dengan exit code:", exitCode)
-                // Coba fallback alternatif
                 suspendFallback.running = true
             }
         }
     }
 
-    // Fallback jika command utama gagal
     Process {
         id: suspendFallback
-        // Coba dengan dbus sebagai alternatif terakhir
         command: ["sh", "-c", "dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager.Suspend boolean:true || systemctl suspend"]
     }
 }

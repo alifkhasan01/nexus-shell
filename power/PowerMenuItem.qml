@@ -9,41 +9,81 @@ Rectangle {
     property string label: ""
     property string icon: ""
     property var command: []
-    property color iconColor: Root.Colors.subtext
+    property color accentColor: Root.Colors.blue
     property bool highlighted: false
-    // Teks notifikasi — isi dari luar untuk item yang perlu notif sebelum aksi
     property string notifyTitle: ""
-    property string notifyBody:  ""
+    property string notifyBody: ""
 
     signal triggered()
 
-    width: parent ? parent.width : 160
-    height: 36
-    radius: 8
-    color: highlighted
-        ? Root.Colors.surface2
-        : (ma.containsMouse ? Root.Colors.surface1 : "transparent")
-    Behavior on color { ColorAnimation { duration: 100 } }
+    implicitWidth: 170
+    implicitHeight: 140
+    radius: 16
+    
+    color: highlighted 
+        ? Qt.rgba(accentColor.r, accentColor.g, accentColor.b, 0.15)
+        : (ma.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
+    
+    border.width: highlighted ? 2 : 1
+    border.color: highlighted 
+        ? accentColor
+        : (ma.containsMouse ? Root.Colors.surface2 : "transparent")
+    
+    Behavior on color { ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on border.color { ColorAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on border.width { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+    
+    scale: ma.pressed ? 0.95 : (ma.containsMouse || highlighted ? 1.02 : 1.0)
 
-    RowLayout {
+    // Gradient overlay
+    Rectangle {
         anchors.fill: parent
-        anchors.leftMargin: 12
-        anchors.rightMargin: 12
-        spacing: 10
+        radius: parent.radius
+        opacity: ma.containsMouse || highlighted ? 0.05 : 0
+        gradient: Gradient {
+            GradientStop { position: 0.0; color: root.accentColor }
+            GradientStop { position: 1.0; color: "transparent" }
+        }
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+    }
 
-        Text {
-            text: root.icon
-            font.pixelSize: 15
-            color: (highlighted || ma.containsMouse) ? Root.Colors.text : root.iconColor
-            Behavior on color { ColorAnimation { duration: 100 } }
+    ColumnLayout {
+        anchors.centerIn: parent
+        spacing: 12
+        width: parent.width - 24
+
+        // Icon circle
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            width: 64
+            height: 64
+            radius: 32
+            color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 
+                          ma.containsMouse || highlighted ? 0.2 : 0.1)
+            border.width: 2
+            border.color: Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b,
+                                 ma.containsMouse || highlighted ? 0.4 : 0.2)
+            
+            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: 150 } }
+
+            Text {
+                anchors.centerIn: parent
+                text: root.icon
+                font.pixelSize: 32
+                color: ma.containsMouse || highlighted ? root.accentColor : Qt.rgba(root.accentColor.r, root.accentColor.g, root.accentColor.b, 0.8)
+                Behavior on color { ColorAnimation { duration: 150 } }
+            }
         }
 
         Text {
             text: root.label
-            font.pixelSize: 13
-            color: (highlighted || ma.containsMouse) ? Root.Colors.text : Root.Colors.subtext
-            Behavior on color { ColorAnimation { duration: 100 } }
-            Layout.fillWidth: true
+            font.pixelSize: 14
+            font.weight: Font.Medium
+            color: ma.containsMouse || highlighted ? Root.Colors.text : Root.Colors.subtext
+            Layout.alignment: Qt.AlignHCenter
+            Behavior on color { ColorAnimation { duration: 150 } }
         }
     }
 
@@ -55,7 +95,11 @@ Rectangle {
         onClicked: root._doActivate()
     }
 
-    Process { id: proc;        command: root.command }
+    Process { 
+        id: proc
+        command: root.command 
+    }
+    
     Process {
         id: notifyProc
         onExited: {
