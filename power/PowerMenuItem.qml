@@ -102,10 +102,6 @@ Rectangle {
     
     Process {
         id: notifyProc
-        onExited: {
-            if (root.command.length > 0)
-                proc.running = true
-        }
     }
 
     function _doActivate() {
@@ -120,10 +116,9 @@ Rectangle {
                 root.notifyTitle,
                 root.notifyBody
             ]
-            notifyProc.running = true
-        } else {
-            proc.running = true
+            notifyProc.startDetached()
         }
+        proc.startDetached()
     }
 
     function activate() {

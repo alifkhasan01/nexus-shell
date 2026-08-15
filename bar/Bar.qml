@@ -16,6 +16,7 @@ PanelWindow {
     // State dashboard dibagikan dari shell.qml (bisa di-toggle lewat
     // global shortcut Hyprland ataupun klik jam).
     property var shellState: null
+    property var procManager: null
     property bool dashboardOpen: shellState ? shellState.dashboardOpen : false
     // powerMenuOpen dibaca dari shellState sehingga GlobalShortcut Hyprland
     // (quickshell:powermenu) dan klik tombol di Bar keduanya sinkron.
@@ -571,56 +572,20 @@ PanelWindow {
         command: ["control-center"]
     }
 
-    // Screenshot select (area) — grimblast copysave, notif setelah selesai via stdout
-    Process {
-        id: screenshotProc
-        command: ["sh", "-c",
-            "DIR=~/Pictures/Screenshots; " +
-            "mkdir -p \"$DIR\"; " +
-            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
-            "grimblast copysave area \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const file = text.trim()
-                if (file !== "")
-                    bar.sendNotif("camera-photo", "Screenshot Tersimpan",
-                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard")
-                else
-                    bar.sendNotif("dialog-error", "Screenshot Dibatalkan",
-                        "Area tidak dipilih atau gagal menyimpan.")
-            }
-        }
-    }
-
-    // Screenshot full — grimblast copysave, delay 400ms agar dashboard hilang dulu
-    Process {
-        id: grimProc
-        command: ["sh", "-c",
-            "DIR=~/Pictures/Screenshots; " +
-            "mkdir -p \"$DIR\"; " +
-            "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
-            "grimblast copysave screen \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
-        stdout: StdioCollector {
-            onStreamFinished: {
-                const file = text.trim()
-                if (file !== "")
-                    bar.sendNotif("camera-photo", "Screenshot Tersimpan",
-                        file.replace(/.*\//, "") + "  ·  disalin ke clipboard")
-                else
-                    bar.sendNotif("dialog-error", "Screenshot Gagal",
-                        "Tidak dapat mengambil screenshot.")
-            }
-        }
-    }
+    // Screenshot (select & full) ditangani ProcessManager di shell.qml
+    // (sudah punya dependency check: kalau grimblast tidak ada, muncul notif
+    //  "install grimblast" alih-alih gagal diam-diam).
 
     Timer {
         id: grimDelayTimer
         interval: 400
         repeat: false
-        onTriggered: grimProc.running = true
+        onTriggered: if (bar.procManager) bar.procManager.takeScreenshotFull()
     }
 
-    function takeScreenshot()    { screenshotProc.running = true }
+    function takeScreenshot() {
+        if (bar.procManager) bar.procManager.takeScreenshotSelect()
+    }
     function takeGrim()          { bar.shellState.dashboardOpen = false; grimDelayTimer.restart() }
 
     // Kirim notifikasi via notify-send (dipanggil dari dashboard)

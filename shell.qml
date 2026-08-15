@@ -9,6 +9,7 @@ import "./lockscreen" as Lock
 import "./notifications" as Notif
 import "./services"
 import "./shell" as ShellComponents
+import "./welcome" as Welcome
 
 ShellRoot {
     id: root
@@ -144,6 +145,27 @@ ShellRoot {
         onPressed: if (brightnessControlObj) brightnessControlObj.brightnessDown()
     }
 
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "screenshot-full"
+        description: "Screenshot fullscreen"
+        onPressed: procManager.takeScreenshotFull()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "screenshot-select"
+        description: "Screenshot area"
+        onPressed: procManager.takeScreenshotSelect()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "welcome"
+        description: "Toggle welcome panel"
+        onPressed: shellStateObj.welcomeOpen = !shellStateObj.welcomeOpen
+    }
+
     // ── Process Manager (Screenshot, BlueZ Agent, Cava Feed) ────────────────
     ShellComponents.ProcessManager {
         id: procManager
@@ -172,6 +194,7 @@ ShellRoot {
             required property var modelData
             screen: modelData
             shellState: shellStateObj
+            procManager: procManager
 
             // Inject window reference ke IdleInhibitService saat bar pertama dibuat
             Component.onCompleted: {
@@ -200,6 +223,43 @@ ShellRoot {
     // dashboard, panel, dan komponen overlay lainnya.
     Notif.NotificationPopup {
         dnd: shellStateObj.dnd
+    }
+
+    // ── Welcome Panel — muncul saat startup kalau ada dependensi kurang ──
+    // Auto-open via Connection di bawah; bisa juga di-toggle manual via
+    // GlobalShortcut `quickshell:welcome`.
+    Welcome.WelcomePanel {
+        id: welcomeRef
+        open: shellStateObj.welcomeOpen
+        procManager: procManager
+        onCloseRequested: shellStateObj.welcomeOpen = false
+        onInstallFinished: function(allInstalled) {
+            if (allInstalled) {
+                console.log("[Welcome] Semua dependensi terinstall — menutup panel")
+                shellStateObj.welcomeOpen = false
+            }
+        }
+    }
+
+    function maybeOpenWelcome() {
+        if (welcomeRef.settingsLoaded && welcomeRef.missingCount > 0
+                && welcomeRef.showOnStartup) {
+            console.log("[Welcome] Dependensi kurang — membuka welcome panel")
+            shellStateObj.welcomeOpen = true
+        }
+    }
+
+    Connections {
+        target: procManager
+        function onDepsCheckedChanged() { root.maybeOpenWelcome() }
+    }
+    Connections {
+        target: welcomeRef
+        function onSettingsLoadedChanged() { root.maybeOpenWelcome() }
+    }
+    Connections {
+        target: welcomeRef
+        function onDepsUpdated() { root.maybeOpenWelcome() }
     }
 
     // ── Auto-pairing BlueZ agent (berjalan di background) ─────────────────

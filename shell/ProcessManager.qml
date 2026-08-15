@@ -18,6 +18,84 @@ Item {
     property int cavaFeedRetries: 0
     property int maxRetries: 3
 
+    // ── Dependency availability flags ──────────────────────────────
+    // Dicek sekali saat startup supaya fitur yang binary-nya nggak ada
+    // langsung nonaktif dengan graceful (bukan retry loop / crash).
+    property bool depsChecked: false
+    property var missingDeps: []
+    property bool hasGrimblast: false
+    property bool hasCava: false
+    property bool hasBluetoothctl: false
+    property bool hasNotifySend: false
+
+    // ── Dependency Check ───────────────────────────────────────────
+    Process {
+        id: depsCheckProc
+        command: ["sh", "-c",
+            "for b in grimblast cava bluetoothctl notify-send; do " +
+            "command -v \"$b\" >/dev/null 2>&1 && echo \"$b:1\" || echo \"$b:0\"; done"]
+
+        onRunningChanged: {
+            if (!running) {
+                console.log("[Deps] Check finished (exit code: " + exitCode + ")")
+            }
+        }
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                for (const line of text.split("\n")) {
+                    const parts = line.trim().split(":")
+                    if (parts.length !== 2) continue
+                    const val = parts[1] === "1"
+                    if (parts[0] === "grimblast") processManager.hasGrimblast = val
+                    else if (parts[0] === "cava") processManager.hasCava = val
+                    else if (parts[0] === "bluetoothctl") processManager.hasBluetoothctl = val
+                    else if (parts[0] === "notify-send") processManager.hasNotifySend = val
+                }
+                processManager.depsChecked = true
+                processManager.applyDependencies()
+            }
+        }
+    }
+
+    Process { id: depsNotifProc }
+
+    Component.onCompleted: {
+        depsCheckProc.running = true
+    }
+
+    // Dipanggil setelah install dependensi selesai (dari WelcomePanel)
+    // supaya flags & auto-start mengikuti kondisi terbaru.
+    function recheckDependencies() {
+        console.log("[Deps] Re-checking dependencies after install")
+        depsCheckProc.running = true
+    }
+
+    function applyDependencies() {
+        const missing = []
+        if (!hasGrimblast) missing.push("grimblast")
+        if (!hasCava) missing.push("cava")
+        if (!hasBluetoothctl) missing.push("bluetoothctl")
+
+        if (missing.length > 0) {
+            console.warn("[Deps] Missing: " + missing.join(", ") + " — fitur terkait dinonaktifkan")
+            if (hasNotifySend) {
+                depsNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    "--expire-time=6000", "--icon=dialog-warning",
+                    "Dependensi Kurang",
+                    "Install dulu: " + missing.join(", ")]
+                depsNotifProc.running = true
+            }
+        } else {
+            console.log("[Deps] Semua dependensi tersedia")
+        }
+        processManager.missingDeps = missing
+
+        // Auto-start hanya jika dependensinya ada
+        if (hasBluetoothctl && !btAgent.running) btAgent.running = true
+        if (hasCava && !cavaFeed.running) cavaFeed.running = true
+    }
+
     // ── Screenshot Processes ───────────────────────────────────────
     Process {
         id: screenshotSelectProc
@@ -137,7 +215,8 @@ Item {
     Process {
         id: btAgent
         command: ["bash", "scripts/btagent.sh"]
-        running: true
+        // Auto-start via applyDependencies() jika bluetoothctl tersedia
+        running: false
         
         Component.onCompleted: {
             console.log("[BTAgent] Initialized")
@@ -180,7 +259,8 @@ Item {
     Process {
         id: cavaFeed
         command: ["bash", "dashboard/cava_feed.sh"]
-        running: true // Auto-start saat quickshell berjalan
+        // Auto-start via applyDependencies() jika cava tersedia
+        running: false
         
         Component.onCompleted: {
             console.log("[CavaFeed] Initialized - auto-start enabled")
@@ -218,12 +298,34 @@ Item {
 
     // Public methods untuk trigger screenshot dari shortcuts
     function takeScreenshotSelect() {
+        if (depsChecked && !hasGrimblast) {
+            console.warn("[Screenshot:Select] grimblast tidak tersedia, dilewati")
+            if (hasNotifySend) {
+                screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    "--expire-time=4000", "--icon=dialog-error",
+                    "Screenshot Tidak Tersedia",
+                    "Grimblast belum diinstall. Install dengan: yay -S grimblast-git"]
+                screenshotNotifProc.running = true
+            }
+            return
+        }
         console.log("[Screenshot:Select] Triggered from shortcut")
         screenshotRetries = 0
         screenshotSelectProc.running = true
     }
 
     function takeScreenshotFull() {
+        if (depsChecked && !hasGrimblast) {
+            console.warn("[Screenshot:Full] grimblast tidak tersedia, dilewati")
+            if (hasNotifySend) {
+                screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
+                    "--expire-time=4000", "--icon=dialog-error",
+                    "Screenshot Tidak Tersedia",
+                    "Grimblast belum diinstall. Install dengan: yay -S grimblast-git"]
+                screenshotNotifProc.running = true
+            }
+            return
+        }
         console.log("[Screenshot:Full] Triggered from shortcut")
         screenshotRetries = 0
         screenshotFullProc.running = true
