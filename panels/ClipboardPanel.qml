@@ -119,12 +119,44 @@ PanelWindow {
         anchors.rightMargin: 100
 
         width: 420
-        height: Math.min(Math.max(480, root.height - 20), root.height - 20)
+        height: {
+            // Kalkulasi tinggi berdasarkan konten
+            const headerHeight = 60      // Header + divider
+            const searchHeight = 42      // Search box (tab 0) atau padding
+            const minContentHeight = 180 // Minimal content area
+            const maxHeight = 650        // Maksimal tinggi panel
+            
+            // Untuk tab Clipboard
+            if (root.currentTab === 0) {
+                const itemCount = root.filteredEntries.length
+                if (itemCount === 0) {
+                    // Empty state: lebih kecil
+                    return headerHeight + searchHeight + 160
+                } else {
+                    // Ada konten: sesuaikan dengan jumlah item (max ~8 items visible)
+                    const itemHeight = 52  // Estimasi tinggi per item
+                    const maxItems = 8
+                    const visibleItems = Math.min(itemCount, maxItems)
+                    const calculatedHeight = headerHeight + searchHeight + (visibleItems * itemHeight) + 20
+                    return Math.min(calculatedHeight, maxHeight)
+                }
+            } else {
+                // Tab Catatan: tinggi sedang
+                return Math.min(480, maxHeight)
+            }
+        }
 
         radius: 16
         color: Root.Colors.mantle
         border.color: Root.Colors.surface2
         border.width: 2
+        
+        Behavior on height { 
+            NumberAnimation { 
+                duration: 200
+                easing.type: Easing.OutCubic 
+            } 
+        }
 
         opacity: 0
         transform: Translate { id: cardTranslate; y: -50 }

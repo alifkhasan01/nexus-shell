@@ -7,11 +7,12 @@ Konfigurasi ini menggunakan **Quickshell IdleMonitor** untuk menggantikan `hypri
 ## Fitur
 
 - **Native Wayland Integration**: Menggunakan protokol `ext-idle-notify-v1`
+- **Persistent Configuration**: Konfigurasi disimpan ke JSON, tidak reset saat restart
 - **Configurable Timeouts**: Atur timeout untuk screen off, lock, dan suspend
-- **Toggle dari Dashboard**: Tombol IDLE untuk enable/disable idle monitoring
-- **Settings UI**: Spinbox untuk mengatur timeout di Settings tab
+- **IdlePanel UI**: Panel khusus untuk mengatur timeout dengan spinbox intuitif
+- **Master Toggle**: Enable/disable semua idle monitoring dengan satu switch
 - **Auto Actions**: Screen off → Lock → Suspend secara bertahap
-- **Visual Feedback**: Notifikasi saat toggle dan saat action terjadi
+- **Idle Inhibitor Support**: Respect aplikasi yang mencegah idle (video player, dll)
 
 ## Cara Kerja
 
@@ -31,6 +32,26 @@ Service singleton yang mengelola 3 idle monitors dengan timeout berbeda:
    - Suspend sistem dengan `systemctl suspend`
    - Hemat baterai maksimal
 
+### Configuration Persistence
+
+Semua pengaturan disimpan otomatis ke `~/.config/quickshell/idle-config.json`:
+
+```json
+{
+  "screenOffTimeout": 300,
+  "lockTimeout": 600,
+  "suspendTimeout": 1800,
+  "monitoringEnabled": true
+}
+```
+
+- ✅ Konfigurasi di-load otomatis saat Quickshell start
+- ✅ Perubahan di IdlePanel langsung disimpan
+- ✅ Tidak ada reset ke default saat restart
+- ✅ Bisa diedit manual (dalam detik, bukan menit)
+
+Lihat [idle-config-format.md](./idle-config-format.md) untuk detail format dan contoh.
+
 ### API
 
 ```qml
@@ -42,7 +63,7 @@ IdleManager.disable()
 // Check state
 IdleManager.monitoringEnabled  // boolean
 
-// Set timeouts (dalam menit)
+// Set timeouts (dalam menit) - auto save ke JSON
 IdleManager.setScreenOffTimeout(5)
 IdleManager.setLockTimeout(10)
 IdleManager.setSuspendTimeout(30)

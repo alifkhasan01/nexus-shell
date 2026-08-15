@@ -5,43 +5,87 @@ import Quickshell.Wayland
 import "../services" as Services
 import "../" as Root
 
-WlrLayershell {
+PanelWindow {
     id: idlePanel
     
-    anchors {
-        top: true
-        right: true
-    }
+    property bool open: false
+    signal closeRequested()
     
-    margins {
-        top: 2
-        right: 200
-    }
-    
-    keyboardFocus: KeyboardFocus.OnDemand
-    layer: WlrLayer.Overlay
-    
-    width: 320
-    height: contentColumn.implicitHeight + 32
-    
+    anchors { top: true; left: true; right: true; bottom: true }
     color: "transparent"
+    visible: showPanel
     
-    // Click outside to close
-    TapHandler {
-        onTapped: idlePanel.visible = false
+    property bool showPanel: false
+    onOpenChanged: {
+        if (open) {
+            showPanel = true
+        }
+    }
+    
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.namespace: "quickshell-idle"
+    WlrLayershell.exclusiveZone: 0
+    
+    // Klik luar untuk tutup
+    MouseArea {
+        anchors.fill: parent
+        z: -1
+        onClicked: idlePanel.closeRequested()
     }
     
     Rectangle {
-        anchors.fill: parent
-        anchors.margins: 8
+        id: card
+        
+        anchors.top: parent.top
+        anchors.topMargin: 5
+        anchors.right: parent.right
+        anchors.rightMargin: 200
+        
+        width: 320
+        height: contentColumn.implicitHeight + 32
+        
         radius: 16
         color: Root.Colors.base
         border.width: 1
         border.color: Root.Colors.surface0
         
+        opacity: 0
+        transform: Translate { id: cardTranslate; y: -30 }
+        
+        states: State {
+            name: "open"
+            when: idlePanel.open
+            PropertyChanges { target: card; opacity: 1 }
+            PropertyChanges { target: cardTranslate; y: 0 }
+        }
+        
+        transitions: [
+            Transition {
+                from: ""; to: "open"
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                }
+            },
+            Transition {
+                from: "open"; to: ""
+                SequentialAnimation {
+                    ParallelAnimation {
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                    }
+                    ScriptAction { script: idlePanel.showPanel = false }
+                }
+            }
+        ]
+        
+        Behavior on color { ColorAnimation { duration: 150 } }
+        
         // Prevent click-through
-        TapHandler {
-            onTapped: {} // Consume event
+        MouseArea {
+            anchors.fill: parent
+            onClicked: {} // Consume event
         }
         
         ColumnLayout {
@@ -87,7 +131,7 @@ WlrLayershell {
                         id: closeArea
                         anchors.fill: parent
                         cursorShape: Qt.PointingHandCursor
-                        onClicked: idlePanel.visible = false
+                        onClicked: idlePanel.closeRequested()
                     }
                 }
             }

@@ -555,7 +555,8 @@ PanelWindow {
         active: bar.idlePanelOpen || idleCloseTimer.running
 
         IdlePanel {
-            visible: bar.idlePanelOpen
+            open: bar.idlePanelOpen
+            onCloseRequested: bar.shellState.idlePanelOpen = false
         }
     }
 

@@ -6,7 +6,6 @@ import QtQuick.Effects
 import Quickshell
 import Quickshell.Io
 import Quickshell.Wayland
-import Quickshell.Wayland._Screencopy
 import Quickshell.Services.Pam
 import Quickshell.Services.UPower
 import Quickshell.Services.Pipewire
@@ -209,10 +208,13 @@ Scope {
 
         // Mulai/hentikan hitungan auto-suspend mengikuti status lock
         onLockedChanged: {
-            if (locked)
+            if (locked) {
                 autoSuspendTimer.restart()
-            else
+            } else {
                 autoSuspendTimer.stop()
+                // Notify IdleManager bahwa system sudah di-unlock
+                Services.IdleManager.onUnlock()
+            }
         }
 
         WlSessionLockSurface {
@@ -233,16 +235,21 @@ Scope {
 
                 Keys.onPressed: event => root._handleKey(event)
 
-                // ── Blur screencopy background ────────────────────────
-                ScreencopyView {
-                    id: bgCopy
+                // ── Blurred wallpaper background (cache) ────────────────
+                // Pakai cache wallpaper di ~/.cache/wallpaper/hyprlock-bg
+                // (bukan screencopy) agar aman saat monitor ke DPMS off.
+                Image {
+                    id: bgWall
                     anchors.fill: parent
-                    captureSource: surface.screen
+                    source: "file://" + Quickshell.env("HOME") + "/.cache/wallpaper/hyprlock-bg"
+                    fillMode: Image.PreserveAspectCrop
+                    smooth: true
+                    mipmap: true
 
                     layer.enabled: true
                     layer.effect: MultiEffect {
-                        anchors.fill: bgCopy
-                        source: bgCopy
+                        anchors.fill: bgWall
+                        source: bgWall
                         autoPaddingEnabled: false
                         blurEnabled: true
                         blur: 1.0
