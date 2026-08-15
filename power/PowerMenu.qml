@@ -221,7 +221,7 @@ PanelWindow {
                     icon: "󰗼"
                     label: "Logout"
                     accentColor: Root.Colors.peach
-                    command: []
+                    command: ["sh", "-c", "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"]
                     notifyTitle: "Keluar dari sesi"
                     notifyBody: "Sesi Hyprland akan diterminasi."
                     highlighted: root.focusedIndex === 3
