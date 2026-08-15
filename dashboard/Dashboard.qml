@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Effects
+import QtQuick.Controls
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
@@ -405,6 +406,167 @@ PanelWindow {
                 }
                 property bool hasPlayer: player !== null
 
+                // ── Lirik ────────────────────────────────────────────────────
+                // Sumber: 1) `xesam:asText` kalau player mengirim lirik sendiri,
+                //         2) fetch otomatis dari LRCLIB (Spotify dll tidak mengirim lirik).
+                // Kalau ada lirik, kotak lirik muncul di sisi kanan visualizer.
+                property string rawLyrics: {
+                    const p = mediaCard.player
+                    const m = p?.metadata
+                    if (!m) return ""
+                    const t = m["xesam:asText"]
+                    if (typeof t === "string") return t
+                    if (Array.isArray(t)) return t.join("\n")
+                    return ""
+                }
+                readonly property bool hasAsText: mediaCard.rawLyrics.length > 0
+                property string _fetchedLyrics: ""    // hasil fetch LRCLIB
+
+                // Baris lirik dengan timestamp (detik) — dasar highlight karaoke
+                readonly property var lyricLines: {
+                    const src = mediaCard.hasAsText ? mediaCard.rawLyrics : mediaCard._fetchedLyrics
+                    return mediaCard.parseLyrics(src)
+                }
+                property bool hasLyrics: mediaCard.lyricLines.length > 0
+                // True kalau lirik punya timestamp (LRC) sehingga bisa sinkron ke lagu
+                readonly property bool lyricSynced: {
+                    for (const l of mediaCard.lyricLines) if (l.t >= 0) return true
+                    return false
+                }
+                // Index baris yang sedang dinyanyikan — mengikuti posisi lagu
+                readonly property int currentLyricLine: {
+                    if (!mediaCard.hasLyrics || !mediaCard.hasPlayer) return -1
+                    const pos = mediaCard.player?.position ?? -1
+                    if (pos < 0) return -1
+                    const lines = mediaCard.lyricLines
+                    let idx = -1
+                    for (let i = 0; i < lines.length; i++) {
+                        const t = lines[i].t
+                        if (t >= 0) {
+                            if (pos >= t) idx = i
+                            else break
+                        }
+                    }
+                    return idx
+                }
+                onCurrentLyricLineChanged: mediaCard._autoScrollLyrics()
+                readonly property string lyricKey: {
+                    const p = mediaCard.player
+                    if (!p) return ""
+                    return (p.identity || "") + "|" + (p.trackTitle || "") + "|" + (p.trackArtist || "")
+                }
+                property string _lastLyricKey: ""
+
+                // Fetch lirik dari LRCLIB untuk track saat ini (kalau player
+                // tidak mengirim lirik). Aman dipanggil berulang — hanya jalan
+                // sekali per track dan langsung skip kalau sudah punya lirik.
+                function requestLyrics() {
+                    const key = mediaCard.lyricKey
+                    if (mediaCard._lastLyricKey !== key) {
+                        mediaCard._lastLyricKey = key
+                        mediaCard._fetchedLyrics = ""
+                    }
+                    if (!mediaCard.hasPlayer || mediaCard.hasAsText) return
+                    if (mediaCard._fetchedLyrics !== "") return
+                    if (lyricProc.running) return
+                    const title  = mediaCard.player?.trackTitle  || ""
+                    const artist = mediaCard.player?.trackArtist || ""
+                    if (title === "" && artist === "") return
+                    lyricProc.command = [
+                        "/home/youtta/.config/quickshell/scripts/fetch_lyrics.sh",
+                        title, artist, mediaCard.player?.trackAlbum || ""
+                    ]
+                    lyricProc.running = true
+                }
+
+                onLyricKeyChanged: mediaCard.requestLyrics()
+
+                // Safety net: cover kasus lagu sudah diputar sebelum dashboard
+                // dimuat / player muncul belakangan. Cek ringan tiap 2.5 detik.
+                Timer {
+                    interval: 2500
+                    running: true
+                    repeat: true
+                    triggeredOnStart: true
+                    onTriggered: mediaCard.requestLyrics()
+                }
+
+                // Proses fetch lirik (LRCLIB)
+                Process {
+                    id: lyricProc
+                    running: false
+                    stdout: StdioCollector {
+                        onStreamFinished: {
+                            if (text && mediaCard.lyricKey === mediaCard._lastLyricKey)
+                                mediaCard._fetchedLyrics = text
+                        }
+                    }
+                }
+
+                // Konstanta layout — lirik ditaruh di KANAN visualizer,
+                // jadi tinggi kartu tidak berubah (tetap ikut kolom kiri).
+                readonly property int _fixedH: 16 + 44 + 22 + 44 + 16 + 34 + 24 + 8 * 6
+                readonly property int cavaLyricSize: 150   // visualizer mengecil saat lirik tampil
+
+                // Visualizer: penuh (sisa tinggi) tanpa lirik, lebih kompak dengan lirik
+                readonly property int cavaSize: {
+                    const avail = mediaCard.height - mediaCard._fixedH
+                    if (mediaCard.hasLyrics)
+                        return Math.min(mediaCard.cavaLyricSize, Math.max(80, avail))
+                    return Math.max(80, Math.min(avail, mediaCard.width - 16))
+                }
+                // Tinggi baris visualizer+lirik: mengisi kolom, lirik mewarisi tingginya
+                readonly property int visualRowH: {
+                    const avail = mediaCard.height - mediaCard._fixedH
+                    if (mediaCard.hasLyrics) return Math.max(avail, mediaCard.cavaSize)
+                    return mediaCard.cavaSize
+                }
+
+                // Parse lirik → [{ t: detik, text }]. Baris LRC diberi timestamp,
+                // lirik polos tanpa timestamp t=-1. Metadata LRC dibuang.
+                function parseLyrics(text) {
+                    const out = []
+                    for (const raw of (text || "").split("\n")) {
+                        const line = raw.trim()
+                        if (line === "") continue
+                        if (/^\[[A-Za-z]+[:@]/.test(line)) continue   // [ti:], [ar:], [offset:] dll
+                        const stamps = []
+                        let rest = line
+                        const stampRe = /^\[(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?\]/
+                        while (stampRe.test(rest)) {
+                            const m = stampRe.exec(rest)
+                            const mm = parseInt(m[1]), ss = parseInt(m[2])
+                            const fs = m[3] ?? "0"
+                            const frac = parseInt(fs)
+                            stamps.push(mm * 60 + ss + frac / (fs.length === 3 ? 1000 : 100))
+                            rest = rest.slice(m[0].length).trim()
+                        }
+                        if (stamps.length > 0) {
+                            if (rest === "") continue
+                            for (const t of stamps) out.push({ t, text: rest })
+                        } else {
+                            out.push({ t: -1, text: line })
+                        }
+                    }
+                    return out
+                }
+
+                // Auto-scroll: bawa baris aktif ke tengah viewport kalau keluar layar
+                function _autoScrollLyrics() {
+                    if (!mediaCard.lyricSynced) return
+                    const rep = lyricRepeater
+                    const item = rep ? rep.itemAt(mediaCard.currentLyricLine) : null
+                    if (!item) return
+                    const py = 4 + item.y   // +4 = lyricColumn.topPadding
+                    const vy = lyricFlick.contentY
+                    const vh = lyricFlick.height
+                    if (py < vy + 2 || py + item.height > vy + vh - 2) {
+                        const target = py - vh / 2 + item.height / 2
+                        const maxY = Math.max(0, lyricFlick.contentHeight - vh)
+                        lyricFlick.contentY = Math.max(0, Math.min(target, maxY))
+                    }
+                }
+
                 // Sink aktif — Pipewire.defaultAudioSink sudah mengikuti preferred
                 // default (termasuk sink bluetooth yang di-auto-promote di shell.qml),
                 // jadi langsung pakai itu sebagai sumber volume.
@@ -491,6 +653,15 @@ PanelWindow {
                     onTriggered: mediaCard.player?.positionChanged()
                 }
 
+                // Update posisi lebih halus saat ada lirik sync (karaoke)
+                Timer {
+                    interval: 200
+                    running: mediaCard.hasPlayer && mediaCard.lyricSynced &&
+                             mediaCard.player?.playbackState === MprisPlaybackState.Playing
+                    repeat: true
+                    onTriggered: mediaCard.player?.positionChanged()
+                }
+
                 // ── Background blur dari album art ─────────────────────────
                 Image {
                     id: mediaArtBg
@@ -556,12 +727,103 @@ PanelWindow {
                         }
                     }
 
-                    // CavaRing — visualizer, ambil sisa tinggi
-                    Dash.CavaRingDank {
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        property int _avail: mediaCard.height - 16 - 44 - 24 - 44 - 34 - 24 - 40
-                        size: Math.max(80, Math.min(_avail, parent.width - 16))
-                        coverSource: mediaCard.player?.trackArtUrl ?? ""
+                    // ── Visualizer + Lirik — sejajar (lirik di kanan) ──────────────
+                    // Lirik hanya muncul kalau player mengirim `xesam:asText`;
+                    // ditaruh di kanan visualizer agar kartu tidak memanjang ke bawah.
+                    Item {
+                        width: parent.width
+                        height: mediaCard.visualRowH
+
+                        Dash.CavaRingDank {
+                            id: cavaVis
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: mediaCard.hasLyrics ? undefined : parent.horizontalCenter
+                            anchors.left: mediaCard.hasLyrics ? parent.left : undefined
+                            size: mediaCard.cavaSize
+                            coverSource: mediaCard.player?.trackArtUrl ?? ""
+                        }
+
+                        Rectangle {
+                            id: lyricBox
+                            visible: mediaCard.hasLyrics
+                            anchors.left: cavaVis.right
+                            anchors.leftMargin: 10
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.right: parent.right
+                            radius: 10
+                            color: Root.Colors.mantle
+                            clip: true
+                            Behavior on color { ColorAnimation { duration: 150 } }
+
+                            Text {
+                                id: lyricHeader
+                                anchors.top: parent.top
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                anchors.topMargin: 6
+                                text: "󰮆 Lirik"
+                                font.pixelSize: 9
+                                font.weight: Font.Bold
+                                color: Root.Colors.lavender
+                                Behavior on color { ColorAnimation { duration: 150 } }
+                            }
+
+                            Flickable {
+                                id: lyricFlick
+                                anchors.top: lyricHeader.bottom
+                                anchors.left: parent.left
+                                anchors.right: parent.right
+                                anchors.bottom: parent.bottom
+                                contentHeight: lyricColumn.implicitHeight
+                                clip: true
+                                boundsBehavior: Flickable.StopAtBounds
+                                ScrollBar.vertical: ScrollBar {
+                                    policy: ScrollBar.AsNeeded
+                                    width: 3
+                                    anchors.right: parent.right
+                                    anchors.rightMargin: 2
+                                    contentItem: Rectangle {
+                                        color: Root.Colors.surface1
+                                        radius: width / 2
+                                    }
+                                    background: Item {}
+                                }
+
+                                Column {
+                                    id: lyricColumn
+                                    width: lyricFlick.width - 6
+                                    anchors.horizontalCenter: parent.horizontalCenter
+                                    topPadding: 4
+                                    bottomPadding: 4
+                                    spacing: 3
+
+                                    Repeater {
+                                        id: lyricRepeater
+                                        model: mediaCard.lyricLines
+
+                                        delegate: Text {
+                                            width: lyricColumn.width
+                                            horizontalAlignment: Text.AlignHCenter
+                                            text: modelData.text
+                                            font.pixelSize: 11
+                                            font.weight: (mediaCard.lyricSynced && index === mediaCard.currentLyricLine)
+                                                        ? Font.DemiBold : Font.Normal
+                                            lineHeight: 1.35
+                                            wrapMode: Text.Wrap
+                                            color: mediaCard.lyricSynced
+                                                   ? (index === mediaCard.currentLyricLine
+                                                      ? Root.Colors.lavender : Root.Colors.subtext)
+                                                   : Root.Colors.text
+                                            opacity: mediaCard.lyricSynced
+                                                     ? (index === mediaCard.currentLyricLine ? 1 : 0.5)
+                                                     : 0.92
+                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                            Behavior on opacity { NumberAnimation { duration: 120 } }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
 
                     // Info: judul + artis (compact)
