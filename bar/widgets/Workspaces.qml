@@ -18,7 +18,7 @@ RowLayout {
         return id.toString()
     }
 
-    property int minWorkspaces: 5
+    property int minWorkspaces: 8
 
     readonly property var workspaceIds: {
         let maxId = Math.max(1, wsRoot.minWorkspaces)

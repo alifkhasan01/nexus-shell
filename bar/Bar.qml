@@ -34,6 +34,7 @@ PanelWindow {
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
     property bool idlePanelOpen: shellState ? shellState.idlePanelOpen : false
+    property bool bgAppsPanelOpen: false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -48,6 +49,7 @@ PanelWindow {
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
     onIdlePanelOpenChanged:      if (!idlePanelOpen)      idleCloseTimer.restart()
+    onBgAppsPanelOpenChanged:    if (!bgAppsPanelOpen)    bgAppsCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
     Timer { id: powerCloseTimer;     interval: 300; repeat: false }
@@ -59,6 +61,7 @@ PanelWindow {
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     Timer { id: idleCloseTimer;      interval: 300; repeat: false }
+    Timer { id: bgAppsCloseTimer;    interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
     margins.top: 0
     margins.left: 98
@@ -114,9 +117,9 @@ PanelWindow {
                         }
                     }
                     Workspaces {}
-                    // ActiveWindow {
-                        // maxWidth: 200
-                    // }
+                    ActiveWindow {
+                        maxWidth: 200
+                    }
                 }
             }
 
@@ -171,6 +174,22 @@ PanelWindow {
 
                     // ── Tray indicators (Syncthing, VPN, Tailscale) ───────
                     TrayIndicators {}
+
+                    // ── Background Apps Button ────────────────────────────
+                    BackgroundAppsButton {
+                        panelOpen: bar.bgAppsPanelOpen
+                        onTogglePanel: {
+                            bar.bgAppsPanelOpen = !bar.bgAppsPanelOpen
+                            bar.shellState.connectionOpen = false
+                            bar.volumePanelOpen = false
+                            bar.shellState.dashboardOpen = false
+                            bar.shellState.wallpaperPanelOpen = false
+                            bar.notifPanelOpen = false
+                            bar.shellState.clipboardOpen = false
+                            bar.shellState.calendarOpen = false
+                            bar.shellState.idlePanelOpen = false
+                        }
+                    }
 
                     NetworkStatus {
                         id: netStatus
@@ -558,6 +577,17 @@ PanelWindow {
         IdlePanel {
             open: bar.idlePanelOpen
             onCloseRequested: bar.shellState.idlePanelOpen = false
+        }
+    }
+
+    // ── Background Apps Panel ─────────────────────────────────────────────
+    LazyLoader {
+        id: bgAppsPanelLoader
+        active: bar.bgAppsPanelOpen || bgAppsCloseTimer.running
+
+        BackgroundAppsPanel {
+            open: bar.bgAppsPanelOpen
+            onCloseRequested: bar.bgAppsPanelOpen = false
         }
     }
 
