@@ -37,11 +37,12 @@ Item {
         anchors.centerIn: parent
         text: root.iconText
         font.pixelSize: 16
-        opacity: root.powered ? 1.0 : 0.5
+        opacity: root.powered ? 1.0 : 0.6
         Behavior on opacity { NumberAnimation { duration: 150 } }
         color: root.panelOpen ? Root.Colors.blue
-             : root.powered   ? Root.Colors.text
-             : Root.Colors.subtext
+             : root.connected  ? Root.Colors.blue
+             : root.powered    ? Root.Colors.lavender
+             : Root.Colors.peach
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 

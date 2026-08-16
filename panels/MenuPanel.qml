@@ -25,6 +25,13 @@ PanelWindow {
             menuModel.update()  // refresh lagi saat dibuka, kalau DesktopEntries belum selesai dimuat
             navState.focusArea = "search"
             searchInput.forceActiveFocus()
+        } else {
+            // Reset ke posisi default: filter kategori "All", PWA tampil,
+            // index kategori awal, dan fokus kembali ke search.
+            menuModel.category = "All"
+            navState.categoryIndex = 0
+            navState.showWebApps = true
+            navState.focusArea = "search"
         }
     }
 

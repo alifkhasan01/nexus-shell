@@ -117,9 +117,9 @@ PanelWindow {
                         }
                     }
                     Workspaces {}
-                    ActiveWindow {
-                        maxWidth: 200
-                    }
+                    // ActiveWindow {
+                        // maxWidth: 200
+                    // }
                 }
             }
 
@@ -242,7 +242,7 @@ PanelWindow {
                             text: "󰅍"
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
-                            color: bar.clipboardPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            color: bar.clipboardPanelOpen ? Root.Colors.blue : Root.Colors.mauve
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
@@ -283,7 +283,7 @@ PanelWindow {
                             text: "󰒲"
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
-                            color: bar.idlePanelOpen ? Root.Colors.blue : Root.Colors.text
+                            color: bar.idlePanelOpen ? Root.Colors.blue : Root.Colors.lavender
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
@@ -324,7 +324,7 @@ PanelWindow {
                             text: "󰂞"
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
-                            color: bar.notifPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            color: bar.notifPanelOpen ? Root.Colors.blue : Root.Colors.yellow
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
@@ -364,7 +364,7 @@ PanelWindow {
                             text: "󰸉"
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 16
-                            color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.text
+                            color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.peach
                             Behavior on color { ColorAnimation { duration: 150 } }
                         }
 
@@ -606,6 +606,10 @@ PanelWindow {
     // (sudah punya dependency check: kalau grimblast tidak ada, muncul notif
     //  "install grimblast" alih-alih gagal diam-diam).
 
+    // Screenshot (select & full) ditangani ProcessManager di shell.qml.
+    // Dashboard ditutup dulu lalu menunggu animasi close selesai sebelum
+    // grimblast dimulai, supaya overlay dashboard tidak mengganggu/cancel
+    // pemilihan area (sama seperti takeGrim).
     Timer {
         id: grimDelayTimer
         interval: 400
@@ -613,8 +617,16 @@ PanelWindow {
         onTriggered: if (bar.procManager) bar.procManager.takeScreenshotFull()
     }
 
+    Timer {
+        id: screenshotSelectDelayTimer
+        interval: 400
+        repeat: false
+        onTriggered: if (bar.procManager) bar.procManager.takeScreenshotSelect()
+    }
+
     function takeScreenshot() {
-        if (bar.procManager) bar.procManager.takeScreenshotSelect()
+        bar.shellState.dashboardOpen = false
+        screenshotSelectDelayTimer.restart()
     }
     function takeGrim()          { bar.shellState.dashboardOpen = false; grimDelayTimer.restart() }
 

@@ -47,8 +47,9 @@ Item {
         font.pixelSize: 16
         color: {
             if (root.panelOpen)           return Root.Colors.blue
-            if (root.connType === "none") return Root.Colors.subtext
-            return Root.Colors.text
+            if (root.connType === "none") return Root.Colors.peach
+            if (root.connType === "ethernet") return Root.Colors.green
+            return Root.Colors.blue
         }
         Behavior on color { ColorAnimation { duration: 150 } }
     }

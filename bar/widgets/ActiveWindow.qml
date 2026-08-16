@@ -15,8 +15,20 @@ Item {
 
     property int maxWidth: 280
 
-    // Langsung akses HyprlandToplevel — tidak perlu resolve via attached object
-    readonly property var _tl: Hyprland.activeToplevel
+    // Window aktif diambil dari workspace yang sedang dipakai (focusedWorkspace),
+    // bukan hanya global activeToplevel, sehingga selalu sinkron dengan
+    // workspace aktif saat berpindah workspace/fokus. Fallback ke activeToplevel.
+    readonly property var _tl: {
+        const ws = Hyprland.focusedWorkspace
+        if (ws) {
+            const tls = (ws.toplevels && ws.toplevels.values) || []
+            for (let i = 0; i < tls.length; i++) {
+                const t = tls[i]
+                if (t && t.activated) return t
+            }
+        }
+        return Hyprland.activeToplevel
+    }
 
     readonly property string _title: _tl ? (_tl.title ?? "") : ""
 

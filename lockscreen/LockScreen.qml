@@ -306,7 +306,7 @@ Scope {
                             Text {
                                 anchors.centerIn: parent
                                 visible: mediaArtImg.source === ""
-                                text: "󰝚"
+                                text: "󰝚 "
                                 font.pixelSize: 24
                                 color: Root.Colors.subtext
                             }
@@ -339,7 +339,7 @@ Scope {
                                 Layout.topMargin: 2
 
                                 Text {
-                                    text: "󰒮"
+                                    text: "󰒮 "
                                     font.family: "CaskaydiaCove Nerd Font"
                                     font.pixelSize: 16
                                     color: Root.Colors.text
@@ -372,7 +372,7 @@ Scope {
                                     }
                                 }
                                 Text {
-                                    text: "󰒭"
+                                    text: " 󰒭"
                                     font.family: "CaskaydiaCove Nerd Font"
                                     font.pixelSize: 16
                                     color: Root.Colors.text
@@ -799,7 +799,7 @@ Scope {
                                               : root.battPercent >= 35 ? "󰁾"
                                               : root.battPercent >= 15 ? "󰁻"
                                               : "󰂃"
-                                    return icon + " " + root.battPercent + "%"
+                                    return icon + "  " + root.battPercent + "%"
                                 }
                             }
                         }
@@ -827,7 +827,7 @@ Scope {
                                     else if (root.netStrength >= 50) icon = "󰤥"
                                     else if (root.netStrength >= 25) icon = "󰤢"
                                     else icon = "󰤟"
-                                    return icon + " " + root.netName
+                                    return icon + "  " + root.netName
                                 }
                             }
                         }
@@ -849,7 +849,7 @@ Scope {
                                 text: {
                                     const pct = Math.round(root.volLevel * 100)
                                     if (root.volMuted || pct === 0) return "󰝟 " + pct + "%"
-                                    return (pct < 50 ? "󰕿" : "󰕾") + " " + pct + "%"
+                                    return (pct < 50 ? "󰕿" : "󰕾") + "  " + pct + "%"
                                 }
                             }
                         }

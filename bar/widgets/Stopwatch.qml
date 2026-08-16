@@ -57,7 +57,7 @@ Item {
             text: root.running ? "󰏤" : "󰐊"
             font.family: "CaskaydiaCove Nerd Font"
             font.pixelSize: 11
-            color: root.running ? Root.Colors.green : Root.Colors.subtext
+            color: root.running ? Root.Colors.green : Root.Colors.green
             Behavior on color { ColorAnimation { duration: 150 } }
         }
 

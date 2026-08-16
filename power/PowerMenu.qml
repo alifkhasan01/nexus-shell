@@ -214,14 +214,11 @@ PanelWindow {
                     icon: "󰗼"
                     label: "Logout"
                     accentColor: Root.Colors.peach
-                    command: ["hyprctl", "dispacth", "exit"]
+                    command: ["sh", "-c", "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"]
                     notifyTitle: "Keluar dari sesi"
                     notifyBody: "Sesi Hyprland akan diterminasi."
                     highlighted: root.focusedIndex === 3
-                    onTriggered: {
-                        root.closeRequested()
-                        logoutProc.startDetached()
-                    }
+                    onTriggered: root.closeRequested()
                 }
 
                 PowerMenuItem {
@@ -275,11 +272,6 @@ PanelWindow {
     Process {
         id: suspendFallback
         command: ["sh", "-c", "dbus-send --system --print-reply --dest=org.freedesktop.login1 /org/freedesktop/login1 org.freedesktop.login1.Manager.Suspend boolean:true || systemctl suspend"]
-    }
-
-    Process {
-        id: logoutProc
-        command: ["hyprctl", "dispatch", "exit"]
     }
 
 }

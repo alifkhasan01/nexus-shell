@@ -49,13 +49,13 @@ Item {
     Text {
         id: label
         anchors.centerIn: parent
-        color: root.muted ? Root.Colors.subtext
+        color: root.muted ? Root.Colors.red
              : root.panelOpen ? Root.Colors.blue
-             : Root.Colors.text
+             : Root.Colors.blue
         font.pixelSize: 14
         Behavior on color { ColorAnimation { duration: 150 } }
         text: {
-            if (root.muted || !root.sink?.audio) return " Mute"
+            if (root.muted || !root.sink?.audio) return "  Mute"
             const pct = Math.round(root.volume * 100)
             const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
             return icon + "  " + pct + "%"

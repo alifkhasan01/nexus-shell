@@ -21,7 +21,7 @@ Item {
             anchors.centerIn: parent
             text: "󰐥"
             font.pixelSize: 20
-            color: menuOpen ? Root.Colors.red : Root.Colors.subtext
+            color: menuOpen ? Root.Colors.red : Root.Colors.red
             Behavior on color { ColorAnimation { duration: 120 } }
         }
     }

@@ -10,7 +10,7 @@ Text {
     signal rightClicked()
 
     text: Qt.formatDateTime(clock.date, timeFormat)
-    color: Root.Colors.text
+    color: Root.Colors.blue
     font.pixelSize: 16
     font.bold: true
 

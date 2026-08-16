@@ -24,7 +24,7 @@ Item {
         text: ""
         font.family: "CaskaydiaCove Nerd Font"
         font.pixelSize: 15
-        color: root.panelOpen ? Root.Colors.blue : Root.Colors.text
+        color: root.panelOpen ? Root.Colors.blue : Root.Colors.mauve
         Behavior on color { ColorAnimation { duration: 150 } }
     }
 

@@ -25,7 +25,7 @@ Item {
     Text {
         id: label
         anchors.centerIn: parent
-        color: Root.Colors.text
+        color: Root.Colors.yellow
         font.pixelSize: 14
         text: {
             const p = root.percent

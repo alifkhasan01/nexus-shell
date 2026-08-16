@@ -105,20 +105,18 @@ Item {
             "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
             "grimblast copysave area \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
         
-        onRunningChanged: {
-            if (!running) {
-                console.log("[Screenshot:Select] Process finished (exit code: " + exitCode + ")")
-                if (exitCode !== 0) {
-                    screenshotRetries++
-                    if (screenshotRetries <= maxRetries) {
-                        console.warn("[Screenshot:Select] Retry " + screenshotRetries + "/" + maxRetries)
-                        screenshotSelectRetryTimer.restart()
-                    } else {
-                        console.error("[Screenshot:Select] Max retries exceeded")
-                    }
+        onExited: (exitCode, exitStatus) => {
+            console.log("[Screenshot:Select] Process finished (exit code: " + exitCode + ")")
+            if (exitCode !== 0) {
+                screenshotRetries++
+                if (screenshotRetries <= maxRetries) {
+                    console.warn("[Screenshot:Select] Retry " + screenshotRetries + "/" + maxRetries)
+                    screenshotSelectRetryTimer.restart()
                 } else {
-                    screenshotRetries = 0
+                    console.error("[Screenshot:Select] Max retries exceeded")
                 }
+            } else {
+                screenshotRetries = 0
             }
         }
 
@@ -160,20 +158,18 @@ Item {
             "FILE=\"$DIR/screenshot-$(date +%Y%m%d-%H%M%S).png\"; " +
             "grimblast copysave screen \"$FILE\" 2>/dev/null && echo \"$FILE\" || echo ''"]
         
-        onRunningChanged: {
-            if (!running) {
-                console.log("[Screenshot:Full] Process finished (exit code: " + exitCode + ")")
-                if (exitCode !== 0) {
-                    screenshotRetries++
-                    if (screenshotRetries <= maxRetries) {
-                        console.warn("[Screenshot:Full] Retry " + screenshotRetries + "/" + maxRetries)
-                        screenshotFullRetryTimer.restart()
-                    } else {
-                        console.error("[Screenshot:Full] Max retries exceeded")
-                    }
+        onExited: (exitCode, exitStatus) => {
+            console.log("[Screenshot:Full] Process finished (exit code: " + exitCode + ")")
+            if (exitCode !== 0) {
+                screenshotRetries++
+                if (screenshotRetries <= maxRetries) {
+                    console.warn("[Screenshot:Full] Retry " + screenshotRetries + "/" + maxRetries)
+                    screenshotFullRetryTimer.restart()
                 } else {
-                    screenshotRetries = 0
+                    console.error("[Screenshot:Full] Max retries exceeded")
                 }
+            } else {
+                screenshotRetries = 0
             }
         }
 
