@@ -9,9 +9,9 @@ Row {
     id: root
     spacing: 6
 
-    property bool syncthingOn: false
-    property bool vpnOn:       false
-    property bool tailscaleOn: false
+    property bool syncthingOn: true
+    property bool vpnOn:       true
+    property bool tailscaleOn: true
 
     Process {
         id: checkProc

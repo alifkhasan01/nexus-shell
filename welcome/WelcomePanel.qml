@@ -188,17 +188,10 @@ PanelWindow {
     Keys.onEscapePressed: closePanel()
 
     // ══ UI ═══════════════════════════════════════════════════════════════
-    // Backdrop semi-transparan + klik untuk tutup
-    Rectangle {
+    // Backdrop (transparent - klik untuk tutup)
+    MouseArea {
         anchors.fill: parent
-        color: "#b0000000"
-        opacity: root.showPanel ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
-
-        MouseArea {
-            anchors.fill: parent
-            onClicked: closePanel()
-        }
+        onClicked: closePanel()
     }
 
     // Card utama
@@ -257,27 +250,6 @@ PanelWindow {
                                 : "Semua dependensi sudah terpasang")
                         font.pixelSize: 12
                         color: root.missingCount > 0 ? Root.Colors.yellow : Root.Colors.green
-                    }
-                }
-                // Tombol tutup (×)
-                Rectangle {
-                    implicitWidth: 32
-                    implicitHeight: 32
-                    radius: 8
-                    color: closeHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 120 } }
-                    Text {
-                        anchors.centerIn: parent
-                        text: "×"
-                        font.pixelSize: 18
-                        color: Root.Colors.subtext
-                    }
-                    MouseArea {
-                        id: closeHov
-                        anchors.fill: parent
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
-                        onClicked: closePanel()
                     }
                 }
             }

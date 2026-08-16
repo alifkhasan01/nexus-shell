@@ -1,9 +1,12 @@
 import QtQuick
+import Quickshell
 import Quickshell.Hyprland
+import Quickshell.Widgets
 import "../../" as Root
 
 // Widget judul window aktif — tampil di tengah bar.
 // Quickshell v0.3.0+: Hyprland.activeToplevel langsung bertipe HyprlandToplevel.
+// Menggunakan icon dari .desktop file system (fallback ke nerd font icon)
 Item {
     id: root
 
@@ -17,21 +20,67 @@ Item {
 
     readonly property string _title: _tl ? (_tl.title ?? "") : ""
 
-    // class ada di lastIpcObject (tidak ada dedicated .className di v0.3.0)
+    // class ada di lastIpcObject
     readonly property string _class: {
         if (!_tl) return ""
         const obj = _tl.lastIpcObject
-        return (obj && obj["class"]) ? obj["class"] : ""
+        return obj ? (obj["class"] || "") : ""
     }
 
-    function _iconFor(cls) {
+    // Cari desktop entry yang cocok dengan class window
+    readonly property var _desktopEntry: {
+        if (!_class) return null
+        
+        const apps = DesktopEntries.applications.values
+        const className = _class.toLowerCase()
+        
+        // Cari exact match dulu
+        for (let i = 0; i < apps.length; i++) {
+            const app = apps[i]
+            if (!app) continue
+            
+            const appClass = (app.id || "").toLowerCase().replace(".desktop", "")
+            if (appClass === className) return app
+            
+            // Cek juga dari exec/name
+            const appName = (app.name || "").toLowerCase()
+            if (appName === className) return app
+        }
+        
+        // Kalau gak ada exact match, cari partial match
+        for (let i = 0; i < apps.length; i++) {
+            const app = apps[i]
+            if (!app) continue
+            
+            const appClass = (app.id || "").toLowerCase()
+            const appName = (app.name || "").toLowerCase()
+            
+            if (appClass.includes(className) || className.includes(appClass.replace(".desktop", "")))
+                return app
+            if (appName.includes(className) || className.includes(appName))
+                return app
+        }
+        
+        return null
+    }
+
+    // Icon path dari desktop entry atau fallback ke nerd font
+    readonly property string _iconPath: {
+        if (_desktopEntry && _desktopEntry.icon) {
+            return Quickshell.iconPath(_desktopEntry.icon, true)
+        }
+        return ""
+    }
+
+    // Fallback nerd font icon
+    function _fallbackIcon(cls) {
         const c = (cls || "").toLowerCase()
         if (c.includes("firefox"))                                   return "󰈹"
-        if (c.includes("chrome") || c.includes("chromium"))         return ""
+        if (c.includes("chrome") || c.includes("chromium"))          return ""
         if (c.includes("code") || c.includes("vscodium") ||
             c.includes("kiro"))                                      return "󰨞"
         if (c.includes("kitty") || c.includes("alacritty") ||
-            c.includes("wezterm") || c.includes("foot"))            return ""
+            c.includes("wezterm") || c.includes("foot"))             return ""
         if (c.includes("thunar") || c.includes("nautilus") ||
             c.includes("dolphin"))                                   return "󰉋"
         if (c.includes("spotify"))                                   return "󰓇"
@@ -43,7 +92,7 @@ Item {
         if (c.includes("obs"))                                       return "󱜠"
         if (c.includes("steam"))                                     return "󰓓"
         if (c.includes("libreoffice"))                               return "󰏫"
-        if (c.includes("nvim") || c.includes("vim"))                return ""
+        if (c.includes("nvim") || c.includes("vim"))                 return ""
         return "󰖲"
     }
 
@@ -62,14 +111,32 @@ Item {
         anchors.centerIn: parent
         spacing: 6
 
-        // App icon
-        Text {
+        // App icon - gunakan IconImage dari system atau fallback ke text icon
+        Item {
             anchors.verticalCenter: parent.verticalCenter
-            text: root._iconFor(root._class)
-            font.family: "CaskaydiaCove Nerd Font"
-            font.pixelSize: 13
-            color: Root.Colors.blue
-            Behavior on color { ColorAnimation { duration: 200 } }
+            width: 16
+            height: 16
+
+            // System icon dari .desktop file
+            IconImage {
+                anchors.centerIn: parent
+                width: 16
+                height: 16
+                visible: root._iconPath !== ""
+                source: root._iconPath
+                asynchronous: true
+            }
+
+            // Fallback: Nerd font icon
+            Text {
+                anchors.centerIn: parent
+                visible: root._iconPath === ""
+                text: root._fallbackIcon(root._class)
+                font.family: "CaskaydiaCove Nerd Font"
+                font.pixelSize: 13
+                color: Root.Colors.blue
+                Behavior on color { ColorAnimation { duration: 200 } }
+            }
         }
 
         // Title text

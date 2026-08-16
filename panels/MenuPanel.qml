@@ -319,23 +319,6 @@ PanelWindow {
                                 hoverEnabled: true
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: navState.showWebApps = !navState.showWebApps
-                                
-                                ToolTip {
-                                    visible: webAppToggle.containsMouse
-                                    delay: 500
-                                    text: navState.showWebApps ? "Hide Web Apps" : "Show Web Apps"
-                                    contentItem: Text {
-                                        text: parent.text
-                                        font.pixelSize: 11
-                                        color: Root.Colors.text
-                                    }
-                                    background: Rectangle {
-                                        color: Root.Colors.surface2
-                                        border.color: Root.Colors.surface1
-                                        border.width: 1
-                                        radius: 6
-                                    }
-                                }
                             }
                             
                             // Hover effect

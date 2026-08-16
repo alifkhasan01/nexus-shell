@@ -68,17 +68,10 @@ PanelWindow {
             items[idx].activate()
     }
 
-    // Background blur overlay
-    Rectangle {
+    // Background overlay (transparent - click to close)
+    MouseArea {
         anchors.fill: parent
-        color: "#80000000"
-        opacity: root.open ? 1 : 0
-        Behavior on opacity { NumberAnimation { duration: 250; easing.type: Easing.OutCubic } }
-        
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.closeRequested()
-        }
+        onClicked: root.closeRequested()
     }
 
     // Main card - centered
@@ -221,7 +214,7 @@ PanelWindow {
                     icon: "󰗼"
                     label: "Logout"
                     accentColor: Root.Colors.peach
-                    command: ["sh", "-c", "command -v hyprshutdown >/dev/null 2>&1 && hyprshutdown || hyprctl dispatch exit"]
+                    command: ["hyprctl", "dispacth", "exit"]
                     notifyTitle: "Keluar dari sesi"
                     notifyBody: "Sesi Hyprland akan diterminasi."
                     highlighted: root.focusedIndex === 3
@@ -288,4 +281,5 @@ PanelWindow {
         id: logoutProc
         command: ["hyprctl", "dispatch", "exit"]
     }
+
 }
