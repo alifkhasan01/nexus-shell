@@ -640,7 +640,7 @@ Scope {
 
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
-                            text: ">"
+                            text: ""
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 11
                             color: Root.Colors.blue
