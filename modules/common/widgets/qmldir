@@ -1,0 +1,6 @@
+module widgets
+
+QuickButton 1.0 QuickButton.qml
+QuickSlider 1.0 QuickSlider.qml
+QuickTextField 1.0 QuickTextField.qml
+QuickCheckBox 1.0 QuickCheckBox.qml
