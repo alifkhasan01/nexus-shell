@@ -1,11 +1,17 @@
 import QtQml
 import QtQuick
+import Quickshell
 
 // Service untuk state global shell
 // Sumber kebenaran untuk panel-panel yang bisa di-toggle dari shortcut Hyprland
 // maupun dari klik di Bar — accessible dari mana saja di aplikasi.
 QtObject {
     id: shellState
+    
+    // Persistent state service
+    PersistentState {
+        id: persistentState
+    }
 
     // Panel states
     property bool dashboardOpen:      false
@@ -63,4 +69,32 @@ QtObject {
     function log(message) {
         console.log("[ShellState]", message)
     }
+
+    // Load saved state on startup
+    Component.onCompleted: {
+        console.log("[ShellState] Loading persistent state...")
+        const saved = persistentState.loadState()
+        
+        // Restore panel states
+        shellState.dashboardOpen = saved.dashboardOpen ?? false
+        shellState.powerMenuOpen = saved.powerMenuOpen ?? false
+        shellState.wallpaperPanelOpen = saved.wallpaperPanelOpen ?? false
+        shellState.calendarOpen = saved.calendarOpen ?? false
+        shellState.connectionOpen = saved.connectionOpen ?? false
+        shellState.clipboardOpen = saved.clipboardOpen ?? false
+        shellState.menuOpen = saved.menuOpen ?? false
+        shellState.welcomeOpen = saved.welcomeOpen ?? false
+        
+        console.log("[ShellState] State restored from persistent storage")
+    }
+    
+    // Save state whenever any panel opens/closes
+    onDashboardOpenChanged: persistentState.set("dashboardOpen", dashboardOpen)
+    onPowerMenuOpenChanged: persistentState.set("powerMenuOpen", powerMenuOpen)
+    onWallpaperPanelOpenChanged: persistentState.set("wallpaperPanelOpen", wallpaperPanelOpen)
+    onCalendarOpenChanged: persistentState.set("calendarOpen", calendarOpen)
+    onConnectionOpenChanged: persistentState.set("connectionOpen", connectionOpen)
+    onClipboardOpenChanged: persistentState.set("clipboardOpen", clipboardOpen)
+    onMenuOpenChanged: persistentState.set("menuOpen", menuOpen)
+    onWelcomeOpenChanged: persistentState.set("welcomeOpen", welcomeOpen)
 }
