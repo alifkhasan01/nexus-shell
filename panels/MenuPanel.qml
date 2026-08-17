@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 import Quickshell
+import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Widgets
 import "../" as Root
@@ -343,6 +344,43 @@ PanelWindow {
                             color: Root.Colors.subtext
                             Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
+                        
+                        // Settings button
+                        Rectangle {
+                            width: 28
+                            height: 28
+                            radius: 8
+                            color: Root.Colors.surface1
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                            
+                            Text {
+                                anchors.centerIn: parent
+                                text: "⚙️"
+                                font.pixelSize: 14
+                                color: Root.Colors.text
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                            }
+                            
+                            MouseArea {
+                                id: settingsBtn
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: {
+                                    console.log("[MenuPanel] Opening settings...")
+                                    settingsProc.running = true
+                                    root.closeRequested()
+                                }
+                            }
+                            
+                            // Hover effect
+                            Rectangle {
+                                anchors.fill: parent
+                                radius: parent.radius
+                                color: settingsBtn.containsMouse ? Qt.rgba(255, 255, 255, 0.15) : "transparent"
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                            }
+                        }
                     }
                 }
 
@@ -663,5 +701,11 @@ PanelWindow {
                 }
             }
         }
+    }
+    
+    // ── Settings launcher process ──────────────────────────────────────────
+    Process {
+        id: settingsProc
+        command: ["sh", "-c", "cd ~/.config/quickshell && quickshell settings.qml &"]
     }
 }
