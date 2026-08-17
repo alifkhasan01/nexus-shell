@@ -82,7 +82,7 @@ PanelWindow {
     // ── Config ────────────────────────────────────────────────────────────
     Process {
         id: loadConfigProc
-        command: ["sh", "-c", "cat ~/.config/quickshell/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
+        command: ["sh", "-c", "cat ~/.config/quickshell/data/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
@@ -155,7 +155,7 @@ PanelWindow {
         }
         const json = JSON.stringify(cfg, null, 2)
         saveConfigProc.command = ["sh", "-c",
-            "mkdir -p ~/.config/quickshell && cat > ~/.config/quickshell/wallpaper.json << 'EOCFG'\n" +
+            "mkdir -p ~/.config/quickshell/data && cat > ~/.config/quickshell/data/wallpaper.json << 'EOCFG'\n" +
             json + "\nEOCFG"]
         saveConfigProc.running = true
     }

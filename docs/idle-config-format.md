@@ -1,7 +1,7 @@
 # Idle Configuration Format
 
 ## File Location
-`~/.config/quickshell/idle-config.json`
+`~/.config/quickshell/data/idle-config.json`
 
 ## Format
 ```json

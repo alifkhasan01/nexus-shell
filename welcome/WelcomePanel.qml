@@ -9,7 +9,7 @@ import "../" as Root
 //   • Menampilkan status dependensi (✓ terpasang / ✗ belum)
 //   • Tombol "Install Dependensi" → menjalankan scripts/install-deps.sh (via pkexec)
 //   • Output install ditampilkan di console area
-//   • Toggle "Tampilkan saat startup" disimpan ke ~/.config/quickshell/welcome-settings.json
+//   • Toggle "Tampilkan saat startup" disimpan ke ~/.config/quickshell/data/welcome-settings.json
 // Trigger: GlobalShortcut quickshell:welcome  +  auto-open dari shell.qml
 PanelWindow {
     id: root
@@ -44,7 +44,7 @@ PanelWindow {
         const json = JSON.stringify({ "showOnStartup": showOnStartup })
         const escaped = json.replace(/'/g, "'\\''")
         saveSettingsProc.command = ["sh", "-c",
-            "echo '" + escaped + "' > ~/.config/quickshell/welcome-settings.json"]
+            "echo '" + escaped + "' > ~/.config/quickshell/data/welcome-settings.json"]
         saveSettingsProc.running = true
     }
 
@@ -163,7 +163,7 @@ PanelWindow {
 
     Process {
         id: loadSettingsProc
-        command: ["sh", "-c", "cat ~/.config/quickshell/welcome-settings.json 2>/dev/null || echo '{}'"]
+        command: ["sh", "-c", "cat ~/.config/quickshell/data/welcome-settings.json 2>/dev/null || echo '{}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {

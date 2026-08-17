@@ -21,7 +21,7 @@ QtObject {
     property bool systemLocked: false
     
     // ── Persistence ────────────────────────────────────────────────────────
-    property string configPath: Quickshell.env("HOME") + "/.config/quickshell/idle-config.json"
+    property string configPath: Quickshell.env("HOME") + "/.config/quickshell/data/idle-config.json"
     property bool configLoaded: false
 
     // References (akan di-inject dari shell.qml)

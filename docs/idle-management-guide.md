@@ -34,7 +34,7 @@ Service singleton yang mengelola 3 idle monitors dengan timeout berbeda:
 
 ### Configuration Persistence
 
-Semua pengaturan disimpan otomatis ke `~/.config/quickshell/idle-config.json`:
+Semua pengaturan disimpan otomatis ke `~/.config/quickshell/data/idle-config.json`:
 
 ```json
 {

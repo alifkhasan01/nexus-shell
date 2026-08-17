@@ -17,7 +17,7 @@ QtObject {
 
         // Simpan pilihan tema ke disk
         saveProc.command = ["sh", "-c",
-            "echo '" + currentTheme + "' > ~/.config/quickshell/theme"
+            "echo '" + currentTheme + "' > ~/.config/quickshell/data/theme"
         ]
         saveProc.running = true
     }
@@ -26,7 +26,7 @@ QtObject {
 
     property Process loadProc: Process {
         command: ["sh", "-c",
-            "cat ~/.config/quickshell/theme 2>/dev/null || echo dark"
+            "cat ~/.config/quickshell/data/theme 2>/dev/null || echo dark"
         ]
         stdout: StdioCollector {
             onStreamFinished: {

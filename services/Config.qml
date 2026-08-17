@@ -71,7 +71,7 @@ Singleton {
         id: fallbackProc
         command: ["sh", "-c",
             "DIR=$(sed -n 's/.*\"wallpaper_dir\"[[:space:]]*:[[:space:]]*\"\\([^\"]*\\)\".*/\\1/p' " +
-            "~/.config/quickshell/wallpaper.json 2>/dev/null | head -1); " +
+            "~/.config/quickshell/data/wallpaper.json 2>/dev/null | head -1); " +
             "DIR=${DIR:-$HOME/Pictures/Wallpapers}; DIR=${DIR/\\$HOME/$HOME}; " +
             "find \"$DIR\" -maxdepth 2 -type f " +
             "\\( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.webp' \\) | head -1"

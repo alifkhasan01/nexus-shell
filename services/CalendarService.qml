@@ -8,8 +8,8 @@ Singleton {
     id: root
 
     // ── Storage paths ──────────────────────────────────────────────────────
-    readonly property string eventsPath: `${Quickshell.env("HOME")}/.config/quickshell/calendar-events.json`
-    readonly property string notesPath: `${Quickshell.env("HOME")}/.config/quickshell/calendar-notes.json`
+    readonly property string eventsPath: `${Quickshell.env("HOME")}/.config/quickshell/data/calendar-events.json`
+    readonly property string notesPath: `${Quickshell.env("HOME")}/.config/quickshell/data/calendar-notes.json`
 
     // ── Data models ────────────────────────────────────────────────────────
     property var events: ({})      // { "2026-08-10": [{id, title, time, color}] }

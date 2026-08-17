@@ -21,7 +21,7 @@ Item {
     // ── Config ────────────────────────────────────────────────────────────
     Process {
         id: loadConfigProc
-        command: ["sh", "-c", "cat ~/.config/quickshell/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
+        command: ["sh", "-c", "cat ~/.config/quickshell/data/wallpaper.json 2>/dev/null || cat ~/.config/wallpicker/config.json 2>/dev/null || echo '{}'"]
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
