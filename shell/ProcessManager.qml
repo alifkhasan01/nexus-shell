@@ -1,9 +1,10 @@
 import QtQml
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 // Manager untuk semua background processes dengan error handling & logging
-// Handles: screenshot (select/full), bluetooth agent, cava audio visualizer
+// Handles: screenshot (select/full), bluetooth agent
 Item {
     id: processManager
     visible: false
@@ -15,7 +16,6 @@ Item {
     // State tracking
     property int screenshotRetries: 0
     property int btAgentRetries: 0
-    property int cavaFeedRetries: 0
     property int maxRetries: 3
 
     // ── Dependency availability flags ──────────────────────────────
@@ -24,7 +24,7 @@ Item {
     property bool depsChecked: false
     property var missingDeps: []
     property bool hasGrimblast: false
-    property bool hasCava: false
+    property bool hasVisualizer: false
     property bool hasBluetoothctl: false
     property bool hasNotifySend: false
 
@@ -32,13 +32,12 @@ Item {
     Process {
         id: depsCheckProc
         command: ["sh", "-c",
-            "for b in grimblast cava bluetoothctl notify-send; do " +
-            "command -v \"$b\" >/dev/null 2>&1 && echo \"$b:1\" || echo \"$b:0\"; done"]
+            "for b in grimblast bluetoothctl notify-send; do " +
+            "command -v \"$b\" >/dev/null 2>&1 && echo \"$b:1\" || echo \"$b:0\"; done; " +
+            "test -x \"" + Quickshell.shellPath("scripts/qs_visualizer") + "\" && echo \"qs_visualizer:1\" || echo \"qs_visualizer:0\""]
 
-        onRunningChanged: {
-            if (!running) {
-                console.log("[Deps] Check finished (exit code: " + exitCode + ")")
-            }
+        onExited: (exitCode, exitStatus) => {
+            console.log("[Deps] Check finished (exit code: " + exitCode + ")")
         }
 
         stdout: StdioCollector {
@@ -48,7 +47,7 @@ Item {
                     if (parts.length !== 2) continue
                     const val = parts[1] === "1"
                     if (parts[0] === "grimblast") processManager.hasGrimblast = val
-                    else if (parts[0] === "cava") processManager.hasCava = val
+                    else if (parts[0] === "qs_visualizer") processManager.hasVisualizer = val
                     else if (parts[0] === "bluetoothctl") processManager.hasBluetoothctl = val
                     else if (parts[0] === "notify-send") processManager.hasNotifySend = val
                 }
@@ -74,7 +73,7 @@ Item {
     function applyDependencies() {
         const missing = []
         if (!hasGrimblast) missing.push("grimblast")
-        if (!hasCava) missing.push("cava")
+        if (!hasVisualizer) missing.push("qs_visualizer (jalankan scripts/build-visualizer.sh)")
         if (!hasBluetoothctl) missing.push("bluetoothctl")
 
         if (missing.length > 0) {
@@ -93,7 +92,6 @@ Item {
 
         // Auto-start hanya jika dependensinya ada
         if (hasBluetoothctl && !btAgent.running) btAgent.running = true
-        if (hasCava && !cavaFeed.running) cavaFeed.running = true
     }
 
     // ── Screenshot Processes ───────────────────────────────────────
@@ -210,7 +208,7 @@ Item {
     // Script: scripts/btagent.sh
     Process {
         id: btAgent
-        command: ["bash", "scripts/btagent.sh"]
+        command: ["bash", Quickshell.shellPath("scripts/btagent.sh")]
         // Auto-start via applyDependencies() jika bluetoothctl tersedia
         running: false
         
@@ -219,21 +217,23 @@ Item {
         }
 
         onRunningChanged: {
-            if (!running) {
-                if (exitCode === 0) {
-                    console.log("[BTAgent] Process exited normally")
-                } else {
-                    console.warn("[BTAgent] Process stopped (exit code: " + exitCode + "), will restart in 5 seconds")
-                    btAgentRetries++
-                    if (btAgentRetries <= maxRetries) {
-                        btAgentRestartTimer.restart()
-                    } else {
-                        console.error("[BTAgent] Max restart retries exceeded")
-                    }
-                }
-            } else {
+            if (running) {
                 console.log("[BTAgent] Started successfully")
                 btAgentRetries = 0
+            }
+        }
+
+        onExited: (exitCode, exitStatus) => {
+            if (exitCode === 0) {
+                console.log("[BTAgent] Process exited normally")
+            } else {
+                console.warn("[BTAgent] Process stopped (exit code: " + exitCode + "), will restart in 5 seconds")
+                btAgentRetries++
+                if (btAgentRetries <= maxRetries) {
+                    btAgentRestartTimer.restart()
+                } else {
+                    console.error("[BTAgent] Max restart retries exceeded")
+                }
             }
         }
     }
@@ -245,50 +245,6 @@ Item {
         onTriggered: {
             btAgent.running = true
             console.log("[BTAgent] Attempting restart (" + btAgentRetries + "/" + maxRetries + ")...")
-        }
-    }
-
-    // ── Cava Audio Visualizer Feed ────────────────────────────────
-    // Runs continuously to feed audio data to media visualizer
-    // Auto-restarts if it crashes
-    // Script: dashboard/cava_feed.sh
-    Process {
-        id: cavaFeed
-        command: ["bash", "dashboard/cava_feed.sh"]
-        // Auto-start via applyDependencies() jika cava tersedia
-        running: false
-        
-        Component.onCompleted: {
-            console.log("[CavaFeed] Initialized - auto-start enabled")
-        }
-
-        onRunningChanged: {
-            if (running) {
-                console.log("[CavaFeed] Started successfully")
-                cavaFeedRetries = 0
-            } else {
-                if (exitCode === 0) {
-                    console.log("[CavaFeed] Process exited normally")
-                } else {
-                    console.warn("[CavaFeed] Process stopped (exit code: " + exitCode + "), will restart in 2 seconds")
-                    cavaFeedRetries++
-                    if (cavaFeedRetries <= maxRetries) {
-                        cavaFeedRestartTimer.restart()
-                    } else {
-                        console.error("[CavaFeed] Max restart retries exceeded")
-                    }
-                }
-            }
-        }
-    }
-
-    Timer {
-        id: cavaFeedRestartTimer
-        interval: 2000
-        repeat: false
-        onTriggered: {
-            cavaFeed.running = true
-            console.log("[CavaFeed] Attempting restart (" + cavaFeedRetries + "/" + maxRetries + ")...")
         }
     }
 
@@ -332,8 +288,7 @@ Item {
         const status = {
             "screenshot_select": screenshotSelectProc.running ? "running" : "idle",
             "screenshot_full": screenshotFullProc.running ? "running" : "idle",
-            "btagent": btAgent.running ? "running" : "idle",
-            "cava_feed": cavaFeed.running ? "running" : "idle"
+            "btagent": btAgent.running ? "running" : "idle"
         }
         return JSON.stringify(status, null, 2)
     }

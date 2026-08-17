@@ -91,7 +91,7 @@ ColumnLayout {
         Layout.fillWidth: true
         icon: {
             const pct = value * 100
-            return pct >= 67 ? "󰃞" : (pct >= 34 ? "󰃝" : "󰃜")
+            return pct >= 67 ? "󰃠" : (pct >= 34 ? "󰃝" : "󰃞")
         }
         // Bind ke BrightnessService (satu sumber dengan Bar) — instan bereaksi
         // terhadap perubahan eksternal (hotkey/controll-center, dll).

@@ -61,7 +61,6 @@ PanelWindow {
     // ── Data dependensi ─────────────────────────────────────────────────
     property var deps: [
         { name: "grimblast",  label: "grimblast",  desc: "Screenshot" },
-        { name: "cava",       label: "cava",       desc: "Audio visualizer" },
         { name: "bluetoothctl", label: "bluez-utils", desc: "Bluetooth" },
         { name: "nmcli",      label: "NetworkManager", desc: "Wi-Fi" },
         { name: "notify-send", label: "libnotify",  desc: "Notifikasi" },
@@ -69,13 +68,11 @@ PanelWindow {
         { name: "cliphist",   label: "cliphist",   desc: "Riwayat clipboard" },
         { name: "wl-copy",    label: "wl-clipboard", desc: "Clipboard" },
         { name: "pactl",      label: "pipewire-utils", desc: "Audio" },
+        { name: "wpctl",      label: "wireplumber",   desc: "Audio (volume)" },
         { name: "playerctl",  label: "playerctl",  desc: "Media keys" },
-        { name: "wf-recorder", label: "wf-recorder", desc: "Screen recording" },
-        { name: "awww",       label: "swww / awww", desc: "Wallpaper" },
-        { name: "hypridle",   label: "hypridle",   desc: "Idle / lock" },
+        { name: "awww",       label: "awww",        desc: "Wallpaper" },
         { name: "hyprsunset", label: "hyprsunset", desc: "Night light" },
         { name: "zenity",     label: "zenity",     desc: "File picker" },
-        { name: "foot",       label: "foot",       desc: "Terminal" },
         { name: "powerprofilesctl", label: "power-profiles-daemon", desc: "Power mode" },
         { name: "jq",         label: "jq",         desc: "JSON tool" },
         { name: "ffmpegthumbnailer", label: "ffmpegthumbnailer", desc: "Video thumb" },

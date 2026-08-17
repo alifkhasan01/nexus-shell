@@ -18,7 +18,6 @@ set -uo pipefail
 
 declare -A ARCH_PKGS=(
   [grimblast]="grimblast-git"
-  [cava]="cava"
   [bluetoothctl]="bluez-utils"
   [nmcli]="networkmanager"
   [notify-send]="libnotify"
@@ -28,12 +27,9 @@ declare -A ARCH_PKGS=(
   [pactl]="pipewire-utils"
   [wpctl]="wireplumber"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
-  [awww]="swww"
-  [hypridle]="hypridle"
+  [awww]="awww"
   [hyprsunset]="hyprsunset"
   [zenity]="zenity"
-  [foot]="foot"
   [powerprofilesctl]="power-profiles-daemon"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
@@ -43,7 +39,6 @@ declare -A ARCH_PKGS=(
 
 declare -A DEB_PKGS=(
   [grimblast]="grim slurp"          # debian nggak punya grimblast, pakai grim+slurp
-  [cava]="cava"
   [bluetoothctl]="bluez"
   [nmcli]="network-manager"
   [notify-send]="libnotify-bin"
@@ -53,12 +48,9 @@ declare -A DEB_PKGS=(
   [pactl]="pipewire-utils"
   [wpctl]="libspa-0.2-bluetooth wireplumber"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
   [awww]="swww"
-  [hypridle]="hypridle"
   [hyprsunset]="hyprsunset"
   [zenity]="zenity"
-  [foot]="foot"
   [powerprofilesctl]="power-profiles-daemon"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
@@ -68,7 +60,6 @@ declare -A DEB_PKGS=(
 
 declare -A RPM_PKGS=(
   [grimblast]="grim slurp"
-  [cava]="cava"
   [bluetoothctl]="bluez"
   [nmcli]="NetworkManager"
   [notify-send]="libnotify"
@@ -78,12 +69,9 @@ declare -A RPM_PKGS=(
   [pactl]="pipewire-utils"
   [wpctl]="wireplumber"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
   [awww]="swww"
-  [hypridle]="hypridle"
   [hyprsunset]="hyprsunset"
   [zenity]="zenity"
-  [foot]="foot"
   [powerprofilesctl]="power-profiles-daemon"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
@@ -93,7 +81,6 @@ declare -A RPM_PKGS=(
 
 declare -A ZYPP_PKGS=(
   [grimblast]="grim slurp"
-  [cava]="cava"
   [bluetoothctl]="bluez"
   [nmcli]="NetworkManager"
   [notify-send]="libnotify"
@@ -103,10 +90,8 @@ declare -A ZYPP_PKGS=(
   [pactl]="pipewire-utils"
   [wpctl]="wireplumber"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
   [awww]="swww"
   [zenity]="zenity"
-  [foot]="foot"
   [powerprofilesctl]="power-profiles-daemon"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
@@ -116,7 +101,6 @@ declare -A ZYPP_PKGS=(
 
 declare -A XBPS_PKGS=(
   [grimblast]="grim slurp"
-  [cava]="cava"
   [bluetoothctl]="bluez"
   [nmcli]="NetworkManager"
   [notify-send]="libnotify"
@@ -126,10 +110,8 @@ declare -A XBPS_PKGS=(
   [pactl]="pipewire-utils"
   [wpctl]="wireplumber"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
   [awww]="swww"
   [zenity]="zenity"
-  [foot]="foot"
   [powerprofilesctl]="power-profiles-daemon"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
@@ -139,7 +121,6 @@ declare -A XBPS_PKGS=(
 
 declare -A ALPINE_PKGS=(
   [grimblast]="grim slurp"
-  [cava]="cava"
   [bluetoothctl]="bluez"
   [nmcli]="networkmanager"
   [notify-send]="libnotify"
@@ -148,10 +129,8 @@ declare -A ALPINE_PKGS=(
   [wl-copy]="wl-clipboard"
   [pactl]="pipewire-utils"
   [playerctl]="playerctl"
-  [wf-recorder]="wf-recorder"
-  [swww]="swww"
+  [awww]="swww"
   [zenity]="zenity"
-  [foot]="foot"
   [jq]="jq"
   [ffmpegthumbnailer]="ffmpegthumbnailer"
   [magick]="imagemagick"
@@ -159,9 +138,9 @@ declare -A ALPINE_PKGS=(
 )
 
 # ── Urutan pemasangan (mendahulukan yang penting) ───────────────────────
-ORDER=(grimblast cava bluetoothctl nmcli notify-send brightnessctl cliphist
-       wl-copy pactl wpctl playerctl wf-recorder awww hypridle hyprsunset
-       zenity foot powerprofilesctl jq ffmpegthumbnailer magick curl)
+ORDER=(grimblast bluetoothctl nmcli notify-send brightnessctl cliphist
+       wl-copy pactl wpctl playerctl awww hyprsunset
+       zenity powerprofilesctl jq ffmpegthumbnailer magick curl)
 
 # ── Deteksi distro / package manager ────────────────────────────────────
 detect_pm() {

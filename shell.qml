@@ -166,6 +166,13 @@ ShellRoot {
         onPressed: shellStateObj.welcomeOpen = !shellStateObj.welcomeOpen
     }
 
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "restart"
+        description: "Restart quickshell"
+        onPressed: Quickshell.reload(true)
+    }
+
     // ── Process Manager (Screenshot, BlueZ Agent, Cava Feed) ────────────────
     ShellComponents.ProcessManager {
         id: procManager
@@ -269,16 +276,10 @@ ShellRoot {
     // (bluetoothd biasanya sudah handle re-registration sendiri).
     // NOTE: Dikelola oleh ProcessManager di shell/ProcessManager.qml
 
-    // ── Cava audio visualizer feed ────────────────────────────────────────
-    // Hanya berjalan saat dashboard terbuka (tab Media butuh data cava).
-    // Hemat CPU & I/O saat dashboard tidak dipakai.
-    // NOTE: Sekarang auto-start saat quickshell berjalan, dikelola oleh ProcessManager
-    // Connections {
-    //     target: shellStateObj
-    //     function onDashboardOpenChanged() {
-    //         cavaFeed.running = shellStateObj.dashboardOpen
-    //     }
-    // }
+    // ── Audio visualizer feed ──────────────────────────────────────────
+    // Hanya berjalan saat dashboard terbuka (tab Media butuh data spektrum).
+    // Feed dikelola CavaService (scripts/qs_visualizer — PipeWire+FFT,
+    // tanpa cava): aktif otomatis saat CavaRingDank visible, mati saat tidak.
 
     // ── Bluetooth Device Auto-promotion ───────────────────────────────────
     // Saat perangkat bluetooth (headphone/dst) terhubung, sink audionya

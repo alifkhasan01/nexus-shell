@@ -14,8 +14,8 @@ Item {
     property int  size:         200
     property real artRadius:    size * 0.32     // radius album art di tengah
     property real gap:          6               // jarak baseline ke tepi art
-    property real maxBarLength: size * 0.18     // amplitudo max ombak (px)
-    property int  bars:         64              // harus sama dengan BARS di cava_feed.sh
+    property real maxBarLength: Math.max(6, size * 0.16 - 6) // amplitudo max ombak (px); pas muat di dalam item agar tidak terpotong
+    property int  bars:         64              // harus sama dengan kBars di qs_visualizer.cpp
 
     property string colorOuter: "#cba6f7"       // mauve  — puncak ombak luar
     property string colorInner: "#f5c2e7"       // pink   — puncak ombak dalam
@@ -198,6 +198,20 @@ Item {
             smooth: true
             mipmap: true
             visible: false
+
+            // Cover art berputar pelan (efek vinyl) selama art tampil.
+            transform: Rotation {
+                id: artSpin
+                origin.x: artImg.width / 2
+                origin.y: artImg.height / 2
+                angle: 0
+                NumberAnimation on angle {
+                    from: 0; to: 360
+                    duration: 16000
+                    loops: Animation.Infinite
+                    running: artImg.status === Image.Ready && root.coverSource !== ""
+                }
+            }
         }
 
         Rectangle {
