@@ -13,6 +13,7 @@ singleton IdleInhibitService 1.0 IdleInhibitService.qml
 singleton IdleManager 1.0 IdleManager.qml
 singleton Motion 1.0 Motion.qml
 singleton NotificationService 1.0 NotificationService.qml
+singleton PersistentState 1.0 PersistentState.qml
 singleton WallpaperService 1.0 WallpaperService.qml
 singleton WeatherService 1.0 WeatherService.qml
 

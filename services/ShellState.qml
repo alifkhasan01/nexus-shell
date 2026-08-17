@@ -7,11 +7,6 @@ import Quickshell
 // maupun dari klik di Bar — accessible dari mana saja di aplikasi.
 QtObject {
     id: shellState
-    
-    // Persistent state service
-    PersistentState {
-        id: persistentState
-    }
 
     // Panel states
     property bool dashboardOpen:      false
@@ -73,7 +68,7 @@ QtObject {
     // Load saved state on startup
     Component.onCompleted: {
         console.log("[ShellState] Loading persistent state...")
-        const saved = persistentState.loadState()
+        const saved = PersistentState.loadState()
         
         // Restore panel states
         shellState.dashboardOpen = saved.dashboardOpen ?? false
@@ -89,12 +84,12 @@ QtObject {
     }
     
     // Save state whenever any panel opens/closes
-    onDashboardOpenChanged: persistentState.set("dashboardOpen", dashboardOpen)
-    onPowerMenuOpenChanged: persistentState.set("powerMenuOpen", powerMenuOpen)
-    onWallpaperPanelOpenChanged: persistentState.set("wallpaperPanelOpen", wallpaperPanelOpen)
-    onCalendarOpenChanged: persistentState.set("calendarOpen", calendarOpen)
-    onConnectionOpenChanged: persistentState.set("connectionOpen", connectionOpen)
-    onClipboardOpenChanged: persistentState.set("clipboardOpen", clipboardOpen)
-    onMenuOpenChanged: persistentState.set("menuOpen", menuOpen)
-    onWelcomeOpenChanged: persistentState.set("welcomeOpen", welcomeOpen)
+    onDashboardOpenChanged: PersistentState.set("dashboardOpen", dashboardOpen)
+    onPowerMenuOpenChanged: PersistentState.set("powerMenuOpen", powerMenuOpen)
+    onWallpaperPanelOpenChanged: PersistentState.set("wallpaperPanelOpen", wallpaperPanelOpen)
+    onCalendarOpenChanged: PersistentState.set("calendarOpen", calendarOpen)
+    onConnectionOpenChanged: PersistentState.set("connectionOpen", connectionOpen)
+    onClipboardOpenChanged: PersistentState.set("clipboardOpen", clipboardOpen)
+    onMenuOpenChanged: PersistentState.set("menuOpen", menuOpen)
+    onWelcomeOpenChanged: PersistentState.set("welcomeOpen", welcomeOpen)
 }
