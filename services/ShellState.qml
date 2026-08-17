@@ -16,7 +16,6 @@ QtObject {
     property bool calendarOpen:       false
     property bool connectionOpen:     false
     property bool clipboardOpen:      false
-    property bool idlePanelOpen:      false
     property bool welcomeOpen:        false
 
     // Settings
@@ -36,7 +35,6 @@ QtObject {
             "calendar": function() { calendarOpen = !calendarOpen },
             "connection": function() { connectionOpen = !connectionOpen },
             "clipboard": function() { clipboardOpen = !clipboardOpen },
-            "idlePanel": function() { idlePanelOpen = !idlePanelOpen },
             "welcome": function() { welcomeOpen = !welcomeOpen }
         }
 
@@ -56,7 +54,6 @@ QtObject {
         calendarOpen = false
         connectionOpen = false
         clipboardOpen = false
-        idlePanelOpen = false
         welcomeOpen = false
     }
 

@@ -19,8 +19,30 @@
    - Implementation timeline
    - One-page quick reference (5 min)
 
+#### 🔌 **Nexus IPC Integration (NEW)**
+3. **[NEXUS_IPC_QUICK_START.md](./NEXUS_IPC_QUICK_START.md)** ⚡
+   - Get started with Nexus IPC in 5 minutes
+   - Test CLI commands
+   - Window manager integration
+   - Troubleshooting quick fixes
+   - **Start here for IPC** (5 min)
+
+4. **[IPC_INTEGRATION.md](./IPC_INTEGRATION.md)** 🔗
+   - Complete IPC protocol documentation
+   - Request/response format
+   - Action registry reference
+   - Extension guide
+   - **Detailed IPC documentation** (15 min)
+
+5. **[IPC_IMPLEMENTATION_SUMMARY.md](./IPC_IMPLEMENTATION_SUMMARY.md)** 📋
+   - v2 redesign rationale
+   - Architecture changes
+   - Specification compliance
+   - Implementation status
+   - **Technical implementation details** (10 min)
+
 #### 📖 **Comprehensive Analysis**
-3. **[IMPROVEMENTS_ROADMAP.md](./IMPROVEMENTS_ROADMAP.md)** 🗺️
+6. **[IMPROVEMENTS_ROADMAP.md](./IMPROVEMENTS_ROADMAP.md)** 🗺️
    - Complete feature analysis
    - Strengths & weaknesses comparison
    - Priority matrix (effort vs impact)
@@ -29,7 +51,7 @@
    - Success criteria
    - **Detailed planning guide** (30 min read)
 
-4. **[COMPARISON_ANALYSIS.md](./COMPARISON_ANALYSIS.md)** 📊
+7. **[COMPARISON_ANALYSIS.md](./COMPARISON_ANALYSIS.md)** 📊
    - Side-by-side comparison with illogical impulse
    - Architecture patterns explained
    - Code quality analysis
@@ -38,7 +60,7 @@
    - Feature completeness scorecard
    - **Technical deep dive** (40 min read)
 
-5. **[ARCHITECTURE_DECISIONS.md](./ARCHITECTURE_DECISIONS.md)** 🎯
+8. **[ARCHITECTURE_DECISIONS.md](./ARCHITECTURE_DECISIONS.md)** 🎯
    - Rationale for each recommendation
    - Risk analysis for each decision
    - Trade-offs explained
@@ -48,7 +70,7 @@
    - **Decision framework** (30 min read)
 
 #### 🔧 **Implementation Guides**
-6. **[PHASE_1_IMPLEMENTATION.md](./PHASE_1_IMPLEMENTATION.md)** ⚙️
+9. **[PHASE_1_IMPLEMENTATION.md](./PHASE_1_IMPLEMENTATION.md)** ⚙️
    - Step-by-step coding guide
    - Complete code examples
    - Testing procedures

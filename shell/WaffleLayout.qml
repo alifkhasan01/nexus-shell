@@ -140,13 +140,9 @@ PanelWindow {
             Widgets.QuickButton {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 50
-                text: "💤 Idle"
-                prefixIcon: "🌙"
-                onClicked: {
-                    if (waffle.shellState) {
-                        waffle.shellState.idlePanelOpen = !waffle.shellState.idlePanelOpen
-                    }
-                }
+                text: "🎯 Inhibit"
+                prefixIcon: "🚫"
+                onClicked: console.log("[Waffle] Idle inhibitor clicked")
             }
         }
     }

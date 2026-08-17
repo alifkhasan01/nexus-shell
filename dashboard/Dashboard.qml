@@ -59,11 +59,21 @@ PanelWindow {
         width:  root._cw
         // Tinggi ikut kolom kiri (yang punya ukuran tetap) + padding
         height: leftCol.height + root._pad * 2
-        radius: 20
+        radius: 24
         color:  Root.Colors.mantle
-        border.color: Root.Colors.surface2
-        border.width: 2
+        border.color: Qt.rgba(Root.Colors.surface2.r, Root.Colors.surface2.g, Root.Colors.surface2.b, 0.5)
+        border.width: 1
         clip: true
+        
+        // Shadow effect
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowBlur: 32
+            shadowColor: Qt.rgba(0, 0, 0, 0.3)
+            shadowHorizontalOffset: 0
+            shadowVerticalOffset: 8
+        }
 
         // ── Animasi slide dari atas + fade + scale ────────────────────
         // Initial state: card tersembunyi, sedikit scale down, dan posisi di atas
@@ -217,8 +227,16 @@ PanelWindow {
             // Jam & tanggal + profile picture
             Rectangle {
                 width: parent.width; height: 76
-                radius: 14; color: Root.Colors.base
+                radius: 16
+                color: Root.Colors.base
+                border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.4)
+                border.width: 1
                 Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+                Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
@@ -359,8 +377,16 @@ PanelWindow {
             // System stats
             Rectangle {
                 width: parent.width; height: 36
-                radius: 10; color: Root.Colors.base
+                radius: 12
+                color: Root.Colors.base
+                border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.4)
+                border.width: 1
                 Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+                Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
@@ -375,8 +401,16 @@ PanelWindow {
             Rectangle {
                 width: parent.width
                 height: settingsContent.implicitHeight + 20
-                radius: 14; color: Root.Colors.base
+                radius: 16
+                color: Root.Colors.base
+                border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.4)
+                border.width: 1
                 Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+                Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
@@ -460,8 +494,9 @@ PanelWindow {
             Rectangle {
                 id: mediaCard
                 anchors.fill: parent
-                radius: 14; color: Root.Colors.base
-                border.color: Root.Colors.surface1
+                radius: 16
+                color: Root.Colors.base
+                border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.4)
                 border.width: 1
                 clip: true
                 Behavior on color { ColorAnimation {

@@ -13,72 +13,24 @@ GridLayout {
 
     property var dashboardRoot: null
 
-    // ── Idle Monitor toggle ───────────────────────────────────────────────
-    // Toggle idle monitoring (screen off, lock, suspend)
-    // Saat OFF: sistem tidak akan auto screen-off/lock/suspend
-    Rectangle {
+    // ── Idle Inhibit toggle ───────────────────────────────────────────────
+    // Toggle idle inhibitor (mencegah auto sleep untuk presentasi/gaming)
+    QuickToggle {
         Layout.fillWidth: true
-        implicitWidth: 84
-        implicitHeight: 60
-        radius: 14
-
-        readonly property bool monitorOn: Services.IdleManager.monitoringEnabled
-
-        color: monitorOn ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color {
-            ColorAnimation {
-                duration: Root.Appearance.animation.elementMoveFast.duration
-                easing.type: Root.Appearance.animation.elementMoveFast.type
-                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-            }
-        }
-
-        Column {
-            anchors.centerIn: parent
-            spacing: 4
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: parent.parent.monitorOn ? "󰅶" : "󰒲"
-                font.pixelSize: 18
-                color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.text
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Root.Appearance.animation.elementMoveFast.duration
-                        easing.type: Root.Appearance.animation.elementMoveFast.type
-                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                    }
-                }
-            }
-            Text {
-                anchors.horizontalCenter: parent.horizontalCenter
-                text: "IDLE"
-                font.pixelSize: 11
-                color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Root.Appearance.animation.elementMoveFast.duration
-                        easing.type: Root.Appearance.animation.elementMoveFast.type
-                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                    }
-                }
-            }
-        }
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                Services.IdleManager.toggle()
-                if (!quickTogglesRoot.dashboardRoot) return
-                
-                const isActive = Services.IdleManager.monitoringEnabled
-                quickTogglesRoot.dashboardRoot.notifyRequested(
-                    isActive ? "display" : "display",
-                    isActive ? "Idle Monitor Aktif" : "Idle Monitor Nonaktif",
-                    isActive ? "Auto screen-off/lock/suspend diaktifkan." : "Auto screen-off/lock/suspend dinonaktifkan."
-                )
-            }
-        }
+        label: "INHIBIT"
+        icon: "󰌫"
+        dashboardRoot: quickTogglesRoot.dashboardRoot
+        checkCommand: "systemctl is-active sleep.target > /dev/null && echo no || echo yes"
+        checkMatch: "yes"
+        onCommand: "systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target"
+        offCommand: "systemctl unmask sleep.target suspend.target hibernate.target hybrid-sleep.target"
+        managerCommand: ""
+        notifIconOn:  "system-lock-screen"
+        notifIconOff: "system-log-out"
+        notifSummaryOn:  "Idle Inhibitor Aktif"
+        notifSummaryOff: "Idle Inhibitor Nonaktif"
+        notifBodyOn:  "Sistem tidak akan auto sleep/suspend."
+        notifBodyOff: "Sistem kembali ke schedule auto sleep."
     }
 
     // ── Screenshot select ─────────────────────────────────────────────────
@@ -88,6 +40,8 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: ssArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color {
             ColorAnimation {
                 duration: Root.Appearance.animation.elementMoveFast.duration
@@ -95,6 +49,11 @@ GridLayout {
                 easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
             }
         }
+        Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -146,6 +105,8 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: grimArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color {
             ColorAnimation {
                 duration: Root.Appearance.animation.elementMoveFast.duration
@@ -153,6 +114,11 @@ GridLayout {
                 easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
             }
         }
+        Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -210,6 +176,8 @@ GridLayout {
                                       : false
 
         color: dndOn ? Root.Colors.blue : Root.Colors.surface0
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color {
             ColorAnimation {
                 duration: Root.Appearance.animation.elementMoveFast.duration
@@ -217,6 +185,11 @@ GridLayout {
                 easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
             }
         }
+        Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -336,7 +309,14 @@ GridLayout {
                 return Qt.rgba(Root.Colors.red.r,   Root.Colors.red.g,   Root.Colors.red.b,   0.80)
             return Qt.rgba(Root.Colors.green.r, Root.Colors.green.g, Root.Colors.green.b, 0.75)
         }
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+        Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve

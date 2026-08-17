@@ -212,8 +212,6 @@ Scope {
                 autoSuspendTimer.restart()
             } else {
                 autoSuspendTimer.stop()
-                // Notify IdleManager bahwa system sudah di-unlock
-                Services.IdleManager.onUnlock()
             }
         }
 

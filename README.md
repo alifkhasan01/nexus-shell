@@ -11,20 +11,19 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 - **Sparkline System Monitor** — Real-time CPU, GPU, RAM, Disk usage dengan line chart mini dan auto-scaling
 - **Live Theme Switching** — 4 flavor Catppuccin (Latte, Frappé, Macchiato, Mocha) bisa ganti tanpa restart
 - **Smart Wallpaper Manager** — Grid thumbnail, preview, slideshow otomatis, transisi animasi via swww
-- **Cava Audio Visualizer** — Cincin visualizer yang mengelilingi cover art media player (auto-start via ProcessManager!)
-- **Quick Toggles** — Panel aksi cepat: screenshot, record, idle, DND, night light
+- **Audio Visualizer** — Cincin visualizer yang mengelilingi cover art media player (C++ native qs_visualizer + PipeWire)
+- **Quick Toggles** — Panel aksi cepat: screenshot, idle inhibitor, DND, night light
 - **Bluetooth Auto-Pairing** — Agent background yang auto-accept pairing request
 - **PAM Lock Screen** — Autentikasi native dengan blur background dan animasi smooth
 
-## 🚀 v2.1 Improvements (NEW)
+## 🚀 v2.2 Cleanup (NEW)
 
-- ✅ **Modular Architecture** — 6 new singleton services, shell.qml down from 600+ to ~120 lines
-- ✅ **Comprehensive Error Handling** — 95% coverage with detailed logging
-- ✅ **Performance Optimized** — Aggressive debouncing, intelligent caching, 30% fewer OSD updates
-- ✅ **Auto-Start Features** — Cava feed starts automatically (no hyprland.conf needed)
-- ✅ **Better Documentation** — Testing guide, UI/UX best practices, release notes
+- ✅ **Native C++ Audio Visualizer** — Ganti Cava shell script dengan binary qs_visualizer (PipeWire + FFT)
+- ✅ **Native Idle Monitoring** — Ganti custom IdleManager dengan built-in Quickshell IdleMonitor
+- ✅ **Reduced Dependencies** — Hapus script shells yang redundant, fokus ke core QML
+- ✅ **Lean Architecture** — Dari 50+ QML services ke essential saja, faster startup & lower memory
 
-**See POLISH_SUMMARY.md for complete list of improvements.**
+**Previous**: v2.1 Improvements below
 
 ## Tampilan
 
@@ -46,13 +45,12 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 ```
 ~/.config/quickshell/
 ├── shell.qml                    # Entry point — spawn Bar, LockScreen, NotificationPopup
-├── qmldir                       # Registrasi singleton (Colors, CavaService)
+├── qmldir                       # Registrasi singleton (Colors, dll)
 ├── theme                        # File teks: nama tema aktif saat ini
 ├── wallpaper.json               # Konfigurasi wallpaper (folder, transisi, slideshow)
 │
 ├── services/
-│   ├── Colors.qml               # Singleton palette Catppuccin (4 flavor)
-│   └── CavaService.qml          # Singleton data visualizer cava
+│   └── Colors.qml               # Singleton palette Catppuccin (4 flavor)
 │
 ├── bar/
 │   ├── Bar.qml                  # PanelWindow bar atas
@@ -73,13 +71,12 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 │   ├── CavaRingDank.qml         # Visualizer cava cincin di media card
 │   ├── MediaCard.qml            # Media player via MPRIS
 │   ├── QuickToggle.qml          # Komponen pill toggle generik (dengan notifikasi)
-│   ├── QuickToggles.qml         # Grid toggle: idle, screenshot, recorder, DND, night
+│   ├── QuickToggles.qml         # Grid toggle: screenshot, idle inhibit, DND, night light
 │   ├── SettingsTab.qml          # Tab settings (slider volume/brightness, theme)
 │   ├── SliderRow.qml            # Komponen slider generik
 │   ├── SystemInfo.qml           # Info sistem dengan sparkline chart (CPU, GPU, RAM, Disk)
 │   ├── SystemStats.qml          # Bar stats ringkas di dashboard
 │   ├── ThemeSelector.qml        # Selector 4 flavor Catppuccin
-│   └── cava_feed.sh             # Script feed data cava ke named pipe
 │
 ├── panels/
 │   ├── ConnectPanel.qml         # Panel Wi-Fi + Bluetooth (dua tab)

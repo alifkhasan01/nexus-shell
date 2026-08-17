@@ -1,8 +1,10 @@
 import QtQuick
 import QtQuick.Effects
+import Quickshell
+import Quickshell.Io
 import "../" as Root
 
-// Ring audio visualizer (cava) — ombak melingkar mulus.
+// Ring audio visualizer — ombak melingkar mulus dari C++ qs_visualizer binary.
 // Titik-titik amplitudo diplot di sepanjang lingkaran lalu
 // dihubungkan dengan kurva Bezier cubic sehingga terbentuk
 // ombak kontinyu (bukan bar terputus-putus).
@@ -22,14 +24,38 @@ Item {
     property string coverSource: ""
 
     property var smoothValues: []
+    property var visualizerValues: []
 
     implicitWidth:  size
     implicitHeight: size
 
-    // Aktifkan CavaService saat komponen visible
-    Component.onCompleted:  Root.CavaService.active = visible
-    onVisibleChanged:        Root.CavaService.active = visible
-    Component.onDestruction: Root.CavaService.active = false
+    // qs_visualizer process (C++ native, PipeWire + FFT)
+    // Auto-start saat komponen visible, auto-stop saat hidden
+    Process {
+        id: visualizer
+        running: root.visible
+        command: [Quickshell.shellPath("scripts/qs_visualizer")]
+        
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                if (!data || data.trim() === "") return
+                const parts = data.trim().split(/\s+/)
+                const arr = []
+                for (let i = 0; i < parts.length; i++) {
+                    const v = parseInt(parts[i])
+                    arr.push(isNaN(v) ? 0 : Math.round(Math.min(255, v) / 255 * 100))
+                }
+                if (arr.length > 0) root.visualizerValues = arr
+            }
+        }
+        
+        onRunningChanged: {
+            if (!running) {
+                root.visualizerValues = []
+            }
+        }
+    }
 
     // ── Smoothing timer ~60 fps ───────────────────────────────────────────
     Timer {
@@ -37,12 +63,12 @@ Item {
         running:  root.visible
         repeat:   true
         onTriggered: {
-            const target = Root.CavaService.values
+            const target = root.visualizerValues
             if (target.length === 0) return
 
             const n = root.bars
             // Pastikan smoothValues punya panjang yang sama dengan `bars`,
-            // bukan panjang raw dari cava (yang mungkin berbeda).
+            // bukan panjang raw dari visualizer (yang mungkin berbeda).
             if (root.smoothValues.length !== n) {
                 // Inisialisasi ulang, resample target ke panjang n
                 const tmp = []

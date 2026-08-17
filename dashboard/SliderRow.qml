@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import "../" as Root
 
 // Slider generik dengan label icon di kiri, dipakai buat volume & brightness.
@@ -53,12 +54,18 @@ Item {
             height: 6
             radius: 3
             color: Root.Colors.surface0
+            border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.2)
+            border.width: 1
 
             Rectangle {
                 width: slider.visualPosition * parent.width
                 height: parent.height
                 radius: 3
                 color: Root.Colors.blue
+                Behavior on width { NumberAnimation {
+                    duration: 50
+                    easing.type: Easing.OutQuad
+                }}
             }
         }
 
@@ -69,6 +76,16 @@ Item {
             height: 14
             radius: 7
             color: Root.Colors.text
+            border.color: Root.Colors.blue
+            border.width: slider.pressed ? 2 : 1
+            Behavior on border.width { NumberAnimation { duration: 100 }}
+            
+            layer.enabled: slider.pressed
+            layer.effect: MultiEffect {
+                shadowEnabled: slider.pressed
+                shadowBlur: 12
+                shadowColor: Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.4)
+            }
         }
 
         // Emit saat thumb digeser

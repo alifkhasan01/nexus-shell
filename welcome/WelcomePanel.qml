@@ -306,11 +306,12 @@ PanelWindow {
                                         horizontalAlignment: Text.AlignRight
                                         elide: Text.ElideRight
                                     }
-                                    MouseArea {
-                                        id: depHov
-                                        anchors.fill: parent
-                                        hoverEnabled: true
-                                    }
+                                }
+
+                                MouseArea {
+                                    id: depHov
+                                    anchors.fill: parent
+                                    hoverEnabled: true
                                 }
                             }
                         }

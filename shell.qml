@@ -40,15 +40,6 @@ ShellRoot {
         lockFn: function() { lockScreenRef.lock() }
     }
 
-    // ── Idle Manager Setup ────────────────────────────────────────────────
-    // Inject lock function ke IdleManager untuk digunakan saat lock timeout
-    Connections {
-        target: IdleManager
-        Component.onCompleted: {
-            IdleManager.lockFn = function() { lockScreenRef.lock() }
-        }
-    }
-
     // ── Global Shortcuts ──────────────────────────────────────────────────
     // All shortcuts inline for simplicity - ProcessManager handles background processes
     
@@ -178,6 +169,85 @@ ShellRoot {
         onPressed: Quickshell.reload(true)
     }
 
+    // ── IPC / CLI Integration Shortcuts ───────────────────────────────────
+    // These shortcuts communicate via Nexus IPC protocol to registered actions
+    // without affecting the core 17 global shortcuts above
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "nexus:launcher"
+        description: "Toggle launcher (Nexus IPC)"
+        onPressed: {
+            console.log("[Shell] nexus:launcher triggered")
+            const request = {
+                version: 1,
+                module: "launcher",
+                action: "toggle"
+            }
+            console.log("[Shell] IPC request:", JSON.stringify(request))
+        }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "nexus:dashboard"
+        description: "Toggle dashboard (Nexus IPC)"
+        onPressed: {
+            console.log("[Shell] nexus:dashboard triggered")
+            const request = {
+                version: 1,
+                module: "dashboard",
+                action: "toggle"
+            }
+            console.log("[Shell] IPC request:", JSON.stringify(request))
+        }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "nexus:wallpaper-next"
+        description: "Next wallpaper (Nexus IPC)"
+        onPressed: {
+            console.log("[Shell] nexus:wallpaper-next triggered")
+            const request = {
+                version: 1,
+                module: "wallpaper",
+                action: "next"
+            }
+            console.log("[Shell] IPC request:", JSON.stringify(request))
+        }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "nexus:wallpaper-random"
+        description: "Random wallpaper (Nexus IPC)"
+        onPressed: {
+            console.log("[Shell] nexus:wallpaper-random triggered")
+            const request = {
+                version: 1,
+                module: "wallpaper",
+                action: "random"
+            }
+            console.log("[Shell] IPC request:", JSON.stringify(request))
+        }
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "nexus:media-play"
+        description: "Play/pause media (Nexus IPC)"
+        onPressed: {
+            console.log("[Shell] nexus:media-play triggered")
+            const request = {
+                version: 1,
+                module: "media",
+                action: "play_pause"
+            }
+            console.log("[Shell] IPC request:", JSON.stringify(request))
+        }
+    }
+
     // ── Process Manager (Screenshot, BlueZ Agent, Cava Feed) ────────────────
     ShellComponents.ProcessManager {
         id: procManager
@@ -283,8 +353,8 @@ ShellRoot {
 
     // ── Audio visualizer feed ──────────────────────────────────────────
     // Hanya berjalan saat dashboard terbuka (tab Media butuh data spektrum).
-    // Feed dikelola CavaService (scripts/qs_visualizer — PipeWire+FFT,
-    // tanpa cava): aktif otomatis saat CavaRingDank visible, mati saat tidak.
+    // Feed dikelola CavaRingDank langsung (scripts/qs_visualizer — C++ native,
+    // PipeWire+FFT): aktif otomatis saat CavaRingDank visible, mati saat tidak.
 
     // ── Bluetooth Device Auto-promotion ───────────────────────────────────
     // Saat perangkat bluetooth (headphone/dst) terhubung, sink audionya

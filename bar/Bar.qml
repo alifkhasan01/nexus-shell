@@ -33,7 +33,6 @@ PanelWindow {
     property bool notifPanelOpen: false
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
-    property bool idlePanelOpen: shellState ? shellState.idlePanelOpen : false
     property bool bgAppsPanelOpen: false
 
     onConnectPanelOpenChanged: {
@@ -48,7 +47,6 @@ PanelWindow {
     onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
-    onIdlePanelOpenChanged:      if (!idlePanelOpen)      idleCloseTimer.restart()
     onBgAppsPanelOpenChanged:    if (!bgAppsPanelOpen)    bgAppsCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
@@ -60,7 +58,6 @@ PanelWindow {
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
-    Timer { id: idleCloseTimer;      interval: 300; repeat: false }
     Timer { id: bgAppsCloseTimer;    interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
     margins.top: 0
@@ -191,7 +188,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.idlePanelOpen = false
                         }
                     }
 
@@ -270,56 +266,6 @@ PanelWindow {
                                 bar.shellState.dashboardOpen = false
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.notifPanelOpen = false
-                                bar.shellState.calendarOpen = false
-                                bar.shellState.idlePanelOpen = false
-                            }
-                        }
-                    }
-
-                    // ── Idle Settings Button ──────────────────────────────
-                    Item {
-                        width: 30
-                        height: 26
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            color: idleArea.containsMouse
-                                 ? Root.Colors.surface1
-                                 : (bar.idlePanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰒲"
-                            font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 15
-                            color: bar.idlePanelOpen ? Root.Colors.blue : Root.Colors.lavender
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        MouseArea {
-                            id: idleArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                bar.shellState.idlePanelOpen = !bar.shellState.idlePanelOpen
-                                bar.shellState.connectionOpen = false
-                                bar.volumePanelOpen = false
-                                bar.shellState.dashboardOpen = false
-                                bar.shellState.wallpaperPanelOpen = false
-                                bar.notifPanelOpen = false
-                                bar.shellState.clipboardOpen = false
                                 bar.shellState.calendarOpen = false
                             }
                         }
@@ -459,6 +405,7 @@ PanelWindow {
                             bar.shellState.calendarOpen = false
                         }
                     }
+
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
                         onToggleMenu: {
@@ -602,17 +549,6 @@ PanelWindow {
         ClipboardPanel {
             open: bar.clipboardPanelOpen
             onCloseRequested: bar.shellState.clipboardOpen = false
-        }
-    }
-
-    // ── Idle Settings Panel ───────────────────────────────────────────────
-    LazyLoader {
-        id: idlePanelLoader
-        active: bar.idlePanelOpen || idleCloseTimer.running
-
-        IdlePanel {
-            open: bar.idlePanelOpen
-            onCloseRequested: bar.shellState.idlePanelOpen = false
         }
     }
 

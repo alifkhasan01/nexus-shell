@@ -12,9 +12,16 @@ RowLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 36
-        radius: 10
+        radius: 12
         color: Root.Colors.currentTheme === "light" ? Root.Colors.blue : Root.Colors.surface0
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+        Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
@@ -59,9 +66,16 @@ RowLayout {
     Rectangle {
         Layout.fillWidth: true
         implicitHeight: 36
-        radius: 10
+        radius: 12
         color: Root.Colors.currentTheme === "dark" ? Root.Colors.blue : Root.Colors.surface0
+        border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+        border.width: 1
         Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+        Behavior on border.color { ColorAnimation {
             duration: Root.Appearance.animation.elementMoveFast.duration
             easing.type: Root.Appearance.animation.elementMoveFast.type
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve

@@ -34,6 +34,8 @@ Rectangle {
     implicitHeight: 60
     radius: 14
     color: active ? Root.Colors.blue : Root.Colors.surface0
+    border.color: Qt.rgba(Root.Colors.surface1.r, Root.Colors.surface1.g, Root.Colors.surface1.b, 0.3)
+    border.width: 1
 
     Behavior on color {
         ColorAnimation {
@@ -42,6 +44,11 @@ Rectangle {
             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
         }
     }
+    Behavior on border.color { ColorAnimation {
+        duration: Root.Appearance.animation.elementMoveFast.duration
+        easing.type: Root.Appearance.animation.elementMoveFast.type
+        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+    }}
 
     Column {
         anchors.centerIn: parent
