@@ -5,6 +5,7 @@ import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
 import "../" as Root
+import "../services"
 
 PanelWindow {
     id: root
@@ -23,9 +24,12 @@ PanelWindow {
             grid.forceActiveFocus()
             if (root.wallpapers.length === 0)
                 loadConfigProc.running = true
-            else
+            else {
                 // Panel sudah pernah scan — langsung muat cache untuk wallpaper yang ada
                 root.loadExistingThumbs(root.wallpapers)
+                // Auto-scroll ke wallpaper aktif
+                root.focusCurrentWallpaper()
+            }
         }
     }
 
@@ -107,9 +111,34 @@ PanelWindow {
                 if (p.length > 0) {
                     root.currentWallpaperPath = p
                     if (root.previewPath === "") root.previewPath = p
+                    // Update service juga
+                    WallpaperService.setCurrent(p)
                 }
             }
         }
+    }
+
+    // Sinkronisasi dengan WallpaperService (yang di-update oleh WallpaperRandom)
+    Connections {
+        target: WallpaperService
+        function onCurrentWallpaperChanged() {
+            if (WallpaperService.currentWallpaper !== "") {
+                root.currentWallpaperPath = WallpaperService.currentWallpaper
+                // Auto-focus ke wallpaper baru jika panel terbuka
+                if (root.open)
+                    root.focusCurrentWallpaper()
+            }
+        }
+    }
+
+    // Refresh currentWallpaper setiap 2 detik saat panel terbuka
+    // (untuk menangkap perubahan dari WallpaperRandom atau sumber lain)
+    Timer {
+        id: currentWallpaperRefreshTimer
+        interval: 2000
+        running: root.open
+        repeat: true
+        onTriggered: readCurrentProc.running = true
     }
 
     function _home() { return "/home/youtta" }
@@ -194,6 +223,9 @@ PanelWindow {
                 // Muat / generate thumbnail cache untuk semua wallpaper yang baru di-scan.
                 // Script otomatis skip file yang thumb-nya sudah baru (mtime check).
                 root.loadExistingThumbs(lines)
+                // Auto-scroll ke wallpaper aktif jika panel terbuka
+                if (root.open)
+                    root.focusCurrentWallpaper()
             }
         }
         onExited: (code) => {
@@ -235,6 +267,26 @@ PanelWindow {
         root.selectedIndex = i
         root.previewPath = root.filtered[i]
         grid.positionViewAtIndex(i, GridView.Center)
+    }
+
+    function focusCurrentWallpaper() {
+        // Auto-scroll dan highlight wallpaper yang sedang aktif
+        if (root.currentWallpaperPath === "" || root.filtered.length === 0)
+            return
+        
+        // Cari index wallpaper aktif di filtered list
+        const idx = root.filtered.indexOf(root.currentWallpaperPath)
+        if (idx >= 0) {
+            // Set sebagai selected dan scroll ke posisinya
+            root.setSelection(idx)
+            // Jangan ubah previewPath jika tidak perlu
+            if (root.previewPath === "")
+                root.previewPath = root.currentWallpaperPath
+        } else if (root.previewPath === "") {
+            // Wallpaper aktif tidak ada di filtered (mungkin karena search) —
+            // set preview ke wallpaper aktif tetap supaya preview konsisten
+            root.previewPath = root.currentWallpaperPath
+        }
     }
 
     function activateSelection() {
@@ -286,6 +338,8 @@ PanelWindow {
                 if (text.trim() === "ok") {
                     root.currentWallpaperPath = root.previewPath
                     root.statusText = "✓ Wallpaper diset: " + root.previewPath.split("/").pop()
+                    // Update WallpaperService
+                    WallpaperService.setCurrent(root.previewPath)
                 } else {
                     root.statusText = "⚠ Gagal set wallpaper."
                     // Gagal? tampilkan panel langsung jangan tunggu timer
@@ -369,9 +423,9 @@ PanelWindow {
         // Animasi opacity — cepat saat transisi wallpaper, normal saat buka/tutup panel
         Behavior on opacity {
             NumberAnimation {
-                duration: root.hiddenForTransition ? 120 : 200
-                easing.type: Easing.Bezier
-                easing.bezierCurve: root.open ? Root.Motion.enter : Root.Motion.exit
+                duration: root.hiddenForTransition ? Root.Appearance.animation.elementMoveFast.duration : Root.Appearance.animation.elementMoveSmall.duration
+                easing.type: Easing.BezierSpline
+                easing.bezierCurve: root.open ? Root.Appearance.animation.elementMoveEnter.bezierCurve : Root.Appearance.animation.elementMoveExit.bezierCurve
             }
         }
 
@@ -382,18 +436,18 @@ PanelWindow {
         transitions: [
             Transition {
                 from: ""; to: "open"
-                NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         // ── Layout: kiri = kontrol+grid, kanan = preview ──────────────────
@@ -428,7 +482,7 @@ PanelWindow {
                             font.pixelSize: 16; font.bold: true
                             font.family: root.nf
                             color: Root.Colors.text
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         // Search
@@ -438,7 +492,7 @@ PanelWindow {
                             border.color: searchInput.activeFocus ? Root.Colors.blue : "transparent"
                             border.width: 1
                             Behavior on color        { ColorAnimation { duration: 120 } }
-                            Behavior on border.color { ColorAnimation { duration: 120 } }
+                            Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             RowLayout {
                                 anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 6
@@ -464,7 +518,7 @@ PanelWindow {
                         Rectangle {
                             implicitWidth: 30; implicitHeight: 30; radius: 8
                             color: randHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             Text {
                                 anchors.centerIn: parent
                                 text: ""; font.pixelSize: 15; font.family: root.nf
@@ -477,7 +531,7 @@ PanelWindow {
                         Rectangle {
                             implicitWidth: 30; implicitHeight: 30; radius: 8
                             color: refHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             Text {
                                 anchors.centerIn: parent
                                 text: ""; font.pixelSize: 15; font.family: root.nf
@@ -495,7 +549,7 @@ PanelWindow {
                         Rectangle {
                             implicitWidth: 30; implicitHeight: 30; radius: 8
                             color: root.settingsOpen ? Root.Colors.blue : (setHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             Text {
                                 anchors.centerIn: parent
                                 text: ""; font.pixelSize: 14; font.family: root.nf
@@ -508,7 +562,7 @@ PanelWindow {
                         Rectangle {
                             implicitWidth: 26; implicitHeight: 26; radius: 8
                             color: closeHov.containsMouse ? Root.Colors.surface1 : "transparent"
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             Text { anchors.centerIn: parent; text: "󱎘"; font.pixelSize: 13; color: Root.Colors.subtext }
                             MouseArea { id: closeHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
                         }
@@ -525,7 +579,7 @@ PanelWindow {
                     Layout.preferredHeight: root.settingsOpen ? settingsInner.height : 0
                     clip: true
                     visible: Layout.preferredHeight > 0
-                    Behavior on Layout.preferredHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                    Behavior on Layout.preferredHeight { NumberAnimation { duration: Root.Appearance.animation.elementResize.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
 
                     Rectangle {
                         id: settingsInner
@@ -535,7 +589,7 @@ PanelWindow {
                         color: Root.Colors.base
                         border.color: Root.Colors.surface1
                         border.width: 1
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         ColumnLayout {
                             id: settingsCol
@@ -549,7 +603,7 @@ PanelWindow {
                                 Rectangle {
                                     Layout.fillWidth: true; height: 28; radius: 6
                                     color: dirHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                     RowLayout {
                                         anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 6
                                         Text { text: "󰉋"; font.pixelSize: 12; font.family: root.nf; color: Root.Colors.subtext }
@@ -574,7 +628,7 @@ PanelWindow {
                                             required property string modelData
                                             height: 22; width: chipLbl.implicitWidth + 16; radius: 6
                                             color: root.transitionType === modelData ? Root.Colors.blue : (chipMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
-                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                             Text { id: chipLbl; anchors.centerIn: parent; text: modelData; font.pixelSize: 10; color: root.transitionType === modelData ? Root.Colors.base : Root.Colors.text }
                                             MouseArea { id: chipMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.transitionType = modelData; root.saveConfig() } }
                                         }
@@ -644,7 +698,7 @@ PanelWindow {
                                 Rectangle {
                                     height: 26; width: slideLbl.implicitWidth + 22; radius: 6
                                     color: root.slideshowEnabled ? Root.Colors.blue : (slideTogMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                     Text { id: slideLbl; anchors.centerIn: parent; text: root.slideshowEnabled ? "ON" : "OFF"; font.pixelSize: 10; font.bold: true; color: root.slideshowEnabled ? Root.Colors.base : Root.Colors.subtext }
                                     MouseArea { id: slideTogMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
                                         onClicked: { root.slideshowEnabled = !root.slideshowEnabled; root.saveConfig(); root.slideshowEnabled ? root.startSlideshow() : root.stopSlideshow() }
@@ -734,7 +788,7 @@ PanelWindow {
                                 bottom: thumbLabel.top; bottomMargin: 3
                             }
                             radius: 8; color: Root.Colors.surface0; clip: true
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             Image {
                                 anchors.fill: parent
@@ -749,7 +803,7 @@ PanelWindow {
                                     anchors.fill: parent; radius: 8
                                     color: Root.Colors.surface1
                                     visible: parent.status !== Image.Ready
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                     // Spinner saat load langsung dari file asli (belum ada thumb cache)
                                     Text {
                                         anchors.centerIn: parent
@@ -791,7 +845,7 @@ PanelWindow {
                                             : root.currentWallpaperPath === modelData ? Root.Colors.green
                                             : (tMa.containsMouse ? Root.Colors.blue : "transparent")
                                 border.width: root.selectedIndex === index ? 3 : 2
-                                Behavior on border.color { ColorAnimation { duration: 120 } }
+                                Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             MouseArea {
@@ -837,7 +891,7 @@ PanelWindow {
                         Layout.fillWidth: true; text: root.statusText; font.pixelSize: 11; elide: Text.ElideRight
                         color: root.statusText.startsWith("⚠") ? Root.Colors.red
                              : root.statusText.startsWith("✓") ? Root.Colors.green : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     Text {
                         visible: root.filtered.length > 0 && !root.scanning
@@ -849,7 +903,7 @@ PanelWindow {
                     Rectangle {
                         implicitWidth: closeFtTxt.implicitWidth + 24; implicitHeight: 32; radius: 8
                         color: closeFtMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         Text { id: closeFtTxt; anchors.centerIn: parent; text: "Tutup"; font.pixelSize: 12; color: Root.Colors.text }
                         MouseArea { id: closeFtMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: root.closeRequested() }
                     }
@@ -871,10 +925,10 @@ PanelWindow {
                 layer.enabled: true
                 opacity: root.settingsOpen ? 0 : 1
 
-                Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
-                Behavior on Layout.maximumWidth   { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
+                Behavior on Layout.maximumWidth   { NumberAnimation { duration: 200; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
                 Behavior on opacity               { NumberAnimation { duration: 180 } }
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                 ColumnLayout {
                     anchors.fill: parent
@@ -886,7 +940,7 @@ PanelWindow {
                         text: "Preview"
                         font.pixelSize: 12; font.bold: true; font.letterSpacing: 0.5
                         color: Root.Colors.subtext; opacity: 0.8
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // Preview image
@@ -894,7 +948,7 @@ PanelWindow {
                         Layout.fillWidth: true
                         Layout.preferredHeight: Math.round(width * 9 / 16)
                         radius: 10; color: Root.Colors.surface0; clip: true
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         Image {
                             id: previewImg
@@ -937,7 +991,7 @@ PanelWindow {
                         font.pixelSize: 11; color: Root.Colors.text
                         wrapMode: Text.WrapAtWordBoundaryOrAnywhere
                         maximumLineCount: 2; elide: Text.ElideRight
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // Path folder
@@ -967,7 +1021,7 @@ PanelWindow {
                         color: setWpMa.containsMouse && enabled
                              ? Qt.lighter(Root.Colors.blue, 1.1) : Root.Colors.blue
                         opacity: enabled ? 1 : 0.4
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         RowLayout {
                             anchors.centerIn: parent; spacing: 8
@@ -988,7 +1042,7 @@ PanelWindow {
                     Rectangle {
                         Layout.fillWidth: true; height: 34; radius: 10
                         color: randRightMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         RowLayout {
                             anchors.centerIn: parent; spacing: 8

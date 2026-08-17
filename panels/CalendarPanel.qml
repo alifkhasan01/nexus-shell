@@ -165,9 +165,9 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 240; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    NumberAnimation { target: cardTranslate;   property: "y";              duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card;             duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    NumberAnimation { target: cardTranslate;   property: "y";              duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card;             duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             // Animasi CLOSE: Scale down + slide up
@@ -176,16 +176,16 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        NumberAnimation { target: cardTranslate;   property: "y";              duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card;             duration: 140; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { targets: [cardScale];     properties: "xScale,yScale"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        NumberAnimation { target: cardTranslate;   property: "y";              duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator { target: card;             duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
@@ -216,14 +216,14 @@ PanelWindow {
                 Rectangle {
                     width: 32; height: 32; radius: 8
                     color: prevMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     Text {
                         anchors.centerIn: parent
                         text: "󰍞"
                         font.family: "CaskaydiaCove Nerd Font"
                         font.pixelSize: 16
                         color: Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     MouseArea {
                         id: prevMa
@@ -255,7 +255,7 @@ PanelWindow {
                             font.pixelSize: 16
                             font.bold: true
                             color: Root.Colors.text
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         MouseArea {
@@ -280,7 +280,7 @@ PanelWindow {
                             text: root.viewYear
                             font.pixelSize: 12
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         MouseArea {
@@ -299,14 +299,14 @@ PanelWindow {
                 Rectangle {
                     width: 32; height: 32; radius: 8
                     color: nextMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     Text {
                         anchors.centerIn: parent
                         text: "󰍟"
                         font.family: "CaskaydiaCove Nerd Font"
                         font.pixelSize: 16
                         color: Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     MouseArea {
                         id: nextMa
@@ -321,14 +321,14 @@ PanelWindow {
                 Rectangle {
                     width: 32; height: 32; radius: 8
                     color: statsMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     Text {
                         anchors.centerIn: parent
                         text: "󰄶"
                         font.family: "CaskaydiaCove Nerd Font"
                         font.pixelSize: 16
                         color: root.showStats ? Root.Colors.blue : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     MouseArea {
                         id: statsMa
@@ -572,7 +572,7 @@ PanelWindow {
                     font.pixelSize: 10
                     font.bold: true
                     color: Root.Colors.overlay1
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Repeater {
@@ -590,7 +590,7 @@ PanelWindow {
                         color: (index >= 5)
                             ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.85)
                             : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                 }
             }
@@ -680,7 +680,7 @@ PanelWindow {
                                 ? Root.Colors.blue
                                 : holiday !== "" ? Root.Colors.peach : "transparent"
                             border.width: holiday !== "" ? 1.5 : (root.isToday(day) ? 1.5 : 0)
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             Column {
                                 anchors.centerIn: parent
@@ -702,7 +702,7 @@ PanelWindow {
                                             return Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.8)
                                         return Root.Colors.text
                                     }
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 // Event & Note indicators
@@ -771,7 +771,7 @@ PanelWindow {
                         font.pixelSize: 12
                         font.bold: true
                         color: Root.Colors.text
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     Text {
@@ -781,7 +781,7 @@ PanelWindow {
                         }
                         font.pixelSize: 12
                         color: Root.Colors.green
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                 }
 
@@ -793,7 +793,7 @@ PanelWindow {
                     Rectangle {
                         width: 28; height: 28; radius: 7
                         color: addEventMa.containsMouse ? Root.Colors.blue : Root.Colors.surface0
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         
                         Text {
                             anchors.centerIn: parent
@@ -801,7 +801,7 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 14
                             color: addEventMa.containsMouse ? Root.Colors.base : Root.Colors.blue
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         MouseArea {
@@ -821,7 +821,7 @@ PanelWindow {
                         radius: 7
                         color: todayBtnMa.containsMouse ? Root.Colors.blue
                              : Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.18)
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         Text {
                             id: todayLbl
@@ -830,7 +830,7 @@ PanelWindow {
                             font.pixelSize: 10
                             font.bold: true
                             color: todayBtnMa.containsMouse ? Root.Colors.mantle : Root.Colors.blue
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         MouseArea {
@@ -872,7 +872,7 @@ PanelWindow {
                         font.bold: true
                         color: Root.Colors.text
                         wrapMode: Text.Wrap
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     Text {
@@ -886,7 +886,7 @@ PanelWindow {
                         font.family: "CaskaydiaCove Nerd Font"
                         wrapMode: Text.Wrap
                         width: parent.width
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     Text {
@@ -896,7 +896,7 @@ PanelWindow {
                         text: "● Hari ini"
                         font.pixelSize: 10
                         color: Root.Colors.blue
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                 }
 

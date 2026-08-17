@@ -24,7 +24,7 @@ Rectangle {
     z: 1000
 
     opacity: showing ? 1 : 0
-    Behavior on opacity { NumberAnimation { duration: 150 } }
+    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
     MouseArea {
         anchors.fill: parent
@@ -43,7 +43,7 @@ Rectangle {
         border.width: 2
 
         scale: dialog.showing ? 1 : 0.9
-        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter } }
+        Behavior on scale { NumberAnimation { duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve } }
 
         MouseArea {
             anchors.fill: parent

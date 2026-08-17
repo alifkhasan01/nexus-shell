@@ -1,6 +1,7 @@
 import QtQuick
 import Quickshell.Io
 import "../" as Root
+import "../services"
 
 // Tombol di Bar untuk toggle WallpaperPanel.
 // Menampilkan thumbnail wallpaper aktif (dari ~/.cache/wallpaper/current)
@@ -16,6 +17,17 @@ Item {
     // Baca path wallpaper aktif dari cache
     property string currentWallpaper: ""
 
+    // Sinkronisasi dengan WallpaperService
+    Connections {
+        target: WallpaperService
+        function onCurrentWallpaperChanged() {
+            if (WallpaperService.currentWallpaper !== "") {
+                const path = WallpaperService.currentWallpaper
+                root.currentWallpaper = path.length > 0 ? ("file://" + path) : ""
+            }
+        }
+    }
+
     Process {
         id: readCurrentProc
         command: ["sh", "-c", "cat ~/.cache/wallpaper/current 2>/dev/null || echo ''"]
@@ -23,13 +35,16 @@ Item {
             onStreamFinished: {
                 const p = text.trim()
                 root.currentWallpaper = p.length > 0 ? ("file://" + p) : ""
+                // Update service
+                if (p.length > 0)
+                    WallpaperService.setCurrent(p)
             }
         }
     }
 
-    // Refresh thumbnail setiap 5 detik untuk menangkap perubahan
+    // Refresh thumbnail setiap 2 detik untuk menangkap perubahan
     Timer {
-        interval: 5000; running: true; repeat: true; triggeredOnStart: true
+        interval: 2000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: readCurrentProc.running = true
     }
 

@@ -209,8 +209,8 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation  { target: cardTx; property: "y";       duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator  { target: card;                         duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation  { target: cardTx; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator  { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
@@ -220,8 +220,8 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation  { target: cardTx; property: "y";   duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator  { target: card;                     duration: 140; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation  { target: cardTx; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator  { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -264,7 +264,7 @@ PanelWindow {
             border.width: 1
 
             Behavior on color        { ColorAnimation { duration: 150 } }
-            Behavior on border.color { ColorAnimation { duration: 150 } }
+            Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
             // blokir klik di dalam kartu
             MouseArea { anchors.fill: parent; onClicked: {} }
@@ -280,7 +280,7 @@ PanelWindow {
                     implicitHeight: 46
                     radius: 10
                     color: Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     RowLayout {
                         anchors.fill: parent
@@ -292,7 +292,7 @@ PanelWindow {
                             text: "󰣇"
                             font.pixelSize: 20
                             color: Root.Colors.blue
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
                         Text {
                             text: "Applications"
@@ -300,7 +300,7 @@ PanelWindow {
                             font.bold: true
                             color: Root.Colors.text
                             Layout.fillWidth: true
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
                         
                         // Toggle button untuk PWA
@@ -310,14 +310,14 @@ PanelWindow {
                             height: 28
                             radius: 8
                             color: navState.showWebApps ? Root.Colors.green : Root.Colors.surface1
-                            Behavior on color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰖟"  // icon Chrome/web
                                 font.pixelSize: 14
                                 color: navState.showWebApps ? Root.Colors.base : Root.Colors.subtext
-                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                             
                             MouseArea {
@@ -333,7 +333,7 @@ PanelWindow {
                                 anchors.fill: parent
                                 radius: parent.radius
                                 color: webAppToggle.containsMouse ? Qt.rgba(255, 255, 255, 0.1) : "transparent"
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                         }
                         
@@ -341,7 +341,7 @@ PanelWindow {
                             text: menuModel.results.length + " apps"
                             font.pixelSize: 11
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
                     }
                 }
@@ -355,7 +355,7 @@ PanelWindow {
                     border.color: searchInput.activeFocus ? Root.Colors.blue : "transparent"
                     border.width: 1
                     Behavior on color        { ColorAnimation { duration: 150 } }
-                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                    Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     RowLayout {
                         anchors.fill: parent
@@ -367,7 +367,7 @@ PanelWindow {
                             text: "󰍉"
                             font.pixelSize: 16
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         TextField {
@@ -399,7 +399,7 @@ PanelWindow {
                                     root.closeRequested()
                                 }
                             }
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         // Tombol clear
@@ -407,7 +407,7 @@ PanelWindow {
                             visible: searchInput.text.length > 0
                             width: 18; height: 18; radius: 9
                             color: clearMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰅖"
@@ -481,7 +481,7 @@ PanelWindow {
                                         return Root.Colors.surface0
                                     }
 
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                     Text {
                                         id: catLbl
@@ -491,7 +491,7 @@ PanelWindow {
                                         color: (menuModel.category === modelData || (navState.focusArea === "categories" && navState.categoryIndex === index))
                                             ? Root.Colors.base
                                             : Root.Colors.subtext
-                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                     }
 
                                     MouseArea {
@@ -567,7 +567,7 @@ PanelWindow {
                                 return Root.Colors.surface1
                             return "transparent"
                         }
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         RowLayout {
                             anchors.fill: parent
@@ -599,7 +599,7 @@ PanelWindow {
                                         font.bold: true
                                         color: Root.Colors.text
                                         elide: Text.ElideRight
-                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                     }
                                     
                                     // Badge PWA
@@ -628,7 +628,7 @@ PanelWindow {
                                     font.pixelSize: 11
                                     color: Root.Colors.subtext
                                     elide: Text.ElideRight
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
                             }
 
@@ -636,7 +636,7 @@ PanelWindow {
                                 text: "󰅂"
                                 font.pixelSize: 14
                                 color: Root.Colors.subtext
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                         }
 

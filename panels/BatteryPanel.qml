@@ -138,7 +138,7 @@ PanelWindow {
                 from: ""; to: "open"
                 ParallelAnimation {
                     NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
-                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
@@ -149,7 +149,7 @@ PanelWindow {
                 SequentialAnimation {
                 ParallelAnimation {
                     NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
-                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                 }
                     ScriptAction { script: root.showPanel = false }
                 }
@@ -217,7 +217,7 @@ PanelWindow {
                         onTrackColorChanged: requestPaint()
 
                         Behavior on arcValue {
-                            NumberAnimation { duration: 600; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
+                            NumberAnimation { duration: Root.Appearance.animation.elementMove.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve }
                         }
 
                         onPaint: {
@@ -400,7 +400,7 @@ PanelWindow {
                                     easing.type: Root.Appearance.animation.elementMoveFast.type
                                     easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
                                 }}
-                                Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                                Behavior on width { NumberAnimation { duration: Root.Appearance.animation.elementResize.duration; easing.type: Root.Appearance.animation.elementResize.type; easing.bezierCurve: Root.Appearance.animation.elementResize.bezierCurve } }
                             }
                         }
                     }

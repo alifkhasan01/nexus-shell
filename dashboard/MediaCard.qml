@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell.Services.Mpris
-import "../../" as Root
+import "../" as Root
 
 Rectangle {
     id: root
@@ -9,6 +9,13 @@ Rectangle {
     height: 90
     radius: 16
     color: Root.Colors.surface0
+    Behavior on color {
+        ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
 
     property var player: Mpris.players.values.length > 0 ? Mpris.players.values[0] : null
     property bool hasPlayer: player !== null
@@ -25,6 +32,13 @@ Rectangle {
             radius: 32
             color: Root.Colors.surface1
             clip: true
+            Behavior on color {
+                ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
 
             Image {
                 anchors.fill: parent
@@ -44,6 +58,14 @@ Rectangle {
                     duration: 16000
                     loops: Animation.Infinite
                 }
+                
+                Behavior on opacity {
+                    NumberAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
 
             Text {
@@ -52,6 +74,13 @@ Rectangle {
                 text: "󰝚"
                 font.pixelSize: 24
                 color: Root.Colors.subtext
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -66,6 +95,13 @@ Rectangle {
                 font.pixelSize: 14
                 font.bold: true
                 elide: Text.ElideRight
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
             Text {
                 Layout.fillWidth: true
@@ -73,6 +109,13 @@ Rectangle {
                 color: Root.Colors.subtext
                 font.pixelSize: 12
                 elide: Text.ElideRight
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
 
             RowLayout {
@@ -84,6 +127,20 @@ Rectangle {
                     font.pixelSize: 16
                     color: Root.Colors.text
                     opacity: root.hasPlayer && root.player.canGoPrevious ? 1 : 0.35
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
                     MouseArea {
                         anchors.fill: parent
                         anchors.margins: -6
@@ -96,6 +153,20 @@ Rectangle {
                     font.pixelSize: 18
                     color: Root.Colors.blue
                     opacity: root.hasPlayer && root.player.canControl ? 1 : 0.45
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
                     MouseArea {
                         anchors.fill: parent
                         anchors.margins: -6
@@ -115,6 +186,20 @@ Rectangle {
                     font.pixelSize: 16
                     color: Root.Colors.text
                     opacity: root.hasPlayer && root.player.canGoNext ? 1 : 0.35
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }
+                    }
                     MouseArea {
                         anchors.fill: parent
                         anchors.margins: -6

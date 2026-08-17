@@ -176,31 +176,27 @@ PanelWindow {
         // Transisi animasi untuk volume panel
         transitions: [
             // Animasi OPEN: Slide down dari atas dengan fade in
-            // Duration: 220ms untuk smooth entrance
-            // Menggunakan ParallelAnimation untuk sinkronisasi slide + fade
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
-            // Duration: 160ms untuk responsive exit
-            // ScriptAction menyembunyikan panel setelah animasi selesai
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
@@ -226,7 +222,7 @@ PanelWindow {
                     font.pixelSize: 15
                     font.bold: true
                     color: Root.Colors.text
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -238,7 +234,7 @@ PanelWindow {
                     height: 28
                     radius: 8
                     color: Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Row {
                         id: tabRow
@@ -258,7 +254,7 @@ PanelWindow {
                                 color: root.currentTab === index
                                     ? Root.Colors.surface2
                                     : (tabMa.containsMouse ? Root.Colors.surface1 : "transparent")
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 Text {
                                     id: tabLbl
@@ -267,7 +263,7 @@ PanelWindow {
                                     font.pixelSize: 11
                                     font.bold: root.currentTab === index
                                     color: root.currentTab === index ? Root.Colors.text : Root.Colors.subtext
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 MouseArea {
@@ -289,7 +285,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 implicitHeight: root.currentTab === 0 ? devicesCol.implicitHeight : appsCol.implicitHeight
 
-                Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                Behavior on implicitHeight { NumberAnimation { duration: Root.Appearance.animation.elementResize.duration; easing.type: Root.Appearance.animation.elementResize.type; easing.bezierCurve: Root.Appearance.animation.elementResize.bezierCurve } }
 
                 // ── TAB 0: PERANGKAT ──────────────────────────────────────
                 ColumnLayout {
@@ -298,7 +294,7 @@ PanelWindow {
                     spacing: 2
                     opacity: root.currentTab === 0 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     // ── Output devices ────────────────────────────────────
                     SectionLabel {
@@ -343,7 +339,7 @@ PanelWindow {
                         color: Root.Colors.subtext
                         horizontalAlignment: Text.AlignHCenter
                         topPadding: 4; bottomPadding: 4
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // ── Divider ───────────────────────────────────────────
@@ -355,7 +351,7 @@ PanelWindow {
                         Layout.bottomMargin: 4
                         height: 1
                         color: Root.Colors.surface1
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // ── Input devices ─────────────────────────────────────
@@ -393,7 +389,7 @@ PanelWindow {
                         color: Root.Colors.subtext
                         horizontalAlignment: Text.AlignHCenter
                         topPadding: 4; bottomPadding: 4
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     Item { Layout.preferredHeight: 2 }
@@ -406,7 +402,7 @@ PanelWindow {
                     spacing: 2
                     opacity: root.currentTab === 1 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     // ── App output streams ────────────────────────────────
                     SectionLabel {
@@ -440,7 +436,7 @@ PanelWindow {
                         font.pixelSize: 11
                         color: Root.Colors.subtext
                         horizontalAlignment: Text.AlignHCenter
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // ── Divider ───────────────────────────────────────────
@@ -453,7 +449,7 @@ PanelWindow {
                         Layout.bottomMargin: 4
                         height: 1
                         color: Root.Colors.surface1
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     // ── App input streams (recording) ─────────────────────
@@ -515,7 +511,7 @@ PanelWindow {
         font.letterSpacing: 0.8
         color: Root.Colors.subtext
         opacity: 0.7
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
     }
 
     // ── Component: DeviceRow ───────────────────────────────────────────────
@@ -532,7 +528,7 @@ PanelWindow {
         implicitHeight: devLayout.implicitHeight + 12
         radius: 10
         color: devHover.hovered ? Root.Colors.surface0 : "transparent"
-        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         readonly property bool muted: node?.audio ? node.audio.muted : false
         readonly property real volume: node?.audio ? (node.audio.volume ?? 0) : 0
@@ -555,7 +551,7 @@ PanelWindow {
                 color: "transparent"
                 border.width: 2
                 border.color: devRow.isDefault ? Root.Colors.blue : Root.Colors.overlay0
-                Behavior on border.color { ColorAnimation { duration: 120 } }
+                Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                 Rectangle {
                     anchors.centerIn: parent
@@ -564,7 +560,7 @@ PanelWindow {
                     radius: 4
                     color: Root.Colors.blue
                     opacity: devRow.isDefault ? 1 : 0
-                    Behavior on opacity { NumberAnimation { duration: 120 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 MouseArea {
@@ -589,14 +585,14 @@ PanelWindow {
                 color: devRow.muted
                     ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
                     : (muteBtnMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1)
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                 Text {
                     anchors.centerIn: parent
                     text: devRow.muted ? "󰝟" : devRow.deviceIcon
                     font.pixelSize: 15
                     color: devRow.muted ? Root.Colors.red : Root.Colors.blue
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 MouseArea {
@@ -624,7 +620,7 @@ PanelWindow {
                     font.bold: devRow.isDefault
                     color: devRow.isDefault ? Root.Colors.text : Root.Colors.subtext
                     elide: Text.ElideRight
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     MouseArea {
                         anchors.fill: parent
@@ -650,7 +646,7 @@ PanelWindow {
                 color: Root.Colors.subtext
                 Layout.minimumWidth: 34
                 horizontalAlignment: Text.AlignRight
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
         }
 
@@ -678,7 +674,7 @@ PanelWindow {
         implicitHeight: appLayout.implicitHeight + 12
         radius: 10
         color: appHover.hovered ? Root.Colors.surface0 : "transparent"
-        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         readonly property bool muted: node?.audio ? node.audio.muted : false
         readonly property real volume: node?.audio ? (node.audio.volume ?? 0) : 0
@@ -725,14 +721,14 @@ PanelWindow {
                 color: appRow.muted
                     ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
                     : (appMuteMa.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1)
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                 Text {
                     anchors.centerIn: parent
                     text: appRow.muted ? "󰝟" : appRow.appIcon
                     font.pixelSize: 14
                     color: appRow.muted ? Root.Colors.red : Root.Colors.overlay2
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 MouseArea {
@@ -755,7 +751,7 @@ PanelWindow {
                     font.pixelSize: 12
                     color: Root.Colors.text
                     elide: Text.ElideRight
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 VolumeSlider {
@@ -773,7 +769,7 @@ PanelWindow {
                 color: Root.Colors.subtext
                 Layout.minimumWidth: 34
                 horizontalAlignment: Text.AlignRight
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
         }
 
@@ -837,7 +833,7 @@ PanelWindow {
                 height: parent.height
                 radius: 3
                 color: volSlider.muted ? Root.Colors.red : Root.Colors.blue
-                Behavior on color { ColorAnimation { duration: 120 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
         }
 
@@ -848,7 +844,7 @@ PanelWindow {
             height: 14
             radius: 7
             color: Root.Colors.text
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
         }
     }
 }

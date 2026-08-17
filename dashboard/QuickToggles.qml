@@ -25,11 +25,13 @@ GridLayout {
         readonly property bool monitorOn: Services.IdleManager.monitoringEnabled
 
         color: monitorOn ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+        Behavior on color {
+            ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -39,22 +41,26 @@ GridLayout {
                 text: parent.parent.monitorOn ? "󰅶" : "󰒲"
                 font.pixelSize: 18
                 color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "IDLE"
                 font.pixelSize: 11
                 color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -82,11 +88,13 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: ssArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+        Behavior on color {
+            ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -96,22 +104,26 @@ GridLayout {
                 text: "󰄀"
                 font.pixelSize: 18
                 color: ssArea.containsPress ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "SS SELECT"
                 font.pixelSize: 11
                 color: ssArea.containsPress ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -134,11 +146,13 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: grimArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+        Behavior on color {
+            ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         Column {
             anchors.centerIn: parent
@@ -148,22 +162,26 @@ GridLayout {
                 text: "󰹑"
                 font.pixelSize: 18
                 color: grimArea.containsPress ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "SS FULL"
                 font.pixelSize: 11
                 color: grimArea.containsPress ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+                Behavior on color {
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }
+                }
             }
         }
 
@@ -192,11 +210,13 @@ GridLayout {
                                       : false
 
         color: dndOn ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
+        Behavior on color {
+            ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
 
         Column {
             anchors.centerIn: parent

@@ -172,23 +172,23 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         // ── Layout utama ──────────────────────────────────────────────────
@@ -209,7 +209,7 @@ PanelWindow {
                     font.pixelSize: 15
                     font.bold: true
                     color: Root.Colors.text
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -223,7 +223,7 @@ PanelWindow {
                     color: clearMa.containsMouse
                            ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
                            : Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Text {
                         id: clearLbl
@@ -231,7 +231,7 @@ PanelWindow {
                         text: "\u{f00c2}  Hapus semua"
                         font.pixelSize: 10
                         color: clearMa.containsMouse ? Root.Colors.red : Root.Colors.subtext
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
                     MouseArea {
                         id: clearMa
@@ -248,7 +248,7 @@ PanelWindow {
                     height: 28
                     radius: 8
                     color: Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Row {
                         id: tabRow
@@ -268,7 +268,7 @@ PanelWindow {
                                 color: root.currentTab === index
                                     ? Root.Colors.surface2
                                     : (tabMa.containsMouse ? Root.Colors.surface1 : "transparent")
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 Text {
                                     id: tabLbl
@@ -277,7 +277,7 @@ PanelWindow {
                                     font.pixelSize: 11
                                     font.bold: root.currentTab === index
                                     color: root.currentTab === index ? Root.Colors.text : Root.Colors.subtext
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 MouseArea {
@@ -298,7 +298,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 height: 1
                 color: Root.Colors.surface1
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
             // ── Konten tab (stack, keduanya di atas Item yang sama) ────────
@@ -312,7 +312,7 @@ PanelWindow {
                     spacing: 8
                     opacity: root.currentTab === 0 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     // Search box
                     Rectangle {
@@ -322,7 +322,7 @@ PanelWindow {
                         color: Root.Colors.surface0
                         border.color: clipInput.activeFocus ? Root.Colors.blue : Root.Colors.surface2
                         border.width: 1
-                        Behavior on border.color { ColorAnimation { duration: 120 } }
+                        Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                         Row {
                             anchors.fill: parent
@@ -415,7 +415,7 @@ PanelWindow {
                                     implicitHeight: clipRow.implicitHeight + 14
                                     radius: 10
                                     color: clipHover.hovered ? Root.Colors.surface0 : Root.Colors.base
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                     RowLayout {
                                         id: clipRow
@@ -441,7 +441,7 @@ PanelWindow {
                                             elide: Text.ElideRight
                                             maximumLineCount: 2
                                             wrapMode: Text.WordWrap
-                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                         }
 
                                         // Tombol hapus entry (muncul saat hover)
@@ -451,7 +451,7 @@ PanelWindow {
                                             color: delMa.containsMouse
                                                    ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.22)
                                                    : "transparent"
-                                            Behavior on color { ColorAnimation { duration: 100 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                             Text {
                                                 anchors.centerIn: parent
@@ -488,7 +488,7 @@ PanelWindow {
                     showHeader: false
                     opacity: root.currentTab === 1 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
             }
         }

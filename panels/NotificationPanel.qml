@@ -74,8 +74,8 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
@@ -85,15 +85,15 @@ PanelWindow {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
         MouseArea { anchors.fill: parent; onClicked: {} }
 
         ColumnLayout {
@@ -114,7 +114,7 @@ PanelWindow {
                     font.pixelSize: 15
                     font.bold: true
                     color: Root.Colors.text
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -143,7 +143,7 @@ PanelWindow {
                     height: 24
                     radius: 8
                     color: clearMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 100 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Text {
                         id: clearTxt
@@ -220,7 +220,7 @@ PanelWindow {
                             implicitHeight: itemCol.implicitHeight + 18
                             radius: 10
                             color: itemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             border.color: urgency === NotificationUrgency.Critical
                                 ? Root.Colors.red
@@ -251,7 +251,7 @@ PanelWindow {
                                     Rectangle {
                                         width: 18; height: 18; radius: 5
                                         color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                                        Behavior on color { ColorAnimation { duration: 100 } }
+                                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                         Text {
                                             anchors.centerIn: parent
                                             text: "󰅖"; font.pixelSize: 10

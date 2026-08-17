@@ -118,23 +118,23 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration }
                 }
             },
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
                     ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+                        NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                        OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration }
                     }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
@@ -158,7 +158,7 @@ PanelWindow {
                     font.pixelSize: 15
                     font.bold: true
                     color: Root.Colors.text
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
 
                 Item { Layout.fillWidth: true }
@@ -170,7 +170,7 @@ PanelWindow {
                     height: 28
                     radius: 8
                     color: Root.Colors.surface0
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Row {
                         id: tabRow
@@ -190,7 +190,7 @@ PanelWindow {
                                 color: root.currentTab === index
                                     ? Root.Colors.surface2
                                     : (tabMa.containsMouse ? Root.Colors.surface1 : "transparent")
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 Text {
                                     id: tabLbl
@@ -199,7 +199,7 @@ PanelWindow {
                                     font.pixelSize: 11
                                     font.bold: root.currentTab === index
                                     color: root.currentTab === index ? Root.Colors.text : Root.Colors.subtext
-                                    Behavior on color { ColorAnimation { duration: 100 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                 }
 
                                 MouseArea {
@@ -220,7 +220,7 @@ PanelWindow {
                 Layout.fillWidth: true
                 height: 1
                 color: Root.Colors.surface1
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
             // ── Konten tab ─────────────────────────────────────────────────
@@ -235,7 +235,7 @@ PanelWindow {
                     spacing: 6
                     opacity: root.currentTab === 0 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     // Toolbar: spacer + scan + toggle
                     RowLayout {
@@ -249,14 +249,14 @@ PanelWindow {
                             width: 26; height: 26; radius: 8
                             visible: root.wifiEnabled
                             color: root.wifiScanning ? Root.Colors.blue : Root.Colors.surface0
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰑐"
                                 font.pixelSize: 13
                                 color: root.wifiScanning ? Root.Colors.base : Root.Colors.subtext
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 RotationAnimator on rotation {
                                     running: root.wifiScanning
@@ -286,8 +286,8 @@ PanelWindow {
                                 x: root.wifiEnabled ? parent.width - width - 4 : 4
                                 y: 4; width: 18; height: 18; radius: 9
                                 color: Root.Colors.base
-                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on x { NumberAnimation { duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             MouseArea {
@@ -321,7 +321,7 @@ PanelWindow {
                                 radius: 2
                                 color: Root.Colors.surface2
                                 opacity: parent.active ? 1.0 : 0.4
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                                Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                             background: Rectangle { color: "transparent" }
                         }
@@ -335,7 +335,7 @@ PanelWindow {
                             font.pixelSize: 12
                             color: Root.Colors.subtext
                             topPadding: 12; bottomPadding: 12
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         ColumnLayout {
@@ -352,7 +352,7 @@ PanelWindow {
                                     Layout.fillWidth: true
                                     // tinggi normal 52, melebar saat input password muncul
                                     implicitHeight: pwRow.visible ? 52 + pwRow.implicitHeight + 8 : 52
-                                    Behavior on implicitHeight { NumberAnimation { duration: 180; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
+                                    Behavior on implicitHeight { NumberAnimation { duration: Root.Appearance.animation.elementResize.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
 
                                     readonly property bool isPending: root.pendingSsid === modelData.ssid
 
@@ -360,7 +360,7 @@ PanelWindow {
                                     color: modelData.connected
                                            ? Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.15)
                                            : (hoverMa.containsMouse ? Root.Colors.surface0 : "transparent")
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                     // ── Baris utama ───────────────────────────────
                                     RowLayout {
@@ -383,7 +383,7 @@ PanelWindow {
                                             }
                                             font.pixelSize: 20
                                             color: modelData.connected ? Root.Colors.blue : Root.Colors.subtext
-                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                         }
 
                                         // SSID + status
@@ -398,14 +398,14 @@ PanelWindow {
                                                 font.bold: modelData.connected
                                                 color: modelData.connected ? Root.Colors.blue : Root.Colors.text
                                                 elide: Text.ElideRight
-                                                Behavior on color { ColorAnimation { duration: 150 } }
+                                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                             }
                                             Text {
                                                 visible: modelData.connected
                                                 text: "Terhubung"
                                                 font.pixelSize: 11
                                                 color: Root.Colors.green
-                                                Behavior on color { ColorAnimation { duration: 150 } }
+                                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                             }
                                         }
 
@@ -415,7 +415,7 @@ PanelWindow {
                                             text: "󰌾"
                                             font.pixelSize: 11
                                             color: Root.Colors.subtext
-                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                         }
 
                                         // Tombol connect / disconnect / batal
@@ -426,7 +426,7 @@ PanelWindow {
                                             radius: 8
                                             color: (modelData.connected || netItem.isPending)
                                                    ? Root.Colors.surface1 : Root.Colors.blue
-                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                             Text {
                                                 id: connTxt
@@ -437,7 +437,7 @@ PanelWindow {
                                                 font.pixelSize: 12
                                                 color: (modelData.connected || netItem.isPending)
                                                        ? Root.Colors.text : Root.Colors.base
-                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                             }
 
                                             MouseArea {
@@ -474,7 +474,7 @@ PanelWindow {
                                         id: pwRow
                                         visible: netItem.isPending
                                         opacity: netItem.isPending ? 1 : 0
-                                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                                        Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                         anchors.left: parent.left
                                         anchors.right: parent.right
@@ -493,8 +493,8 @@ PanelWindow {
                                             color: Root.Colors.surface0
                                             border.color: pwField.activeFocus ? Root.Colors.blue : Root.Colors.surface2
                                             border.width: 1
-                                            Behavior on border.color { ColorAnimation { duration: 120 } }
-                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                            Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                             RowLayout {
                                                 anchors.fill: parent
@@ -534,10 +534,10 @@ PanelWindow {
                                                         font.pixelSize: 13
                                                         color: Root.Colors.overlay0
                                                         verticalAlignment: Text.AlignVCenter
-                                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                                     }
 
-                                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                                 }
 
                                                 // Toggle tampilkan/sembunyikan password
@@ -545,7 +545,7 @@ PanelWindow {
                                                     text: pwField.showPw ? "󰛑" : "󰛐"
                                                     font.pixelSize: 14
                                                     color: Root.Colors.subtext
-                                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                                     MouseArea {
                                                         anchors.fill: parent
@@ -564,7 +564,7 @@ PanelWindow {
                                             radius: 8
                                             color: root.pendingPassword.length >= 8
                                                    ? Root.Colors.blue : Root.Colors.surface1
-                                            Behavior on color { ColorAnimation { duration: 120 } }
+                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                             function doConnect() {
                                                 if (root.pendingPassword.length < 1) return
@@ -580,7 +580,7 @@ PanelWindow {
                                                 font.pixelSize: 12
                                                 color: root.pendingPassword.length >= 8
                                                        ? Root.Colors.base : Root.Colors.subtext
-                                                Behavior on color { ColorAnimation { duration: 120 } }
+                                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                                             }
 
                                             MouseArea {
@@ -609,7 +609,7 @@ PanelWindow {
                                 font.pixelSize: 12
                                 color: Root.Colors.subtext
                                 topPadding: 8; bottomPadding: 8
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             // Pesan saat scanning
@@ -621,7 +621,7 @@ PanelWindow {
                                 font.pixelSize: 12
                                 color: Root.Colors.subtext
                                 topPadding: 4; bottomPadding: 4
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                         }
                     }
@@ -634,7 +634,7 @@ PanelWindow {
                     spacing: 6
                     opacity: root.currentTab === 1 ? 1 : 0
                     visible: opacity > 0
-                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     // Toolbar: spacer + scan + toggle
                     RowLayout {
@@ -648,14 +648,14 @@ PanelWindow {
                             width: 26; height: 26; radius: 8
                             visible: root.btEnabled
                             color: root.btScanning ? Root.Colors.blue : Root.Colors.surface0
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                             Text {
                                 anchors.centerIn: parent
                                 text: "󰑐"
                                 font.pixelSize: 13
                                 color: root.btScanning ? Root.Colors.base : Root.Colors.subtext
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                                 RotationAnimator on rotation {
                                     running: root.btScanning
@@ -685,8 +685,8 @@ PanelWindow {
                                 x: root.btEnabled ? parent.width - width - 4 : 4
                                 y: 4; width: 18; height: 18; radius: 9
                                 color: Root.Colors.base
-                                Behavior on x { NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on x { NumberAnimation { duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             MouseArea {
@@ -720,7 +720,7 @@ PanelWindow {
                                 radius: 2
                                 color: Root.Colors.surface2
                                 opacity: parent.active ? 1.0 : 0.4
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
+                                Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                             background: Rectangle { color: "transparent" }
                         }
@@ -734,7 +734,7 @@ PanelWindow {
                             font.pixelSize: 12
                             color: Root.Colors.subtext
                             topPadding: 12; bottomPadding: 12
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                         }
 
                         ColumnLayout {
@@ -754,7 +754,7 @@ PanelWindow {
                                 leftPadding: 4
                                 topPadding: 2
                                 bottomPadding: 2
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             Repeater {
@@ -779,7 +779,7 @@ PanelWindow {
                                 leftPadding: 4
                                 topPadding: 6
                                 bottomPadding: 2
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             Repeater {
@@ -802,7 +802,7 @@ PanelWindow {
                                 font.pixelSize: 12
                                 color: Root.Colors.subtext
                                 topPadding: 8; bottomPadding: 8
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
 
                             // Pesan saat scanning
@@ -814,7 +814,7 @@ PanelWindow {
                                 font.pixelSize: 12
                                 color: Root.Colors.subtext
                                 topPadding: 4; bottomPadding: 4
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                         }
                     }
@@ -837,7 +837,7 @@ PanelWindow {
         color: deviceData.connected
                ? Qt.rgba(Root.Colors.blue.r, Root.Colors.blue.g, Root.Colors.blue.b, 0.15)
                : (rowHover.containsMouse ? Root.Colors.surface0 : "transparent")
-        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
         RowLayout {
             anchors.fill: parent
@@ -860,7 +860,7 @@ PanelWindow {
                 }
                 font.pixelSize: 22
                 color: deviceData.connected ? Root.Colors.blue : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
             }
 
             ColumnLayout {
@@ -874,14 +874,14 @@ PanelWindow {
                     font.bold: deviceData.connected
                     color: deviceData.connected ? Root.Colors.blue : Root.Colors.text
                     elide: Text.ElideRight
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
                 Text {
                     visible: deviceData.connected
                     text: "Terhubung"
                     font.pixelSize: 11
                     color: Root.Colors.green
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                 }
             }
 
@@ -895,7 +895,7 @@ PanelWindow {
                     implicitHeight: 28
                     radius: 8
                     color: deviceData.connected ? Root.Colors.surface1 : Root.Colors.blue
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Text {
                         id: actTxt
@@ -903,7 +903,7 @@ PanelWindow {
                         text: deviceData.connected ? "Putus" : "Hubung"
                         font.pixelSize: 12
                         color: deviceData.connected ? Root.Colors.text : Root.Colors.base
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     MouseArea {
@@ -923,14 +923,14 @@ PanelWindow {
                     visible: deviceData.paired && rowHover.containsMouse
                     width: 24; height: 24; radius: 7
                     color: Root.Colors.surface1
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                     Text {
                         anchors.centerIn: parent
                         text: "󰆴"
                         font.pixelSize: 12
                         color: Root.Colors.red
-                        Behavior on color { ColorAnimation { duration: 120 } }
+                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                     }
 
                     MouseArea {

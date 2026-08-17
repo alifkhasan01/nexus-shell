@@ -35,11 +35,13 @@ Rectangle {
     radius: 14
     color: active ? Root.Colors.blue : Root.Colors.surface0
 
-    Behavior on color { ColorAnimation {
-        duration: Root.Appearance.animation.elementMoveFast.duration
-        easing.type: Root.Appearance.animation.elementMoveFast.type
-        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-    }}
+    Behavior on color {
+        ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }
+    }
 
     Column {
         anchors.centerIn: parent
@@ -50,12 +52,26 @@ Rectangle {
             text: root.icon
             font.pixelSize: 18
             color: root.active ? Root.Colors.base : Root.Colors.text
+            Behavior on color {
+                ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
         }
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: root.label
             font.pixelSize: 11
             color: root.active ? Root.Colors.base : Root.Colors.subtext
+            Behavior on color {
+                ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }
+            }
         }
     }
 
@@ -71,6 +87,13 @@ Rectangle {
         radius: 3
         color: root.active ? Qt.rgba(1,1,1,0.5) : Root.Colors.subtext
         opacity: 0.7
+        Behavior on color {
+            ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }
+        }
     }
 
     MouseArea {
