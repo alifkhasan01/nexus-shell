@@ -137,8 +137,8 @@ PanelWindow {
             Transition {
                 from: ""; to: "open"
                 ParallelAnimation {
-                    NumberAnimation { target: cardTranslate; property: "y"; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-                    OpacityAnimator { target: card; duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
                 }
             },
             // Animasi CLOSE: Slide up ke atas dengan fade out
@@ -147,16 +147,20 @@ PanelWindow {
             Transition {
                 from: "open"; to: ""
                 SequentialAnimation {
-                    ParallelAnimation {
-                        NumberAnimation { target: cardTranslate; property: "y"; duration: 160; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                        OpacityAnimator { target: card; duration: 150; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-                    }
+                ParallelAnimation {
+                    NumberAnimation { target: cardTranslate; property: "y"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                    OpacityAnimator { target: card; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                }
                     ScriptAction { script: root.showPanel = false }
                 }
             }
         ]
 
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         // Blokir klik di dalam kartu
         MouseArea { anchors.fill: parent; onClicked: {} }
@@ -178,7 +182,11 @@ PanelWindow {
                 font.pixelSize: 15
                 font.bold: true
                 color: Root.Colors.text
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }}
             }
 
             // ── Arc + info utama ───────────────────────────────────────────
@@ -259,7 +267,11 @@ PanelWindow {
                             font.pixelSize: 20
                             font.bold: true
                             color: arcCanvas.fillColor
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
                         Text {
                             anchors.horizontalCenter: parent.horizontalCenter
@@ -270,7 +282,11 @@ PanelWindow {
                             }
                             font.pixelSize: 9
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
                     }
                 }
@@ -290,7 +306,11 @@ PanelWindow {
                             text: root.charging ? "Waktu ke penuh" : "Waktu tersisa"
                             font.pixelSize: 10
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
                         Text {
                             text: root.charging
@@ -299,7 +319,11 @@ PanelWindow {
                             font.pixelSize: 15
                             font.bold: true
                             color: Root.Colors.text
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
                     }
 
@@ -308,7 +332,11 @@ PanelWindow {
                         Layout.fillWidth: true
                         height: 1
                         color: Root.Colors.surface1
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }}
                     }
 
                     // Health
@@ -320,7 +348,11 @@ PanelWindow {
                             text: "Kesehatan Baterai"
                             font.pixelSize: 10
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
                         RowLayout {
                             spacing: 6
@@ -329,13 +361,21 @@ PanelWindow {
                                 font.pixelSize: 15
                                 font.bold: true
                                 color: root.healthColor(root.healthPct)
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+                                    duration: Root.Appearance.animation.elementMoveFast.duration
+                                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                }}
                             }
                             Text {
                                 text: "· " + root.healthLabel(root.healthPct)
                                 font.pixelSize: 11
                                 color: Root.Colors.subtext
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+                                    duration: Root.Appearance.animation.elementMoveFast.duration
+                                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                }}
                             }
                         }
                         // Health bar
@@ -344,14 +384,22 @@ PanelWindow {
                             height: 4
                             radius: 2
                             color: Root.Colors.surface1
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
 
                             Rectangle {
                                 width: parent.width * (root.healthPct / 100)
                                 height: parent.height
                                 radius: 2
                                 color: root.healthColor(root.healthPct)
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+                                    duration: Root.Appearance.animation.elementMoveFast.duration
+                                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                }}
                                 Behavior on width { NumberAnimation { duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard } }
                             }
                         }
@@ -364,7 +412,11 @@ PanelWindow {
                 Layout.fillWidth: true
                 height: 1
                 color: Root.Colors.surface1
-                Behavior on color { ColorAnimation { duration: 150 } }
+                Behavior on color { ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }}
             }
 
             // ── Power Profile Selector ─────────────────────────────────────
@@ -377,7 +429,11 @@ PanelWindow {
                     font.pixelSize: 13
                     font.bold: true
                     color: Root.Colors.text
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }}
                 }
 
                 // Tiga tombol profile — full-width, vertical stack
@@ -418,8 +474,16 @@ PanelWindow {
                                 }
                             }
 
-                            Behavior on color        { ColorAnimation { duration: 120 } }
-                            Behavior on border.color { ColorAnimation { duration: 120 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
 
                             RowLayout {
                                 anchors.fill: parent
@@ -432,7 +496,11 @@ PanelWindow {
                                     text: modelData.icon
                                     font.pixelSize: 20
                                     color: isActive ? profileAccent : Root.Colors.subtext
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation {
+                                        duration: Root.Appearance.animation.elementMoveFast.duration
+                                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                    }}
                                 }
 
                                 // Label + deskripsi
@@ -445,7 +513,11 @@ PanelWindow {
                                         font.pixelSize: 13
                                         font.bold: isActive
                                         color: isActive ? Root.Colors.text : Root.Colors.subtext
-                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation {
+                                            duration: Root.Appearance.animation.elementMoveFast.duration
+                                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                        }}
                                     }
                                     Text {
                                         Layout.fillWidth: true
@@ -453,7 +525,11 @@ PanelWindow {
                                         font.pixelSize: 10
                                         color: Root.Colors.subtext
                                         elide: Text.ElideRight
-                                        Behavior on color { ColorAnimation { duration: 120 } }
+                                        Behavior on color { ColorAnimation {
+                                            duration: Root.Appearance.animation.elementMoveFast.duration
+                                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                        }}
                                     }
                                 }
 
@@ -463,7 +539,11 @@ PanelWindow {
                                     text: "󰄴"
                                     font.pixelSize: 14
                                     color: profileAccent
-                                    Behavior on color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation {
+                                        duration: Root.Appearance.animation.elementMoveFast.duration
+                                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                    }}
                                 }
                             }
 

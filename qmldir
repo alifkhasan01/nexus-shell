@@ -5,3 +5,6 @@ singleton BrightnessService 1.0 services/BrightnessService.qml
 singleton WeatherService 1.0 services/WeatherService.qml
 singleton NotificationService 1.0 services/NotificationService.qml
 singleton Motion 1.0 services/Motion.qml
+singleton Appearance 1.0 services/Appearance.qml
+singleton ColorUtils 1.0 services/ColorUtils.qml
+singleton Config 1.0 services/Config.qml

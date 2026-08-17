@@ -19,7 +19,11 @@ Item {
         anchors.margins: -4
         radius: 6
         color: brightMa.containsMouse ? Root.Colors.surface1 : "transparent"
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Text {
@@ -32,7 +36,11 @@ Item {
             const icon = p >= 67 ? "󰃠" : (p >= 34 ? "󰃝" : "󰃞")
             return icon + "  " + p + "%"
         }
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     // Signal ke Bar.qml untuk tampilkan OSD

@@ -40,11 +40,19 @@ Item {
         color: swArea.containsMouse
                ? Root.Colors.surface1
                : (root.running ? Qt.rgba(Root.Colors.green.r, Root.Colors.green.g, Root.Colors.green.b, 0.15) : Root.Colors.surface0)
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         border.color: root.running ? Root.Colors.green : "transparent"
         border.width: root.running ? 1 : 0
-        Behavior on border.color { ColorAnimation { duration: 150 } }
+        Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Row {
@@ -58,7 +66,11 @@ Item {
             font.family: "CaskaydiaCove Nerd Font"
             font.pixelSize: 11
             color: root.running ? Root.Colors.green : Root.Colors.green
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
         }
 
         Text {
@@ -67,7 +79,11 @@ Item {
             font.pixelSize: 12
             font.bold: true
             color: root.running ? Root.Colors.green : Root.Colors.text
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
         }
     }
 

@@ -87,16 +87,16 @@ PanelWindow {
         ParallelAnimation {
             id: enterAnim
             running: false
-            NumberAnimation { target: card;   property: "opacity"; from: 0; to: 1; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
-            NumberAnimation { target: slideT; property: "y";       from: -12; to: 0; duration: 220; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter }
+            NumberAnimation { target: card;   property: "opacity"; from: 0; to: 1; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+            NumberAnimation { target: slideT; property: "y";       from: -12; to: 0; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
         }
 
         // ── Animasi keluar ────────────────────────────────────────────────
         ParallelAnimation {
             id: exitAnim
             running: false
-            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: 120; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
-            NumberAnimation { target: slideT; property: "y";       to: -10; duration: 120; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit }
+            NumberAnimation { target: card;   property: "opacity"; to: 0; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+            NumberAnimation { target: slideT; property: "y";       to: -10; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
             onFinished: card.dismissed()
         }
 
@@ -143,8 +143,16 @@ PanelWindow {
                 }
             }
 
-            Behavior on color        { ColorAnimation { duration: 150 } }
-            Behavior on border.color { ColorAnimation { duration: 150 } }
+            Behavior on color        { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
+            Behavior on border.color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
 
             // ── Konten ────────────────────────────────────────────────────
             ColumnLayout {
@@ -195,7 +203,11 @@ PanelWindow {
                         width: 20; height: 20
                         radius: 6
                         color: xMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }}
                         Text {
                             anchors.centerIn: parent
                             text: "󰅖"
@@ -221,7 +233,11 @@ PanelWindow {
                     color: Root.Colors.text
                     wrapMode: Text.WordWrap
                     Layout.fillWidth: true
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }}
                 }
 
                 // ── Body ──────────────────────────────────────────────────
@@ -234,7 +250,11 @@ PanelWindow {
                     textFormat: Text.PlainText
                     Layout.fillWidth: true
                     Layout.bottomMargin: actRow.visible ? 2 : 6
-                    Behavior on color { ColorAnimation { duration: 150 } }
+                    Behavior on color { ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveFast.duration
+                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    }}
                 }
 
                 // ── Tombol aksi ───────────────────────────────────────────
@@ -253,13 +273,21 @@ PanelWindow {
                             height: 28
                             radius: 7
                             color: aMa.containsMouse ? Root.Colors.blue : Root.Colors.surface0
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                             Text {
                                 anchors.centerIn: parent
                                 text: modelData.text
                                 font.pixelSize: 11
                                 color: aMa.containsMouse ? Root.Colors.base : Root.Colors.text
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation {
+                                    duration: Root.Appearance.animation.elementMoveFast.duration
+                                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                }}
                             }
                             MouseArea {
                                 id: aMa

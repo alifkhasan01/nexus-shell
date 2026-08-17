@@ -266,16 +266,16 @@ Scope {
                 Transition {
                     from: ""; to: "visible"
                     ParallelAnimation {
-                        NumberAnimation { property: "opacity"; duration: 150; easing.type: Easing.OutCubic }
-                        NumberAnimation { property: "scale"; duration: 200; easing.type: Easing.OutCubic }
+                        NumberAnimation { property: "opacity"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
+                        NumberAnimation { property: "scale"; duration: Root.Appearance.animation.elementMoveEnter.duration; easing.type: Root.Appearance.animation.elementMoveEnter.type; easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve }
                     }
                 },
                 Transition {
                     from: "visible"; to: ""
                     SequentialAnimation {
                         ParallelAnimation {
-                            NumberAnimation { property: "opacity"; duration: 120; easing.type: Easing.InCubic }
-                            NumberAnimation { property: "scale"; duration: 150; easing.type: Easing.InCubic }
+                            NumberAnimation { property: "opacity"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+                            NumberAnimation { property: "scale"; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
                         }
                         ScriptAction { script: panel.showPanel = false }
                     }
@@ -316,7 +316,11 @@ Scope {
                              ? Root.Colors.surface1 
                              : Root.Colors.surface0
                         
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }}
 
                         Text {
                             anchors.centerIn: parent
@@ -344,7 +348,11 @@ Scope {
                              ? Root.Colors.surface1 
                              : Root.Colors.surface0
                         
-                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on color { ColorAnimation {
+                            duration: Root.Appearance.animation.elementMoveFast.duration
+                            easing.type: Root.Appearance.animation.elementMoveFast.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                        }}
 
                         Text {
                             anchors.centerIn: parent
@@ -427,9 +435,13 @@ Scope {
                                          ? Root.Colors.surface1 
                                          : Root.Colors.surface0
                                     
-                                    Behavior on color { ColorAnimation { duration: 150 } }
+                                    Behavior on color { ColorAnimation {
+                                        duration: Root.Appearance.animation.elementMoveFast.duration
+                                        easing.type: Root.Appearance.animation.elementMoveFast.type
+                                        easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                    }}
 
-                                    MouseArea {
+                                            MouseArea {
                                         id: itemArea
                                         anchors.fill: parent
                                         hoverEnabled: true
@@ -549,7 +561,11 @@ Scope {
                                                      0.2
                                                  )
                                             
-                                            Behavior on color { ColorAnimation { duration: 150 } }
+                                            Behavior on color { ColorAnimation {
+                                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                            }}
 
                                             Text {
                                                 anchors.centerIn: parent
@@ -560,7 +576,11 @@ Scope {
                                                      ? Root.Colors.base 
                                                      : Root.Colors.red
                                                 
-                                                Behavior on color { ColorAnimation { duration: 150 } }
+                                                Behavior on color { ColorAnimation {
+                                                    duration: Root.Appearance.animation.elementMoveFast.duration
+                                                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                                                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                                                }}
                                             }
 
                                             MouseArea {

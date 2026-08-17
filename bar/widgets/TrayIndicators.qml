@@ -43,7 +43,11 @@ Row {
         color: ma.hovered
                ? Root.Colors.surface1
                : Qt.rgba(iconColor.r, iconColor.g, iconColor.b, 0.15)
-        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Text {
             anchors.centerIn: parent

@@ -22,7 +22,7 @@ Rectangle {
         Rectangle {
             width: 64
             height: 64
-            radius: 12
+            radius: 32
             color: Root.Colors.surface1
             clip: true
 
@@ -35,6 +35,15 @@ Rectangle {
                 smooth: true
                 mipmap: false
                 visible: source !== ""
+
+                RotationAnimator on rotation {
+                    running: root.hasPlayer &&
+                             root.player.playbackState === MprisPlaybackState.Playing &&
+                             visible
+                    from: 0; to: 360
+                    duration: 16000
+                    loops: Animation.Infinite
+                }
             }
 
             Text {

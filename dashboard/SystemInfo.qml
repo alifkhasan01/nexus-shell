@@ -42,7 +42,11 @@ component StatRow: Item {
             color: box.tempColor
             Layout.preferredWidth: 16
             horizontalAlignment: Text.AlignHCenter
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
         }
 
         // Label
@@ -52,7 +56,11 @@ component StatRow: Item {
             font.weight: Font.Medium
             color: Root.Colors.text
             Layout.preferredWidth: 28
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
         }
 
         // Sparkline Chart
@@ -151,7 +159,11 @@ component StatRow: Item {
             color: box.tempColor
             Layout.preferredWidth: 34
             horizontalAlignment: Text.AlignRight
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
         }
 
         // Temp atau sub-teks pendek
@@ -163,7 +175,11 @@ component StatRow: Item {
             elide: Text.ElideRight
             Layout.preferredWidth: 60
             horizontalAlignment: Text.AlignRight
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
         }
     }
 }
@@ -326,7 +342,11 @@ component StatRow: Item {
             Layout.preferredHeight: 84
             radius: 14
             color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
             RowLayout {
                 anchors.fill: parent
@@ -396,7 +416,13 @@ component StatRow: Item {
                         radius: width / 2
                         color: Qt.rgba(0, 0, 0, 0.45)
                         opacity: editHover.containsMouse ? 1 : 0
-                        Behavior on opacity { NumberAnimation { duration: 150 } }
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }
+                        }
 
                         Text {
                             anchors.centerIn: parent
@@ -426,7 +452,11 @@ component StatRow: Item {
                         font.pixelSize: 15
                         font.weight: Font.SemiBold
                         color: Root.Colors.text
-                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                     }
                     Text {
                         text: "󰄛  " + root.cpuName.replace(/AMD Ryzen /, "Ryzen ").replace(/ with.*/, "")
@@ -466,7 +496,11 @@ component StatRow: Item {
             implicitHeight: statsCol.implicitHeight + 20
             radius: 14
             color: Root.Colors.base
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
             ColumnLayout {
                 id: statsCol
@@ -524,7 +558,11 @@ component StatRow: Item {
             radius: 14
             color: Root.Colors.base
             clip: true
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
             Flickable {
                 id: weatherFlick
@@ -588,7 +626,11 @@ component StatRow: Item {
                                 font.pixelSize: 30
                                 font.weight: Font.Bold
                                 color: Root.Colors.text
-                                Behavior on color { ColorAnimation { duration: 200 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
                             Text {
                                 text: Root.WeatherService.desc
@@ -659,7 +701,11 @@ component StatRow: Item {
                                 height: forecastCol.implicitHeight + 14
                                 radius: 10
                                 color: index === 0 ? Root.Colors.surface0 : "transparent"
-                                Behavior on color { ColorAnimation { duration: 200 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                                 Rectangle {
                                     visible: index > 0

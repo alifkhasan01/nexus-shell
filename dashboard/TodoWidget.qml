@@ -100,7 +100,11 @@ Item {
                 text: "󰸕  Catatan"
                 font.pixelSize: 13; font.weight: Font.SemiBold
                 color: Root.Colors.lavender
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
 
             Item { Layout.fillWidth: true }
@@ -110,7 +114,11 @@ Item {
                 visible: root.items.some(it => it.done)
                 width: doneTxt.implicitWidth + 12; height: 22; radius: 7
                 color: doneMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                 Text {
                     id: doneTxt
                     anchors.centerIn: parent
@@ -133,7 +141,11 @@ Item {
             color: Root.Colors.surface0
             border.color: todoInput.activeFocus ? Root.Colors.lavender : Root.Colors.surface1
             border.width: 1
-            Behavior on border.color { ColorAnimation { duration: 120 } }
+            Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
             Row {
                 anchors.fill: parent
@@ -144,7 +156,11 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     text: "󰐕"; font.pixelSize: 13
                     color: todoInput.activeFocus ? Root.Colors.lavender : Root.Colors.surface2
-                    Behavior on color { ColorAnimation { duration: 120 } }
+                    Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                 }
 
                 TextInput {
@@ -204,7 +220,11 @@ Item {
                         width: todoCol.width
                         height: 34; radius: 8
                         color: rowHover.containsMouse ? Root.Colors.surface0 : "transparent"
-                        Behavior on color { ColorAnimation { duration: 80 } }
+                        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                         RowLayout {
                             anchors.fill: parent
@@ -220,7 +240,11 @@ Item {
                                        : Root.Colors.surface1
                                 border.color: modelData.done ? Root.Colors.lavender : Root.Colors.surface2
                                 border.width: 1
-                                Behavior on color { ColorAnimation { duration: 120 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                                 Text {
                                     anchors.centerIn: parent
@@ -244,7 +268,11 @@ Item {
                                 color: modelData.done ? Root.Colors.subtext : Root.Colors.text
                                 font.strikeout: modelData.done
                                 elide: Text.ElideRight
-                                Behavior on color { ColorAnimation { duration: 100 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
 
                             // Tombol hapus (hanya muncul hover)
@@ -254,7 +282,11 @@ Item {
                                 color: delMa2.containsMouse
                                        ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.2)
                                        : "transparent"
-                                Behavior on color { ColorAnimation { duration: 80 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                                 Text {
                                     anchors.centerIn: parent

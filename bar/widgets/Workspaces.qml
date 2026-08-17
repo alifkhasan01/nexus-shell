@@ -67,7 +67,11 @@ RowLayout {
 
             opacity: (ws.isActive || ws.occupied || wsMouse.containsMouse) ? 1 : 0.4
             Behavior on opacity {
-                NumberAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
+                NumberAnimation {
+                    duration: Root.Appearance.animation.elementMoveSmall.duration
+                    easing.type: Root.Appearance.animation.elementMoveSmall.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+                }
             }
 
             color: ws.isActive
@@ -78,10 +82,18 @@ RowLayout {
             border.width: ws.isActive ? 0 : 1
 
             Behavior on color {
-                ColorAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
+                ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveSmall.duration
+                    easing.type: Root.Appearance.animation.elementMoveSmall.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+                }
             }
             Behavior on border.width {
-                NumberAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
+                NumberAnimation {
+                    duration: Root.Appearance.animation.elementMoveSmall.duration
+                    easing.type: Root.Appearance.animation.elementMoveSmall.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+                }
             }
 
             Text {
@@ -91,7 +103,11 @@ RowLayout {
                 color: ws.isActive ? Root.Colors.base : Root.Colors.text
 
                 Behavior on color {
-                    ColorAnimation { duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
+                    ColorAnimation {
+                        duration: Root.Appearance.animation.elementMoveSmall.duration
+                        easing.type: Root.Appearance.animation.elementMoveSmall.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+                    }
                 }
             }
 

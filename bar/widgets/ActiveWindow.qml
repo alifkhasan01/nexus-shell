@@ -115,7 +115,11 @@ Item {
         anchors.fill: parent
         radius: 8
         color: Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Row {
@@ -147,7 +151,11 @@ Item {
                 font.family: "CaskaydiaCove Nerd Font"
                 font.pixelSize: 13
                 color: Root.Colors.blue
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }}
             }
         }
 
@@ -160,7 +168,11 @@ Item {
             font.pixelSize: 12
             elide: Text.ElideRight
             width: Math.min(implicitWidth, root.maxWidth)
-            Behavior on color { ColorAnimation { duration: 200 } }
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
         }
     }
 }

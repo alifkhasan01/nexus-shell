@@ -15,14 +15,22 @@ Item {
         color: ma.containsMouse || menuOpen
             ? Root.Colors.surface1
             : (ma.pressed ? Root.Colors.surface2 : "transparent")
-        Behavior on color { ColorAnimation { duration: 120 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Text {
             anchors.centerIn: parent
             text: "󰐥"
             font.pixelSize: 20
             color: menuOpen ? Root.Colors.red : Root.Colors.red
-            Behavior on color { ColorAnimation { duration: 120 } }
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
         }
     }
 

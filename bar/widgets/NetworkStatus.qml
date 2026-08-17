@@ -38,7 +38,11 @@ Item {
         anchors.margins: -4
         radius: 6
         color: netMa.containsMouse ? Root.Colors.surface1 : "transparent"
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Text {
@@ -51,7 +55,11 @@ Item {
             if (root.connType === "ethernet") return Root.Colors.green
             return Root.Colors.blue
         }
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     MouseArea {

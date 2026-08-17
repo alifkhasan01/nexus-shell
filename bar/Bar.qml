@@ -85,7 +85,11 @@ PanelWindow {
         topLeftRadius: 0
         topRightRadius: 0
         
-        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         RowLayout {
             anchors.fill: parent
@@ -234,7 +238,11 @@ PanelWindow {
                             color: clipArea.containsMouse
                                  ? Root.Colors.surface1
                                  : (bar.clipboardPanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         Text {
@@ -243,7 +251,11 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
                             color: bar.clipboardPanelOpen ? Root.Colors.blue : Root.Colors.mauve
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         MouseArea {
@@ -275,7 +287,11 @@ PanelWindow {
                             color: idleArea.containsMouse
                                  ? Root.Colors.surface1
                                  : (bar.idlePanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         Text {
@@ -284,7 +300,11 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
                             color: bar.idlePanelOpen ? Root.Colors.blue : Root.Colors.lavender
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         MouseArea {
@@ -316,7 +336,11 @@ PanelWindow {
                             color: notifArea.containsMouse
                                  ? Root.Colors.surface1
                                  : (bar.notifPanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         Text {
@@ -325,7 +349,11 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 15
                             color: bar.notifPanelOpen ? Root.Colors.blue : Root.Colors.yellow
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         MouseArea {
@@ -356,7 +384,11 @@ PanelWindow {
                             color: wpArea.containsMouse
                                  ? Root.Colors.surface1
                                  : (bar.wallpaperPanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         Text {
@@ -365,7 +397,11 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 16
                             color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.peach
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
                         }
 
                         MouseArea {

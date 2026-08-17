@@ -25,7 +25,11 @@ GridLayout {
         readonly property bool monitorOn: Services.IdleManager.monitoringEnabled
 
         color: monitorOn ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -35,14 +39,22 @@ GridLayout {
                 text: parent.parent.monitorOn ? "󰅶" : "󰒲"
                 font.pixelSize: 18
                 color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "IDLE"
                 font.pixelSize: 11
                 color: parent.parent.monitorOn ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
@@ -70,7 +82,11 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: ssArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -80,14 +96,22 @@ GridLayout {
                 text: "󰄀"
                 font.pixelSize: 18
                 color: ssArea.containsPress ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "SS SELECT"
                 font.pixelSize: 11
                 color: ssArea.containsPress ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
@@ -110,7 +134,11 @@ GridLayout {
         implicitHeight: 60
         radius: 14
         color: grimArea.containsPress ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -120,14 +148,22 @@ GridLayout {
                 text: "󰹑"
                 font.pixelSize: 18
                 color: grimArea.containsPress ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "SS FULL"
                 font.pixelSize: 11
                 color: grimArea.containsPress ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
@@ -156,7 +192,11 @@ GridLayout {
                                       : false
 
         color: dndOn ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -166,14 +206,22 @@ GridLayout {
                 text: "󰂛"
                 font.pixelSize: 18
                 color: parent.parent.dndOn ? Root.Colors.base : Root.Colors.text
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: "DND"
                 font.pixelSize: 11
                 color: parent.parent.dndOn ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
@@ -268,7 +316,11 @@ GridLayout {
                 return Qt.rgba(Root.Colors.red.r,   Root.Colors.red.g,   Root.Colors.red.b,   0.80)
             return Qt.rgba(Root.Colors.green.r, Root.Colors.green.g, Root.Colors.green.b, 0.75)
         }
-        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Column {
             anchors.centerIn: parent
@@ -282,7 +334,11 @@ GridLayout {
                 color: pomodoroBtn.phase === 0
                        ? (pomArea.containsPress ? Root.Colors.base : Root.Colors.text)
                        : Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -293,7 +349,11 @@ GridLayout {
                 color: pomodoroBtn.phase === 0
                        ? (pomArea.containsPress ? Root.Colors.base : Root.Colors.subtext)
                        : Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 100 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -313,8 +373,18 @@ GridLayout {
             color: Root.Colors.base
             SequentialAnimation on opacity {
                 running: pomodoroBtn.running; loops: Animation.Infinite
-                NumberAnimation { to: 0.2; duration: 600 }
-                NumberAnimation { to: 1.0; duration: 600 }
+                NumberAnimation {
+                    to: 0.2
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }
+                NumberAnimation {
+                    to: 1.0
+                    duration: Root.Appearance.animation.elementMoveFast.duration
+                    easing.type: Root.Appearance.animation.elementMoveFast.type
+                    easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                }
             }
         }
 

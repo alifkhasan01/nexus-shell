@@ -116,6 +116,10 @@ ColumnLayout {
         color: Root.Colors.subtext
         opacity: 0.75
         leftPadding: 2
-        Behavior on color { ColorAnimation { duration: 200 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 }

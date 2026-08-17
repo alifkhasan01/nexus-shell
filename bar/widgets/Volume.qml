@@ -43,7 +43,11 @@ Item {
         anchors.margins: -4
         radius: 6
         color: volMa.containsMouse ? Root.Colors.surface1 : "transparent"
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Text {
@@ -53,7 +57,11 @@ Item {
              : root.panelOpen ? Root.Colors.blue
              : Root.Colors.blue
         font.pixelSize: 14
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
         text: {
             if (root.muted || !root.sink?.audio) return "  Mute"
             const pct = Math.round(root.volume * 100)

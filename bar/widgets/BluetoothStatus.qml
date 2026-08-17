@@ -30,7 +30,11 @@ Item {
         anchors.margins: -4
         radius: 6
         color: btMa.containsMouse ? Root.Colors.surface1 : "transparent"
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Text {
@@ -38,12 +42,20 @@ Item {
         text: root.iconText
         font.pixelSize: 16
         opacity: root.powered ? 1.0 : 0.6
-        Behavior on opacity { NumberAnimation { duration: 150 } }
+        Behavior on opacity { NumberAnimation {
+            duration: Root.Appearance.animation.elementMoveSmall.duration
+            easing.type: Root.Appearance.animation.elementMoveSmall.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+        }}
         color: root.panelOpen ? Root.Colors.blue
              : root.connected  ? Root.Colors.blue
              : root.powered    ? Root.Colors.lavender
              : Root.Colors.peach
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     MouseArea {

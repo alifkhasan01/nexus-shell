@@ -88,15 +88,21 @@ PanelWindow {
                 ParallelAnimation {
                     NumberAnimation {
                         target: cardSlide; property: "y"
-                        duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                        duration: Root.Appearance.animation.elementMoveEnter.duration
+                        easing.type: Root.Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                     }
                     NumberAnimation {
                         target: card; property: "scale"
-                        duration: 400; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                        duration: Root.Appearance.animation.elementMoveEnter.duration
+                        easing.type: Root.Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                     }
                     NumberAnimation {
                         target: card; property: "opacity"
-                        duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                        duration: Root.Appearance.animation.elementMoveEnter.duration
+                        easing.type: Root.Appearance.animation.elementMoveEnter.type
+                        easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                     }
                 }
             },
@@ -109,15 +115,21 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: cardSlide; property: "y"
-                            duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                         NumberAnimation {
                             target: card; property: "scale"
-                            duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                         NumberAnimation {
                             target: card; property: "opacity"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                     }
                     PauseAnimation { duration: 50 }
@@ -126,8 +138,16 @@ PanelWindow {
             }
         ]
 
-        Behavior on color        { ColorAnimation { duration: 200 } }
-        Behavior on border.color { ColorAnimation { duration: 200 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+        Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         MouseArea { anchors.fill: parent; hoverEnabled: false; onClicked: {} }
 
@@ -161,11 +181,15 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: leftSlide; property: "y"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                             NumberAnimation {
                                 target: leftCol; property: "opacity"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                         }
                     }
@@ -176,11 +200,15 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: leftSlide; property: "y"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                         NumberAnimation {
                             target: leftCol; property: "opacity"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                     }
                 }
@@ -190,7 +218,11 @@ PanelWindow {
             Rectangle {
                 width: parent.width; height: 76
                 radius: 14; color: Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                 Item {
                     anchors.fill: parent; anchors.margins: 12
@@ -209,7 +241,11 @@ PanelWindow {
                             color: "transparent"
                             border.color: Root.Colors.lavender
                             border.width: 2
-                            Behavior on border.color { ColorAnimation { duration: 200 } }
+                            Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
 
                         // Background fallback
@@ -218,7 +254,11 @@ PanelWindow {
                             anchors.margins: 3
                             radius: width / 2
                             color: Root.Colors.surface1
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
 
                         // Gambar bulat via layer + MultiEffect mask
@@ -255,7 +295,11 @@ PanelWindow {
                             font.family: "CaskaydiaCove Nerd Font"
                             font.pixelSize: 22
                             color: Root.Colors.subtext
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
                     }
 
@@ -269,12 +313,20 @@ PanelWindow {
                         Text {
                             text: Qt.formatDateTime(new Date(), "dddd")
                             color: Root.Colors.subtext; font.pixelSize: 12
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
                         Text {
                             text: Qt.formatDateTime(new Date(), "dd MMMM yyyy")
                             color: Root.Colors.text; font.pixelSize: 14; font.bold: true
-                            Behavior on color { ColorAnimation { duration: 200 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
                     }
 
@@ -285,7 +337,11 @@ PanelWindow {
                         anchors.right: parent.right
                         text: Qt.formatDateTime(new Date(), "HH:mm")
                         color: Root.Colors.blue; font.pixelSize: 30; font.bold: true
-                        Behavior on color { ColorAnimation { duration: 200 } }
+                        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         Timer {
                             interval: 1000; running: true; repeat: true
                             onTriggered: clockText.text = Qt.formatDateTime(new Date(), "HH:mm")
@@ -304,7 +360,11 @@ PanelWindow {
             Rectangle {
                 width: parent.width; height: 36
                 radius: 10; color: Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                 Dash.SystemStats {
                     anchors.fill: parent
                     anchors.leftMargin: 12; anchors.rightMargin: 12
@@ -316,7 +376,11 @@ PanelWindow {
                 width: parent.width
                 height: settingsContent.implicitHeight + 20
                 radius: 14; color: Root.Colors.base
-                Behavior on color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                 Dash.SettingsTab {
                     id: settingsContent
@@ -359,11 +423,15 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: rightSlide; property: "y"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                             NumberAnimation {
                                 target: rightCol; property: "opacity"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                         }
                     }
@@ -374,11 +442,15 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: rightSlide; property: "y"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                         NumberAnimation {
                             target: rightCol; property: "opacity"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                     }
                 }
@@ -392,8 +464,16 @@ PanelWindow {
                 border.color: Root.Colors.surface1
                 border.width: 1
                 clip: true
-                Behavior on color { ColorAnimation { duration: 200 } }
-                Behavior on border.color { ColorAnimation { duration: 200 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
+                Behavior on border.color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                 property var player: {
                     const list = Mpris.players.values
@@ -516,7 +596,13 @@ PanelWindow {
                     anchors.fill: parent
                     color: Root.Colors.base
                     opacity: mediaCard.hasPlayer ? 0.72 : 1
-                    Behavior on opacity { NumberAnimation { duration: 200 } }
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: Root.Appearance.animation.elementMoveSmall.duration
+                            easing.type: Root.Appearance.animation.elementMoveSmall.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveSmall.bezierCurve
+                        }
+                    }
                 }
 
                 // ── Tidak ada player ──────────────────────────────────────
@@ -552,7 +638,11 @@ PanelWindow {
                             color: Root.Colors.subtext; font.pixelSize: 10
                             font.weight: Font.Medium
                             elide: Text.ElideRight
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
                     }
 
@@ -579,7 +669,11 @@ PanelWindow {
                                 text: mediaCard.player?.trackTitle ?? ""
                                 color: Root.Colors.text; font.pixelSize: 13; font.bold: true
                                 elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
                             Text {
                                 width: parent.width
@@ -588,7 +682,11 @@ PanelWindow {
                                          ? "  ·  " + mediaCard.player.trackAlbum : "")
                                 color: Root.Colors.subtext; font.pixelSize: 11
                                 elide: Text.ElideRight; horizontalAlignment: Text.AlignHCenter
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
                         }
                     }
@@ -604,7 +702,11 @@ PanelWindow {
                             Text {
                                 text: mediaCard.fmt(mediaCard.player?.position ?? 0)
                                 color: Root.Colors.text; font.pixelSize: 10
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
 
                             Rectangle {
@@ -613,7 +715,11 @@ PanelWindow {
                                 Layout.alignment: Qt.AlignVCenter
                                 height: 4; radius: 2
                                 color: Root.Colors.surface1
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                                 readonly property real dur: mediaCard.player?.length   ?? 0
                                 readonly property real pos: mediaCard.player?.position ?? 0
@@ -624,7 +730,11 @@ PanelWindow {
                                     height: parent.height; radius: parent.radius
                                     color: Root.Colors.blue
                                     Behavior on width {
-                                        NumberAnimation { duration: 950; easing.type: Easing.Linear }
+                                        NumberAnimation {
+                                            duration: Root.Appearance.animation.elementResize.duration
+                                            easing.type: Root.Appearance.animation.elementResize.type
+                                            easing.bezierCurve: Root.Appearance.animation.elementResize.bezierCurve
+                                        }
                                     }
                                 }
                                 MouseArea {
@@ -640,7 +750,11 @@ PanelWindow {
                             Text {
                                 text: mediaCard.fmt(mediaCard.player?.length ?? 0)
                                 color: Root.Colors.subtext; font.pixelSize: 10
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
                         }
                     }
@@ -656,7 +770,11 @@ PanelWindow {
                             width: 30; height: 30; radius: 15
                             color: shufMa.containsMouse ? Root.Colors.surface1 : "transparent"
                             visible: mediaCard.player?.shuffleSupported ?? false
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             Text {
                                 anchors.centerIn: parent; text: "󰒝"; font.pixelSize: 14
                                 color: (mediaCard.player?.shuffle ?? false)
@@ -675,7 +793,11 @@ PanelWindow {
                             width: 30; height: 30; radius: 15
                             color: loopMa.containsMouse ? Root.Colors.surface1 : "transparent"
                             visible: mediaCard.player?.loopSupported ?? false
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             Text {
                                 anchors.centerIn: parent; font.pixelSize: 14
                                 text: (mediaCard.player?.loopState === MprisLoopState.Track)
@@ -705,7 +827,11 @@ PanelWindow {
                             anchors.centerIn: parent
                             width: 44; height: 44; radius: 22
                             color: Root.Colors.blue
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             Text {
                                 anchors.centerIn: parent
                                 text: (mediaCard.player?.playbackState === MprisPlaybackState.Playing)
@@ -728,7 +854,11 @@ PanelWindow {
                             anchors.right: parent.horizontalCenter; anchors.rightMargin: 28
                             width: 36; height: 36; radius: 18
                             color: prevMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             Text {
                                 anchors.centerIn: parent; text: "󰒮"; font.pixelSize: 18
                                 color: Root.Colors.text
@@ -748,7 +878,11 @@ PanelWindow {
                             anchors.left: parent.horizontalCenter; anchors.leftMargin: 28
                             width: 36; height: 36; radius: 18
                             color: nextMa.containsMouse ? Root.Colors.surface1 : "transparent"
-                            Behavior on color { ColorAnimation { duration: 100 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             Text {
                                 anchors.centerIn: parent; text: "󰒭"; font.pixelSize: 18
                                 color: Root.Colors.text
@@ -778,7 +912,11 @@ PanelWindow {
                                 text: mediaCard.outputIcon
                                 font.pixelSize: 10
                                 color: Root.Colors.blue
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
                                 // Klik ikon untuk toggle mute output aktif
                                 MouseArea {
@@ -797,7 +935,11 @@ PanelWindow {
                                 font.pixelSize: 10
                                 font.bold: true
                                 color: Root.Colors.blue
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
 
                             Item { Layout.preferredWidth: 2 }
@@ -809,7 +951,11 @@ PanelWindow {
                                 color: Root.Colors.subtext
                                 elide: Text.ElideRight
                                 maximumLineCount: 1
-                                Behavior on color { ColorAnimation { duration: 150 } }
+                                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                             }
                         }
                     }
@@ -850,7 +996,11 @@ PanelWindow {
                             color: Root.Colors.subtext
                             horizontalAlignment: Text.AlignRight
                             width: 34
-                            Behavior on color { ColorAnimation { duration: 150 } }
+                            Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
                         }
                     }
                 }
@@ -887,11 +1037,15 @@ PanelWindow {
                         ParallelAnimation {
                             NumberAnimation {
                                 target: infoSlide; property: "y"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                             NumberAnimation {
                                 target: infoCol; property: "opacity"
-                                duration: 350; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                duration: Root.Appearance.animation.elementMoveEnter.duration
+                                easing.type: Root.Appearance.animation.elementMoveEnter.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveEnter.bezierCurve
                             }
                         }
                     }
@@ -902,11 +1056,15 @@ PanelWindow {
                     ParallelAnimation {
                         NumberAnimation {
                             target: infoSlide; property: "y"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                         NumberAnimation {
                             target: infoCol; property: "opacity"
-                            duration: 300; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.exit
+                            duration: Root.Appearance.animation.elementMoveExit.duration
+                            easing.type: Root.Appearance.animation.elementMoveExit.type
+                            easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve
                         }
                     }
                 }

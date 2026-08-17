@@ -15,3 +15,7 @@ singleton Motion 1.0 Motion.qml
 singleton NotificationService 1.0 NotificationService.qml
 singleton WeatherService 1.0 WeatherService.qml
 
+singleton Appearance 1.0 Appearance.qml
+singleton ColorUtils 1.0 ColorUtils.qml
+singleton Config 1.0 Config.qml
+

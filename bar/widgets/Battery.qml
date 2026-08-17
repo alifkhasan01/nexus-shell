@@ -86,7 +86,11 @@ Item {
         color: batteryMa.containsMouse
                ? Root.Colors.surface1
                : (root.panelOpen ? Root.Colors.surface0 : "transparent")
-        Behavior on color { ColorAnimation { duration: 150 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
     }
 
     Row {
@@ -103,7 +107,11 @@ Item {
                 if (root.percent <= 30)       return Root.Colors.peach
                 return Root.Colors.text
             }
-            Behavior on color { ColorAnimation { duration: 150 } }
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
             font.pixelSize: 14
             text: {
                 let icon

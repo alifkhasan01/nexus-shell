@@ -14,7 +14,11 @@ RowLayout {
         implicitHeight: 36
         radius: 10
         color: Root.Colors.currentTheme === "light" ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 160 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Row {
             anchors.centerIn: parent
@@ -24,7 +28,11 @@ RowLayout {
                 text: "󰖨"
                 font.pixelSize: 14
                 color: Root.Colors.currentTheme === "light" ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -32,7 +40,11 @@ RowLayout {
                 font.pixelSize: 12
                 font.bold: Root.Colors.currentTheme === "light"
                 color: Root.Colors.currentTheme === "light" ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
@@ -49,7 +61,11 @@ RowLayout {
         implicitHeight: 36
         radius: 10
         color: Root.Colors.currentTheme === "dark" ? Root.Colors.blue : Root.Colors.surface0
-        Behavior on color { ColorAnimation { duration: 160 } }
+        Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
 
         Row {
             anchors.centerIn: parent
@@ -59,7 +75,11 @@ RowLayout {
                 text: "󰖔"
                 font.pixelSize: 14
                 color: Root.Colors.currentTheme === "dark" ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
@@ -67,7 +87,11 @@ RowLayout {
                 font.pixelSize: 12
                 font.bold: Root.Colors.currentTheme === "dark"
                 color: Root.Colors.currentTheme === "dark" ? Root.Colors.base : Root.Colors.subtext
-                Behavior on color { ColorAnimation { duration: 160 } }
+                Behavior on color { ColorAnimation {
+            duration: Root.Appearance.animation.elementMoveFast.duration
+            easing.type: Root.Appearance.animation.elementMoveFast.type
+            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+        }}
             }
         }
 
