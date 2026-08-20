@@ -706,6 +706,6 @@ PanelWindow {
     // ── Settings launcher process ──────────────────────────────────────────
     Process {
         id: settingsProc
-        command: ["sh", "-c", "cd ~/.config/quickshell && quickshell settings.qml &"]
+        command: ["sh", "-c", "cd ~/.config/quickshell && quickshell -p settings.qml &"]
     }
 }

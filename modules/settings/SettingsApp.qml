@@ -18,13 +18,15 @@ ApplicationWindow {
     property int currentPage: 0
     
     // Define pages
-    property list<object> pages: [
-        { name: "Quick", icon: "⚡", component: "modules/settings/QuickConfig.qml" },
-        { name: "General", icon: "⚙️", component: "modules/settings/GeneralConfig.qml" },
-        { name: "Interface", icon: "🎨", component: "modules/settings/InterfaceConfig.qml" },
-        { name: "Services", icon: "📦", component: "modules/settings/ServicesConfig.qml" },
-        { name: "About", icon: "ℹ️", component: "modules/settings/About.qml" },
-    ]
+    ListModel {
+        id: pageModel
+
+        ListElement { name: "Quick";     icon: "bolt"; src: "QuickConfig.qml" }
+        ListElement { name: "General";   icon: "gear"; src: "GeneralConfig.qml" }
+        ListElement { name: "Interface"; icon: "brush"; src: "InterfaceConfig.qml" }
+        ListElement { name: "Services";  icon: "box"; src: "ServicesConfig.qml" }
+        ListElement { name: "About";     icon: "info"; src: "About.qml" }
+    }
     
     // Initial setup
     Component.onCompleted: {
@@ -35,29 +37,30 @@ ApplicationWindow {
         console.log("[Settings] Settings app closed")
     }
     
-    // Keyboard navigation
-    Keys.onPressed: (event) => {
-        if (event.modifiers === Qt.ControlModifier) {
-            // Ctrl+Tab: next page
-            if (event.key === Qt.Key_Tab) {
-                currentPage = (currentPage + 1) % pages.length
-                event.accepted = true
-                console.log("[Settings] Navigated to page:", pages[currentPage].name)
-            }
-            // Ctrl+Shift+Tab: previous page
-            else if (event.key === Qt.Key_Backtab) {
-                currentPage = (currentPage - 1 + pages.length) % pages.length
-                event.accepted = true
-                console.log("[Settings] Navigated to page:", pages[currentPage].name)
-            }
-        }
-    }
-    
     // Main layout
     ColumnLayout {
+        id: contentLayout
         anchors.fill: parent
         anchors.margins: 8
         spacing: 8
+        focus: true
+
+        Keys.onPressed: (event) => {
+            if (event.modifiers === Qt.ControlModifier) {
+                // Ctrl+Tab: next page
+                if (event.key === Qt.Key_Tab) {
+                    root.currentPage = (root.currentPage + 1) % pageModel.count
+                    event.accepted = true
+                    console.log("[Settings] Navigated to page:", pageModel.get(root.currentPage).name)
+                }
+                // Ctrl+Shift+Tab: previous page
+                else if (event.key === Qt.Key_Backtab) {
+                    root.currentPage = (root.currentPage - 1 + pageModel.count) % pageModel.count
+                    event.accepted = true
+                    console.log("[Settings] Navigated to page:", pageModel.get(root.currentPage).name)
+                }
+            }
+        }
         
         // Title bar
         Rectangle {
@@ -72,7 +75,7 @@ ApplicationWindow {
                 spacing: 12
                 
                 Text {
-                    text: root.pages[root.currentPage].name + " Settings"
+                    text: pageModel.get(root.currentPage).name + " Settings"
                     color: "#1a1a1a"
                     font {
                         pixelSize: 20
@@ -123,12 +126,12 @@ ApplicationWindow {
                     
                     // Navigation buttons
                     Repeater {
-                        model: root.pages
+                        model: pageModel
                         
                         Button {
                             Layout.fillWidth: true
                             
-                            text: modelData.name
+                            text: name
                             
                             background: Rectangle {
                                 color: root.currentPage === index 
@@ -174,7 +177,7 @@ ApplicationWindow {
                     anchors.fill: parent
                     anchors.margins: 16
                     
-                    source: root.pages[root.currentPage].component
+                    source: pageModel.get(root.currentPage).src
                     
                     onSourceChanged: {
                         pageTransition.start()

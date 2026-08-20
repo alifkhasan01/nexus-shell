@@ -115,6 +115,7 @@ PanelWindow {
                             bar.notifPanelOpen                = false
                             bar.shellState.clipboardOpen      = false
                             bar.shellState.calendarOpen       = false
+                            bar.shellState.controlCenterOpen  = false
                         }
                     }
                     Workspaces {}
@@ -144,6 +145,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                         // Right click → dashboard
                         onRightClicked: {
@@ -155,6 +157,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                     }
 
@@ -188,6 +191,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                     }
 
@@ -203,6 +207,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -219,6 +224,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
                     }
@@ -267,6 +273,7 @@ PanelWindow {
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.notifPanelOpen = false
                                 bar.shellState.calendarOpen = false
+                                bar.shellState.controlCenterOpen = false
                             }
                         }
                     }
@@ -315,6 +322,7 @@ PanelWindow {
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.shellState.clipboardOpen = false
                                 bar.shellState.calendarOpen = false
+                                bar.shellState.controlCenterOpen = false
                             }
                         }
                     }
@@ -367,7 +375,58 @@ PanelWindow {
                                     bar.notifPanelOpen = false
                                     bar.shellState.clipboardOpen = false
                                     bar.shellState.calendarOpen = false
+                                    bar.shellState.controlCenterOpen = false
                                 }
+                            }
+                        }
+                    }
+
+                    // ── Control Center Button ─────────────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: ccArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.shellState && bar.shellState.controlCenterOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰖳"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 15
+                            color: (bar.shellState && bar.shellState.controlCenterOpen) ? Root.Colors.blue : Root.Colors.text
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
+                        }
+
+                        MouseArea {
+                            id: ccArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: {
+                                bar.shellState.controlCenterOpen = !bar.shellState.controlCenterOpen
+                                bar.shellState.connectionOpen   = false
+                                bar.volumePanelOpen    = false
+                                bar.shellState.dashboardOpen = false
+                                bar.shellState.wallpaperPanelOpen = false
+                                bar.notifPanelOpen = false
+                                bar.shellState.clipboardOpen = false
+                                bar.shellState.calendarOpen = false
+                                bar.shellState.powerMenuOpen = false
                             }
                         }
                     }
@@ -383,6 +442,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -403,6 +463,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                     }
 
@@ -417,6 +478,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
+                            bar.shellState.controlCenterOpen = false
                         }
                     }
                 }
@@ -568,11 +630,6 @@ PanelWindow {
 
     // ── OSD (Volume & Brightness) ─────────────────────────────────────────
     Osd { id: osd }
-
-    Process {
-        id: controlCenterProcess
-        command: ["control-center"]
-    }
 
     // Screenshot (select & full) ditangani ProcessManager di shell.qml
     // (sudah punya dependency check: kalau grimblast tidak ada, muncul notif

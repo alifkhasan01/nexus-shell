@@ -51,6 +51,7 @@ ColumnLayout {
                 }
                 
                 Slider {
+                    id: opacitySlider
                     from: 0
                     to: 1
                     stepSize: 0.05
@@ -59,7 +60,7 @@ ColumnLayout {
                 }
                 
                 Text {
-                    text: Math.round(value * 100) + "%"
+                    text: Math.round(opacitySlider.value * 100) + "%"
                     color: "#666666"
                     font.pixelSize: 12
                     width: 40

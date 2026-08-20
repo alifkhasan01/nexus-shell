@@ -54,7 +54,7 @@ ColumnLayout {
                 text: "Quickshell is a highly customizable desktop shell and dashboard for Linux, built with Qt and QML. It provides a modern, feature-rich environment for managing your desktop."
                 color: "#1a1a1a"
                 font.pixelSize: 12
-                wrapText: true
+                wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }
             

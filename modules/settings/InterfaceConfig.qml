@@ -129,6 +129,7 @@ ColumnLayout {
                 }
                 
                 Slider {
+                    id: iconSizeSlider
                     from: 16
                     to: 48
                     stepSize: 2
@@ -137,7 +138,7 @@ ColumnLayout {
                 }
                 
                 Text {
-                    text: (Math.round(value)) + "px"
+                    text: (Math.round(iconSizeSlider.value)) + "px"
                     color: "#666666"
                     font.pixelSize: 12
                     width: 50

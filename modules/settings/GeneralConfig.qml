@@ -74,6 +74,7 @@ ColumnLayout {
                 }
                 
                 Slider {
+                    id: uiSlider
                     from: 0
                     to: 1
                     stepSize: 0.1
@@ -82,7 +83,7 @@ ColumnLayout {
                 }
                 
                 Text {
-                    text: (Math.round(value * 100)) + "%"
+                    text: (Math.round(uiSlider.value * 100)) + "%"
                     color: "#666666"
                     font.pixelSize: 12
                     width: 50
