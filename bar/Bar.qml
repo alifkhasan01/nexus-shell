@@ -31,6 +31,7 @@ PanelWindow {
     property bool batteryPanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
     property bool notifPanelOpen: false
+    property bool settingsPanelOpen: false
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
     property bool bgAppsPanelOpen: false
@@ -45,6 +46,7 @@ PanelWindow {
     onWallpaperPanelOpenChanged: if (!wallpaperPanelOpen) wallpaperCloseTimer.restart()
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
     onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
+    onSettingsPanelOpenChanged:  if (!settingsPanelOpen)  settingsCloseTimer.restart()
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
     onBgAppsPanelOpenChanged:    if (!bgAppsPanelOpen)    bgAppsCloseTimer.restart()
@@ -56,6 +58,7 @@ PanelWindow {
     Timer { id: batteryCloseTimer;   interval: 300; repeat: false }
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
+    Timer { id: settingsCloseTimer;  interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     Timer { id: bgAppsCloseTimer;    interval: 300; repeat: false }
@@ -115,9 +118,65 @@ PanelWindow {
                             bar.notifPanelOpen                = false
                             bar.shellState.clipboardOpen      = false
                             bar.shellState.calendarOpen       = false
-                            bar.shellState.controlCenterOpen  = false
+                            bar.settingsPanelOpen             = false
                         }
                     }
+
+                    // ── Wallpaper Button ──────────────────────────────────
+                    Item {
+                        width: 30
+                        height: 26
+
+                        Rectangle {
+                            anchors.fill: parent
+                            radius: 6
+                            color: wpArea.containsMouse
+                                 ? Root.Colors.surface1
+                                 : (bar.wallpaperPanelOpen ? Root.Colors.surface0 : "transparent")
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
+                        }
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "󰸉"
+                            font.family: "CaskaydiaCove Nerd Font"
+                            font.pixelSize: 16
+                            color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.peach
+                            Behavior on color { ColorAnimation {
+                                duration: Root.Appearance.animation.elementMoveFast.duration
+                                easing.type: Root.Appearance.animation.elementMoveFast.type
+                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                            }}
+                        }
+
+                        // wallpapers
+                        MouseArea {
+                            id: wpArea
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            acceptedButtons: Qt.LeftButton | Qt.RightButton
+                            onClicked: (mouse) => {
+                                if (mouse.button === Qt.RightButton) {
+                                    bar.shellState.wallpaperRandom.pickRandom()
+                                } else {
+                                    bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
+                                    bar.shellState.connectionOpen   = false
+                                    bar.volumePanelOpen    = false
+                                    bar.shellState.dashboardOpen = false
+                                    bar.notifPanelOpen = false
+                                    bar.shellState.clipboardOpen = false
+                                    bar.shellState.calendarOpen = false
+                                    bar.settingsPanelOpen = false
+                                }
+                            }
+                        }
+                    }
+
                     Workspaces {}
                     // ActiveWindow {
                         // maxWidth: 200
@@ -145,7 +204,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                         // Right click → dashboard
                         onRightClicked: {
@@ -157,7 +216,7 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                     }
 
@@ -191,7 +250,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                     }
 
@@ -207,7 +266,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -224,58 +283,9 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
-                    }
-
-                    // ── Clipboard Button ──────────────────────────────────
-                    Item {
-                        width: 30
-                        height: 26
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            color: clipArea.containsMouse
-                                 ? Root.Colors.surface1
-                                 : (bar.clipboardPanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰅍"
-                            font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 15
-                            color: bar.clipboardPanelOpen ? Root.Colors.blue : Root.Colors.mauve
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        MouseArea {
-                            id: clipArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                bar.shellState.clipboardOpen = !bar.shellState.clipboardOpen
-                                bar.shellState.connectionOpen = false
-                                bar.volumePanelOpen = false
-                                bar.shellState.dashboardOpen = false
-                                bar.shellState.wallpaperPanelOpen = false
-                                bar.notifPanelOpen = false
-                                bar.shellState.calendarOpen = false
-                                bar.shellState.controlCenterOpen = false
-                            }
-                        }
                     }
 
                     // ── Notification History Button ───────────────────────
@@ -322,111 +332,7 @@ PanelWindow {
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.shellState.clipboardOpen = false
                                 bar.shellState.calendarOpen = false
-                                bar.shellState.controlCenterOpen = false
-                            }
-                        }
-                    }
-
-                    // ── Wallpaper Button ──────────────────────────────────
-                    Item {
-                        width: 30
-                        height: 26
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            color: wpArea.containsMouse
-                                 ? Root.Colors.surface1
-                                 : (bar.wallpaperPanelOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰸉"
-                            font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 16
-                            color: bar.wallpaperPanelOpen ? Root.Colors.blue : Root.Colors.peach
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        MouseArea {
-                            id: wpArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            acceptedButtons: Qt.LeftButton | Qt.RightButton
-                            onClicked: (mouse) => {
-                                if (mouse.button === Qt.RightButton) {
-                                    bar.shellState.wallpaperRandom.pickRandom()
-                                } else {
-                                    bar.shellState.wallpaperPanelOpen = !bar.shellState.wallpaperPanelOpen
-                                    bar.shellState.connectionOpen   = false
-                                    bar.volumePanelOpen    = false
-                                    bar.shellState.dashboardOpen = false
-                                    bar.notifPanelOpen = false
-                                    bar.shellState.clipboardOpen = false
-                                    bar.shellState.calendarOpen = false
-                                    bar.shellState.controlCenterOpen = false
-                                }
-                            }
-                        }
-                    }
-
-                    // ── Control Center Button ─────────────────────────────
-                    Item {
-                        width: 30
-                        height: 26
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: 6
-                            color: ccArea.containsMouse
-                                 ? Root.Colors.surface1
-                                 : (bar.shellState && bar.shellState.controlCenterOpen ? Root.Colors.surface0 : "transparent")
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "󰖳"
-                            font.family: "CaskaydiaCove Nerd Font"
-                            font.pixelSize: 15
-                            color: (bar.shellState && bar.shellState.controlCenterOpen) ? Root.Colors.blue : Root.Colors.text
-                            Behavior on color { ColorAnimation {
-                                duration: Root.Appearance.animation.elementMoveFast.duration
-                                easing.type: Root.Appearance.animation.elementMoveFast.type
-                                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                            }}
-                        }
-
-                        MouseArea {
-                            id: ccArea
-                            anchors.fill: parent
-                            hoverEnabled: true
-                            cursorShape: Qt.PointingHandCursor
-                            onClicked: {
-                                bar.shellState.controlCenterOpen = !bar.shellState.controlCenterOpen
-                                bar.shellState.connectionOpen   = false
-                                bar.volumePanelOpen    = false
-                                bar.shellState.dashboardOpen = false
-                                bar.shellState.wallpaperPanelOpen = false
-                                bar.notifPanelOpen = false
-                                bar.shellState.clipboardOpen = false
-                                bar.shellState.calendarOpen = false
-                                bar.shellState.powerMenuOpen = false
+                                bar.settingsPanelOpen = false
                             }
                         }
                     }
@@ -442,7 +348,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -463,9 +369,58 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                     }
+
+                    // ── Settings Button ───────────────────────────────────
+                    // Item {
+                    //     width: 30
+                    //     height: 26
+
+                    //     Rectangle {
+                    //         anchors.fill: parent
+                    //         radius: 6
+                    //         color: settingsArea.containsMouse
+                    //              ? Root.Colors.surface1
+                    //              : (bar.settingsPanelOpen ? Root.Colors.surface0 : "transparent")
+                    //         Behavior on color { ColorAnimation {
+                    //             duration: Root.Appearance.animation.elementMoveFast.duration
+                    //             easing.type: Root.Appearance.animation.elementMoveFast.type
+                    //             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    //         }}
+                    //     }
+
+                    //     Text {
+                    //         anchors.centerIn: parent
+                    //         text: "󰒓"
+                    //         font.family: "CaskaydiaCove Nerd Font"
+                    //         font.pixelSize: 15
+                    //         color: bar.settingsPanelOpen ? Root.Colors.blue : Root.Colors.subtext
+                    //         Behavior on color { ColorAnimation {
+                    //             duration: Root.Appearance.animation.elementMoveFast.duration
+                    //             easing.type: Root.Appearance.animation.elementMoveFast.type
+                    //             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+                    //         }}
+                    //     }
+
+                    //     MouseArea {
+                    //         id: settingsArea
+                    //         anchors.fill: parent
+                    //         hoverEnabled: true
+                    //         cursorShape: Qt.PointingHandCursor
+                    //         onClicked: {
+                    //             bar.settingsPanelOpen = !bar.settingsPanelOpen
+                    //             bar.shellState.connectionOpen = false
+                    //             bar.volumePanelOpen = false
+                    //             bar.shellState.dashboardOpen = false
+                    //             bar.shellState.wallpaperPanelOpen = false
+                    //             bar.notifPanelOpen = false
+                    //             bar.shellState.clipboardOpen = false
+                    //             bar.shellState.calendarOpen = false
+                    //         }
+                    //     }
+                    // }
 
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
@@ -478,7 +433,7 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.shellState.controlCenterOpen = false
+                            bar.settingsPanelOpen = false
                         }
                     }
                 }
@@ -592,27 +547,32 @@ PanelWindow {
         }
     }
 
-    // ── Notification History Panel ────────────────────────────────────────
+    // ── Combined Clipboard + Notification Panel ────────────────────────────
     LazyLoader {
         id: notifPanelLoader
-        active: bar.notifPanelOpen || notifCloseTimer.running
-
-        NotificationPanel {
-            open: bar.notifPanelOpen
-            onCloseRequested: bar.notifPanelOpen = false
-        }
-    }
-
-    // ── Clipboard Panel ───────────────────────────────────────────────────
-    LazyLoader {
-        id: clipboardLoader
-        active: bar.clipboardPanelOpen || clipboardCloseTimer.running
+        active: bar.notifPanelOpen || bar.clipboardPanelOpen || notifCloseTimer.running || clipboardCloseTimer.running
 
         ClipboardPanel {
-            open: bar.clipboardPanelOpen
-            onCloseRequested: bar.shellState.clipboardOpen = false
+            open: bar.notifPanelOpen || bar.clipboardPanelOpen
+            openTab: bar.clipboardPanelOpen ? 0 : 2
+            onCloseRequested: {
+                bar.notifPanelOpen = false
+                bar.shellState.clipboardOpen = false
+            }
         }
     }
+
+    // ── Settings Panel ─────────────────────────────────────────────────────
+    // LazyLoader {
+    //     id: settingsLoader
+    //     active: bar.settingsPanelOpen || settingsCloseTimer.running
+
+    //     SettingsPanel {
+    //         open: bar.settingsPanelOpen
+    //         shellState: bar.shellState
+    //         onCloseRequested: bar.settingsPanelOpen = false
+    //     }
+    // }
 
     // ── Background Apps Panel ─────────────────────────────────────────────
     LazyLoader {

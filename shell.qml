@@ -10,7 +10,6 @@ import QtQml
 import QtQuick
 import "./bar" as Bar
 import "./bar/widgets" as Widgets
-import "./control-center" as ControlCenter
 import "./lockscreen" as Lock
 import "./notifications" as Notif
 import "./services"
@@ -170,13 +169,6 @@ ShellRoot {
         onPressed: Quickshell.reload(true)
     }
 
-    GlobalShortcut {
-        appid: "quickshell"
-        name: "control-center"
-        description: "Toggle control center"
-        onPressed: shellStateObj.controlCenterOpen = !shellStateObj.controlCenterOpen
-    }
-
     // ── IPC / CLI Integration Shortcuts ───────────────────────────────────
     // These shortcuts communicate via Nexus IPC protocol to registered actions
     // without affecting the core 17 global shortcuts above
@@ -313,14 +305,6 @@ ShellRoot {
     // dashboard, panel, dan komponen overlay lainnya.
     Notif.NotificationPopup {
         dnd: shellStateObj.dnd
-    }
-
-    // ── Control Center — popup top-right (Wi-Fi/BT/DND, sliders, media) ──
-    // Di-toggle lewat GlobalShortcut `quickshell:control-center` atau tombol
-    // di Bar. State-nya dibagikan via ShellState.
-    ControlCenter.ControlCenter {
-        id: controlCenterRef
-        shellState: shellStateObj
     }
 
     // ── Welcome Panel — muncul saat startup kalau ada dependensi kurang ──

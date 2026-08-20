@@ -3,6 +3,7 @@ import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
 import Quickshell.Io
+import Quickshell.Services.Notifications
 import "../" as Root
 import "../dashboard" as Dash
 
@@ -20,10 +21,12 @@ PanelWindow {
     visible: showPanel
 
     property bool showPanel: false
-    property int currentTab: 0  // 0 = Clipboard, 1 = Catatan
+    property int currentTab: 2  // 0 = Clipboard, 1 = Catatan, 2 = Notifikasi
+    property int openTab: 2     // tab yang aktif saat panel dibuka
 
     onOpenChanged: {
         if (open) {
+            root.currentTab = root.openTab
             showPanel = true
             root._refresh()
         }
@@ -140,9 +143,20 @@ PanelWindow {
                     const calculatedHeight = headerHeight + searchHeight + (visibleItems * itemHeight) + 20
                     return Math.min(calculatedHeight, maxHeight)
                 }
-            } else {
+            } else if (root.currentTab === 1) {
                 // Tab Catatan: tinggi sedang
                 return Math.min(480, maxHeight)
+            } else {
+                // Tab Notifikasi: tinggi menyesuaikan isi notifikasi agar
+                // tidak terpotong (tiap item bisa lebih tinggi dari 60px).
+                const itemCount = Root.NotificationService.historyModel.count
+                if (itemCount === 0) {
+                    return headerHeight + 160
+                } else {
+                    const contentHeight = Math.max(notifCol.implicitHeight, 140)
+                    const calculatedHeight = headerHeight + contentHeight + 80
+                    return Math.min(calculatedHeight, maxHeight)
+                }
             }
         }
 
@@ -205,7 +219,7 @@ PanelWindow {
 
                 // Judul tab aktif
                 Text {
-                    text: root.currentTab === 0 ? "  Clipboard" : "  Catatan"
+                    text: root.currentTab === 0 ? "  Clipboard" : root.currentTab === 1 ? "  Catatan" : "󰂞  Notifikasi"
                     font.pixelSize: 15
                     font.bold: true
                     color: Root.Colors.text
@@ -256,7 +270,7 @@ PanelWindow {
                         spacing: 2
 
                         Repeater {
-                            model: ["Clipboard", "Catatan"]
+                            model: ["Clipboard", "Catatan", "Notifikasi"]
 
                             delegate: Rectangle {
                                 required property string modelData
@@ -489,6 +503,174 @@ PanelWindow {
                     opacity: root.currentTab === 1 ? 1 : 0
                     visible: opacity > 0
                     Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                }
+
+                // ── TAB 2: NOTIFIKASI ─────────────────────────────────────
+                ColumnLayout {
+                    anchors.fill: parent
+                    spacing: 8
+                    opacity: root.currentTab === 2 ? 1 : 0
+                    visible: opacity > 0
+                    Behavior on opacity { NumberAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+
+                    // Tombol hapus semua
+                    RowLayout {
+                        visible: Root.NotificationService.historyModel.count > 0
+                        Layout.fillWidth: true
+
+                        Item { Layout.fillWidth: true }
+
+                        Rectangle {
+                            width: notifClearTxt.implicitWidth + 14
+                            height: 24
+                            radius: 7
+                            color: notifClearMa.containsMouse
+                                   ? Qt.rgba(Root.Colors.red.r, Root.Colors.red.g, Root.Colors.red.b, 0.18)
+                                   : Root.Colors.surface0
+                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+
+                            Text {
+                                id: notifClearTxt
+                                anchors.centerIn: parent
+                                text: "Hapus semua"
+                                font.pixelSize: 10
+                                color: notifClearMa.containsMouse ? Root.Colors.red : Root.Colors.subtext
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                            }
+                            MouseArea {
+                                id: notifClearMa
+                                anchors.fill: parent
+                                hoverEnabled: true
+                                cursorShape: Qt.PointingHandCursor
+                                onClicked: Root.NotificationService.clearHistory()
+                            }
+                        }
+                    }
+
+                    // Kosong state
+                    Item {
+                        visible: Root.NotificationService.historyModel.count === 0
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+
+                        Column {
+                            anchors.centerIn: parent
+                            spacing: 6
+
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "󰂚"
+                                font.pixelSize: 28
+                                color: Root.Colors.surface2
+                            }
+                            Text {
+                                anchors.horizontalCenter: parent.horizontalCenter
+                                text: "Tidak ada notifikasi"
+                                font.pixelSize: 12
+                                color: Root.Colors.subtext
+                            }
+                        }
+                    }
+
+                    // List notifikasi
+                    Flickable {
+                        id: notifFlick
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        visible: Root.NotificationService.historyModel.count > 0
+                        contentWidth: width
+                        contentHeight: notifCol.implicitHeight
+                        clip: true
+                        boundsBehavior: Flickable.StopAtBounds
+
+                        Column {
+                            id: notifCol
+                            width: notifFlick.width
+                            spacing: 6
+
+                            Repeater {
+                                model: Root.NotificationService.historyModel
+
+                                delegate: Rectangle {
+                                    required property string appName
+                                    required property string summary
+                                    required property string body
+                                    required property int urgency
+                                    required property int index
+
+                                    width: notifCol.width
+                                    implicitHeight: notifItemCol.implicitHeight + 18
+                                    radius: 10
+                                    color: notifItemHover.containsMouse ? Root.Colors.surface0 : Root.Colors.base
+                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+
+                                    border.color: urgency === NotificationUrgency.Critical
+                                        ? Root.Colors.red
+                                        : Root.Colors.surface1
+                                    border.width: 1
+
+                                    ColumnLayout {
+                                        id: notifItemCol
+                                        anchors {
+                                            top: parent.top; left: parent.left; right: parent.right
+                                            margins: 10
+                                        }
+                                        spacing: 2
+
+                                        RowLayout {
+                                            Layout.fillWidth: true
+
+                                            Text {
+                                                text: appName
+                                                font.pixelSize: 10
+                                                font.bold: true
+                                                color: Root.Colors.subtext
+                                                elide: Text.ElideRight
+                                                Layout.fillWidth: true
+                                            }
+
+                                            Rectangle {
+                                                width: 18; height: 18; radius: 5
+                                                color: notifXMa.containsMouse ? Root.Colors.surface1 : "transparent"
+                                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
+                                                Text {
+                                                    anchors.centerIn: parent
+                                                    text: "󰅖"; font.pixelSize: 10
+                                                    color: Root.Colors.subtext
+                                                }
+                                                MouseArea {
+                                                    id: notifXMa; anchors.fill: parent
+                                                    hoverEnabled: true; cursorShape: Qt.PointingHandCursor
+                                                    onClicked: Root.NotificationService.removeFromHistory(index)
+                                                }
+                                            }
+                                        }
+
+                                        Text {
+                                            text: summary
+                                            visible: text !== ""
+                                            font.pixelSize: 12; font.bold: true
+                                            color: Root.Colors.text
+                                            wrapMode: Text.WordWrap
+                                            Layout.fillWidth: true
+                                        }
+
+                                        Text {
+                                            text: body
+                                            visible: text !== ""
+                                            font.pixelSize: 11
+                                            color: Root.Colors.subtext
+                                            wrapMode: Text.WordWrap
+                                            textFormat: Text.PlainText
+                                            Layout.fillWidth: true
+                                        }
+                                    }
+
+                                    HoverHandler { id: notifItemHover }
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
