@@ -1,4 +1,5 @@
 import QtQuick
+import Quickshell
 import Quickshell.Io
 import "../../services"
 
@@ -44,7 +45,7 @@ Item {
         }
     }
 
-    function _home() { return "/home/youtta" }
+    function _home() { return Quickshell.env("HOME") || "" }
 
     // ── Scan folder wallpaper ─────────────────────────────────────────────
     function scanWallpapers() {

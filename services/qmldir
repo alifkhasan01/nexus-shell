@@ -8,6 +8,7 @@ VolumeControl 1.0 VolumeControl.qml
 singleton BrightnessService 1.0 BrightnessService.qml
 singleton CalendarService 1.0 CalendarService.qml
 singleton Colors 1.0 Colors.qml
+singleton EqService 1.0 EqService.qml
 singleton IdleInhibitService 1.0 IdleInhibitService.qml
 singleton Motion 1.0 Motion.qml
 singleton NotificationService 1.0 NotificationService.qml

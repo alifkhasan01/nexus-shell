@@ -18,7 +18,7 @@ GridLayout {
     QuickToggle {
         Layout.fillWidth: true
         label: "INHIBIT"
-        icon: "󰌫"
+        icon: "󰒲"
         dashboardRoot: quickTogglesRoot.dashboardRoot
         checkCommand: "systemctl is-active sleep.target > /dev/null && echo no || echo yes"
         checkMatch: "yes"

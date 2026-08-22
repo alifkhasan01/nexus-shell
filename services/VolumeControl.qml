@@ -1,9 +1,11 @@
 import QtQml
 import QtQuick
 import Quickshell.Services.Pipewire
+import Quickshell.Io
 
 // Service untuk kontrol volume dengan aggressive debouncing & error handling
 // Mengakses default audio sink dengan prioritas ke bluetooth device
+// Updated untuk mendukung EasyEffects dengan wpctl
 // Optimized untuk minimal memory footprint & CPU usage
 Item {
     id: volumeControl
@@ -95,6 +97,28 @@ Item {
         return _defaultSink
     }
 
+    // Microphone/input source properties
+    property var _defaultSource: Pipewire.defaultAudioSource
+
+    // Detect hardware sink aktif di balik EasyEffects.
+    // EasyEffects simpan node.driver-id = ID hardware sink yang sedang di-drive.
+    property string _hwSinkId: {
+        if (!sink) return ""
+        const eeName = (sink.name || "").toLowerCase()
+        if (!eeName.includes("easyeffects")) return ""
+        const driverId = (sink.properties || {})["node.driver-id"]
+        return driverId != null ? String(driverId) : ""
+    }
+
+    // wpctl processes untuk EasyEffects support
+    property Process wpctlVol: Process { running: false }
+    property Process wpctlVolHw: Process { running: false }
+    property Process wpctlMute: Process { running: false }
+    property Process wpctlMuteHw: Process { running: false }
+    
+    // wpctl processes untuk microphone control
+    property Process wpctlMicMute: Process { running: false }
+
     // Track sink changes dengan throttling
     PwObjectTracker {
         objects: [volumeControl._defaultSink, volumeControl._btSink].filter(n => n != null)
@@ -105,8 +129,43 @@ Item {
         }
     }
 
+    // Track mic source agar audio.muted reaktif setelah wpctl toggle
+    PwObjectTracker {
+        objects: volumeControl._defaultSource ? [volumeControl._defaultSource] : []
+    }
+
     Component.onCompleted: {
-        console.log("[VolumeControl] Service initialized (aggressive debounce: 75ms)")
+        console.log("[VolumeControl] Service initialized (EasyEffects support, aggressive debounce: 75ms)")
+    }
+
+    function _setVolume(v) {
+        // Set ke EasyEffects sink supaya display % di EasyEffects sinkron
+        wpctlVol.command = ["wpctl", "set-volume", "@DEFAULT_SINK@", v.toFixed(3)]
+        wpctlVol.running = true
+        
+        // Set juga ke hardware sink supaya volume benar-benar berubah
+        if (_hwSinkId !== "") {
+            wpctlVolHw.command = ["wpctl", "set-volume", _hwSinkId, v.toFixed(3)]
+            wpctlVolHw.running = true
+        }
+    }
+
+    function _toggleMute() {
+        // Toggle mute untuk EasyEffects sink
+        wpctlMute.command = ["wpctl", "set-mute", "@DEFAULT_SINK@", "toggle"]
+        wpctlMute.running = true
+        
+        // Toggle juga hardware sink jika ada EasyEffects
+        if (_hwSinkId !== "") {
+            wpctlMuteHw.command = ["wpctl", "set-mute", _hwSinkId, "toggle"]
+            wpctlMuteHw.running = true
+        }
+    }
+
+    function _toggleMicMute() {
+        // Toggle mute untuk default microphone/input source
+        wpctlMicMute.command = ["wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"]
+        wpctlMicMute.running = true
     }
 
     function volumeUp() {
@@ -127,27 +186,32 @@ Item {
         try {
             const step = 0.05
             const oldVolume = sink.audio.volume
-            sink.audio.volume = Math.min(1.0, sink.audio.volume + step)
+            const newVolume = Math.min(1.0, oldVolume + step)
             
-            // Check if actually changed (avoid unnecessary OSD updates)
-            if (Math.abs(sink.audio.volume - oldVolume) < 0.001) {
+            // Check if actually changed (avoid unnecessary updates)
+            if (Math.abs(newVolume - oldVolume) < 0.001) {
                 debounceHits++
                 return true
             }
+            
+            // Use wpctl for EasyEffects compatibility
+            _setVolume(newVolume)
             
             lastUpdateTime = Date.now()
             debounceTimer.stop()
             debounceTimer.triggered.connect(() => {
                 if (osdRef) {
-                    osdRef.showVolume(sink.audio.volume, sink.audio.muted)
+                    // Get actual volume after wpctl command
+                    const actualVolume = sink.audio ? sink.audio.volume : newVolume
+                    osdRef.showVolume(actualVolume, sink.audio ? sink.audio.muted : false)
                 }
             })
             debounceTimer.restart()
 
             updateCount++
-            console.log("[VolumeControl] Volume up: " + 
+            console.log("[VolumeControl] Volume up (wpctl): " + 
                        (oldVolume * 100).toFixed(0) + "% → " + 
-                       (sink.audio.volume * 100).toFixed(0) + "%")
+                       (newVolume * 100).toFixed(0) + "%")
             return true
         } catch (e) {
             errorCount++
@@ -175,27 +239,32 @@ Item {
         try {
             const step = 0.05
             const oldVolume = sink.audio.volume
-            sink.audio.volume = Math.max(0.0, sink.audio.volume - step)
+            const newVolume = Math.max(0.0, oldVolume - step)
             
-            // Check if actually changed (avoid unnecessary OSD updates)
-            if (Math.abs(sink.audio.volume - oldVolume) < 0.001) {
+            // Check if actually changed (avoid unnecessary updates)
+            if (Math.abs(newVolume - oldVolume) < 0.001) {
                 debounceHits++
                 return true
             }
+            
+            // Use wpctl for EasyEffects compatibility
+            _setVolume(newVolume)
             
             lastUpdateTime = Date.now()
             debounceTimer.stop()
             debounceTimer.triggered.connect(() => {
                 if (osdRef) {
-                    osdRef.showVolume(sink.audio.volume, sink.audio.muted)
+                    // Get actual volume after wpctl command
+                    const actualVolume = sink.audio ? sink.audio.volume : newVolume
+                    osdRef.showVolume(actualVolume, sink.audio ? sink.audio.muted : false)
                 }
             })
             debounceTimer.restart()
 
             updateCount++
-            console.log("[VolumeControl] Volume down: " + 
+            console.log("[VolumeControl] Volume down (wpctl): " + 
                        (oldVolume * 100).toFixed(0) + "% → " + 
-                       (sink.audio.volume * 100).toFixed(0) + "%")
+                       (newVolume * 100).toFixed(0) + "%")
             return true
         } catch (e) {
             errorCount++
@@ -222,17 +291,24 @@ Item {
 
         try {
             const oldMuted = sink.audio.muted
-            sink.audio.muted = !sink.audio.muted
             
+            // Use wpctl for EasyEffects compatibility
+            _toggleMute()
+            
+            // OSD update dengan delay kecil untuk menunggu wpctl selesai
             if (osdRef) {
-                osdRef.showVolume(sink.audio.volume, sink.audio.muted)
+                Qt.callLater(() => {
+                    const actualMuted = sink.audio ? sink.audio.muted : !oldMuted
+                    const actualVolume = sink.audio ? sink.audio.volume : 0
+                    osdRef.showVolume(actualVolume, actualMuted)
+                })
             }
             
             lastUpdateTime = Date.now()
             updateCount++
-            console.log("[VolumeControl] Mute toggled: " + 
+            console.log("[VolumeControl] Mute toggled (wpctl): " + 
                        (oldMuted ? "on" : "off") + " → " + 
-                       (sink.audio.muted ? "on" : "off"))
+                       (!oldMuted ? "on" : "off"))
             return true
         } catch (e) {
             errorCount++
@@ -242,18 +318,76 @@ Item {
         }
     }
 
+    function toggleMicMute() {
+        if (!_defaultSource) {
+            errorCount++
+            lastError = "No audio source available"
+            console.error("[VolumeControl] toggleMicMute failed:", lastError)
+            return false
+        }
+
+        if (!_defaultSource.audio) {
+            errorCount++
+            lastError = "Source has no audio property"
+            console.error("[VolumeControl] toggleMicMute failed:", lastError)
+            return false
+        }
+
+        try {
+            const oldMuted = _defaultSource.audio.muted
+            
+            // Use wpctl for microphone mute
+            _toggleMicMute()
+            
+            // OSD update — pakai Qt.callLater supaya Pipewire sempat update state
+            // sebelum kita baca _defaultSource.audio.muted
+            if (osdRef) {
+                Qt.callLater(() => {
+                    const actualMuted = _defaultSource && _defaultSource.audio
+                        ? _defaultSource.audio.muted
+                        : !oldMuted
+                    osdRef.showMicMute(actualMuted)
+                })
+            }
+            
+            lastUpdateTime = Date.now()
+            updateCount++
+            console.log("[VolumeControl] Microphone mute toggled (wpctl): " + 
+                       (oldMuted ? "on" : "off") + " → " + 
+                       (!oldMuted ? "on" : "off"))
+            return true
+        } catch (e) {
+            errorCount++
+            lastError = e.message
+            console.error("[VolumeControl] Error in toggleMicMute:", e.message)
+            return false
+        }
+    }
+
     function getSinkInfo(): string {
         if (!sink) return "No sink available"
         const name = sink.name || "Unknown"
         const volume = sink.audio ? (sink.audio.volume * 100).toFixed(0) + "%" : "N/A"
         const muted = sink.audio ? (sink.audio.muted ? "Muted" : "Unmuted") : "N/A"
-        return `${name} - ${volume} ${muted}`
+        const easyEffectsMode = _hwSinkId !== "" ? " (via EasyEffects)" : ""
+        return `${name}${easyEffectsMode} - ${volume} ${muted}`
+    }
+
+    function getMicInfo(): string {
+        if (!_defaultSource) return "No microphone available"
+        const name = _defaultSource.name || "Unknown"
+        const muted = _defaultSource.audio ? (_defaultSource.audio.muted ? "Muted" : "Unmuted") : "N/A"
+        return `Mic: ${name} - ${muted}`
     }
 
     function getDebugInfo(): object {
         return {
             "status": sink ? "ready" : "no sink",
             "sink_name": sink ? (sink.name || "unknown") : null,
+            "mic_name": _defaultSource ? (_defaultSource.name || "unknown") : null,
+            "mic_muted": _defaultSource && _defaultSource.audio ? _defaultSource.audio.muted : null,
+            "easyeffects_mode": _hwSinkId !== "",
+            "hw_sink_id": _hwSinkId || null,
             "volume": sink && sink.audio ? (sink.audio.volume * 100).toFixed(0) + "%" : null,
             "muted": sink && sink.audio ? sink.audio.muted : null,
             "update_count": updateCount,

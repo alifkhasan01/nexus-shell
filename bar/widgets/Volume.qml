@@ -1,11 +1,12 @@
 import QtQuick
+import QtQuick.Layouts
 import Quickshell.Io
 import Quickshell.Services.Pipewire
 import "../../" as Root
 
 Item {
     id: root
-    implicitWidth: label.implicitWidth
+    implicitWidth: row.implicitWidth
     width: implicitWidth
     height: 20
 
@@ -33,8 +34,6 @@ Item {
     }
 
     property real volume: {
-        // Kalau default sink adalah EasyEffects, tampilkan volume hardware sink
-        // supaya persentase di bar mencerminkan volume yang benar-benar terdengar
         if (root._hwSinkId !== "") {
             const nodes = Pipewire.nodes.values
             for (let i = 0; i < nodes.length; i++) {
@@ -45,12 +44,16 @@ Item {
         }
         return sink?.audio ? sink.audio.volume : 0
     }
-    property bool muted:  sink?.audio ? sink.audio.muted  : true
+    property bool muted: sink?.audio ? sink.audio.muted : true
 
+    // ── Microphone source ──────────────────────────────────────────────────
+    property var _defaultSource: Pipewire.defaultAudioSource
+    property bool micMuted: _defaultSource?.audio ? _defaultSource.audio.muted : false
+
+    // Track sink + hardware sink
     PwObjectTracker {
         objects: {
             const list = [root._defaultSink, root._btSink].filter(n => n != null)
-            // Track juga hardware sink supaya root.volume reaktif saat volume berubah
             if (root._hwSinkId !== "") {
                 const nodes = Pipewire.nodes.values
                 for (let i = 0; i < nodes.length; i++) {
@@ -62,28 +65,18 @@ Item {
         }
     }
 
-    // Proses wpctl — route lewat @DEFAULT_SINK@ supaya EasyEffects diikutsertakan
-    Process {
-        id: wpctlVol
-        running: false
-    }
-    Process {
-        id: wpctlMute
-        running: false
-    }
-    // Process untuk hardware sink di bawah EasyEffects
-    Process {
-        id: wpctlVolHw
-        running: false
-    }
-    Process {
-        id: wpctlMuteHw
-        running: false
+    // Track mic source agar micMuted reaktif
+    PwObjectTracker {
+        objects: root._defaultSource ? [root._defaultSource] : []
     }
 
-    // Detect hardware sink aktif di balik EasyEffects.
-    // EasyEffects simpan node.driver-id = ID hardware sink yang sedang di-drive.
-    // Ini otomatis update saat user switch output (BT → speaker, dll).
+    // Proses wpctl
+    Process { id: wpctlVol;     running: false }
+    Process { id: wpctlMute;    running: false }
+    Process { id: wpctlVolHw;   running: false }
+    Process { id: wpctlMuteHw;  running: false }
+    Process { id: wpctlMicMute; running: false }
+
     property string _hwSinkId: {
         if (!root.sink) return ""
         const eeName = (root.sink.name || "").toLowerCase()
@@ -93,10 +86,8 @@ Item {
     }
 
     function _setVolume(v) {
-        // Set ke EasyEffects sink supaya display % di EasyEffects sinkron
         wpctlVol.command = ["wpctl", "set-volume", "@DEFAULT_SINK@", v.toFixed(3)]
         wpctlVol.running = true
-        // Set juga ke hardware sink supaya volume benar-benar berubah
         if (root._hwSinkId !== "") {
             wpctlVolHw.command = ["wpctl", "set-volume", root._hwSinkId, v.toFixed(3)]
             wpctlVolHw.running = true
@@ -110,7 +101,12 @@ Item {
             wpctlMuteHw.running = true
         }
     }
+    function _toggleMicMute() {
+        wpctlMicMute.command = ["wpctl", "set-mute", "@DEFAULT_SOURCE@", "toggle"]
+        wpctlMicMute.running = true
+    }
 
+    // ── Hover background ───────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
         anchors.margins: -4
@@ -123,29 +119,45 @@ Item {
         }}
     }
 
-    Text {
-        id: label
+    RowLayout {
+        id: row
         anchors.centerIn: parent
-        color: root.muted ? Root.Colors.red
-             : root.panelOpen ? Root.Colors.blue
-             : Root.Colors.blue
-        font.pixelSize: 14
-        Behavior on color { ColorAnimation {
-            duration: Root.Appearance.animation.elementMoveFast.duration
-            easing.type: Root.Appearance.animation.elementMoveFast.type
-            easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-        }}
-        text: {
-            if (root.muted || !root.sink?.audio) return "  Mute"
-            const pct = Math.round(root.volume * 100)
-            const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
-            return icon + "  " + pct + "%"
+        spacing: 5
+
+        // ── Volume label ───────────────────────────────────────────────────
+        Text {
+            id: label
+            color: root.muted ? Root.Colors.red : Root.Colors.blue
+            font.pixelSize: 14
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
+            text: {
+                if (root.muted || !root.sink?.audio) return "  Mute"
+                const pct = Math.round(root.volume * 100)
+                const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
+                return icon + "  " + pct + "%"
+            }
+        }
+
+        // ── Mic mute indicator — hanya muncul saat mic di-mute ────────────
+        Text {
+            id: micIndicator
+            visible: root.micMuted
+            color: Root.Colors.red
+            font.pixelSize: 12
+            text: "󰍭"
+            Behavior on color { ColorAnimation {
+                duration: Root.Appearance.animation.elementMoveFast.duration
+                easing.type: Root.Appearance.animation.elementMoveFast.type
+                easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
+            }}
         }
     }
 
-    // Signal ke Bar.qml untuk tampilkan OSD
-    signal osdVolume(real value, bool muted)
-
+    // ── Satu MouseArea untuk seluruh widget ───────────────────────────────
     MouseArea {
         id: volMa
         anchors.fill: parent
@@ -157,8 +169,15 @@ Item {
             if (mouse.button === Qt.LeftButton) {
                 root.togglePanel()
             } else if (mouse.button === Qt.RightButton) {
-                root._toggleMute()
-                root.osdVolume(root.volume, !root.muted)
+                // Klik kanan di area micIndicator → toggle mic mute
+                // Klik kanan di luar → toggle volume mute
+                const localPt = mapToItem(micIndicator, mouse.x, mouse.y)
+                if (root.micMuted && micIndicator.contains(localPt)) {
+                    root._toggleMicMute()
+                } else {
+                    root._toggleMute()
+                    root.osdVolume(root.volume, !root.muted)
+                }
             }
         }
 
@@ -171,6 +190,9 @@ Item {
             volDebounce.restart()
         }
     }
+
+    // Signal ke Bar.qml untuk tampilkan OSD
+    signal osdVolume(real value, bool muted)
 
     Timer {
         id: volDebounce

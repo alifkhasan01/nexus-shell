@@ -16,6 +16,12 @@ PanelWindow {
         _show()
     }
 
+    function showMicMute(muted) {
+        osdType  = muted ? "mic_mute" : "mic_unmute"
+        osdValue = 0.5  // No volume bar for mic, just icon + label
+        _show()
+    }
+
     function showBrightness(value) {
         osdType  = "brightness"
         osdValue = Math.max(0, Math.min(1, value))
@@ -109,12 +115,15 @@ PanelWindow {
             Text {
                 font.pixelSize: 18
                 color: {
-                    if (root.osdType === "mute")       return Root.Colors.subtext
-                    if (root.osdType === "brightness")  return Root.Colors.yellow
+                    if (root.osdType === "mute" || root.osdType === "mic_mute") return Root.Colors.red
+                    if (root.osdType === "mic_unmute")                          return Root.Colors.green
+                    if (root.osdType === "brightness")                          return Root.Colors.yellow
                     return Root.Colors.blue
                 }
                 text: {
-                    if (root.osdType === "mute") return ""
+                    if (root.osdType === "mute")       return ""
+                    if (root.osdType === "mic_mute")   return "󰍭"
+                    if (root.osdType === "mic_unmute") return "󰍬"
                     if (root.osdType === "brightness") {
                         const p = root.osdValue
                         return p >= 0.67 ? "󰃞" : (p >= 0.34 ? "󰃝" : "󰃜")
@@ -125,12 +134,13 @@ PanelWindow {
                 Behavior on color { ColorAnimation { duration: 120 } }
             }
 
-            // ── Progress bar ──────────────────────────────────────────────
+            // ── Progress bar (disembunyikan untuk mic OSD) ────────────────
             Rectangle {
                 Layout.fillWidth: true
                 height: 6
                 radius: 3
                 color: Root.Colors.surface1
+                visible: root.osdType !== "mic_mute" && root.osdType !== "mic_unmute"
                 Behavior on color { ColorAnimation { duration: 150 } }
 
                 Rectangle {
@@ -147,11 +157,22 @@ PanelWindow {
                 }
             }
 
+            // ── Label status mic — ditampilkan hanya untuk mic OSD ─────────
+            Text {
+                font.pixelSize: 13
+                Layout.fillWidth: true
+                visible: root.osdType === "mic_mute" || root.osdType === "mic_unmute"
+                color: root.osdType === "mic_mute" ? Root.Colors.red : Root.Colors.green
+                text: root.osdType === "mic_mute" ? "Mic Muted" : "Mic Active"
+                Behavior on color { ColorAnimation { duration: 120 } }
+            }
+
             // ── Persentase (kanan progress bar) ───────────────────────────
             Text {
                 font.pixelSize: 12
                 Layout.minimumWidth: 34
                 horizontalAlignment: Text.AlignRight
+                visible: root.osdType !== "mic_mute" && root.osdType !== "mic_unmute"
                 color: root.osdType === "mute" ? Root.Colors.subtext : Root.Colors.text
                 text: root.osdType === "mute"
                       ? "Mute"

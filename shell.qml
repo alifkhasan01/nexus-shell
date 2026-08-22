@@ -129,6 +129,13 @@ ShellRoot {
 
     GlobalShortcut {
         appid: "quickshell"
+        name: "mic:mute"
+        description: "Toggle microphone mute"
+        onPressed: if (volumeControlObj) volumeControlObj.toggleMicMute()
+    }
+
+    GlobalShortcut {
+        appid: "quickshell"
         name: "brightness:up"
         description: "Brightness up"
         onPressed: if (brightnessControlObj) brightnessControlObj.brightnessUp()

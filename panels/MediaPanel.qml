@@ -2,10 +2,10 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls.Basic
 import Quickshell
-import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Mpris
 import "../" as Root
+import "../services" as Services
 
 PanelWindow {
     id: root
@@ -29,85 +29,13 @@ PanelWindow {
     property var player: Mpris.players.values.length > 0 ? Mpris.players.values[0] : null
     property bool hasPlayer: player !== null
 
-    // ── Equalizer state ────────────────────────────────────────────────────
-    // 10-band: 31 63 125 250 500 1k 2k 4k 8k 16k
-    property var eqBands: [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-    property var eqLabels: ["31", "63", "125", "250", "500", "1k", "2k", "4k", "8k", "16k"]
-    property string activePreset: "Flat"
-    property var presets: ["Flat", "Bass", "Treble", "Vocal", "Pop", "Rock", "Jazz", "Classic"]
-
-    // Gain values per preset (index matches eqBands)
-    property var presetValues: ({
-        "Flat":    [ 0,  0,  0,  0,  0,  0,  0,  0,  0,  0],
-        "Bass":    [ 6,  5,  3,  1,  0,  0, -1, -1, -2, -2],
-        "Treble":  [-2, -2, -1,  0,  0,  1,  3,  4,  5,  6],
-        "Vocal":   [-2, -1,  0,  1,  3,  4,  4,  3,  1,  0],
-        "Pop":     [-1,  2,  3,  2,  0, -1,  2,  3,  2,  1],
-        "Rock":    [ 5,  4,  3, -1, -2,  0,  1,  3,  4,  3],
-        "Jazz":    [ 3,  2,  1,  2,  0, -1,  0,  2,  3,  2],
-        "Classic": [ 0,  0,  0,  0, -2, -2,  0,  3,  4,  4]
-    })
-
-    // ── EasyEffects process ────────────────────────────────────────────────
-    Process {
-        id: eqProc
-        running: false
-    }
-
-    function loadPreset(name) {
-        activePreset = name
-        const vals = presetValues[name]
-        if (vals) {
-            // Update slider values
-            const newBands = []
-            for (let i = 0; i < 10; i++) newBands.push(vals[i])
-            eqBands = newBands
-        }
-        eqProc.command = ["easyeffects", "--load-preset", name]
-        eqProc.running = false
-        eqProc.running = true
-    }
-
-    // Simpan custom EQ lalu load ke EasyEffects
-    Process { id: saveProc; running: false }
-
-    function applyCustomEq() {
-        // Schema EasyEffects 7/8: band harus nested di "left"/"right",
-        // preset disimpan di ~/.local/share/easyeffects/output/
-        const bands = eqBands
-        const freq = [31, 63, 125, 250, 500, 1000, 2000, 4000, 8000, 16000]
-        let bandObj = ""
-        for (let i = 0; i < 10; i++) {
-            bandObj += `"band${i}": { "frequency": ${freq[i]}.0, "gain": ${bands[i].toFixed(1)}, "mode": "RLC(BT)", "mute": false, "q": 1.5047, "slope": "x1", "solo": false, "type": "Bell" }`
-            if (i < 9) bandObj += ",\n        "
-        }
-        const json = `{
-  "output": {
-    "blocklist": [],
-    "equalizer#0": {
-      "bypass": false,
-      "input-gain": 0.0,
-      "output-gain": 0.0,
-      "mode": "IIR",
-      "num-bands": 10,
-      "split-channels": false,
-      "left": {
-        ${bandObj}
-      },
-      "right": {
-        ${bandObj}
-      }
-    },
-    "plugins_order": ["equalizer#0"]
-  }
-}`
-        saveProc.command = ["sh", "-c",
-            `mkdir -p ~/.local/share/easyeffects/output && printf '%s' '${json.replace(/'/g, `'\\''`)}' > ~/.local/share/easyeffects/output/Custom.json && easyeffects --load-preset Custom`
-        ]
-        saveProc.running = false
-        saveProc.running = true
-        activePreset = ""
-    }
+    // ── Equalizer ──────────────────────────────────────────────────────────
+    // State EQ (preset aktif & gain band) disimpan di EqService singleton —
+    // terdeteksi langsung dari EasyEffects tanpa perlu panel dibuka dulu.
+    readonly property string activePreset: Services.EqService.activePreset
+    readonly property var eqBands: Services.EqService.bands
+    readonly property var presets: Services.EqService.presets
+    readonly property var eqLabels: Services.EqService.eqLabels
 
     // ── Progress timer ─────────────────────────────────────────────────────
     Timer {
@@ -576,6 +504,8 @@ PanelWindow {
                                     drag.minimumY: sliderHandle.trackTop - sliderHandle.height / 2
                                     drag.maximumY: sliderHandle.trackBottom - sliderHandle.height / 2
 
+                                    onPressed: Services.EqService.dragging = true
+
                                     onPositionChanged: {
                                         if (!drag.active) return
                                         const mid = sliderHandle.mid
@@ -584,14 +514,14 @@ PanelWindow {
                                         const clamped = Math.max(-12, Math.min(12, gain))
                                         const rounded = Math.round(clamped * 2) / 2
 
-                                        const newBands = root.eqBands.slice()
-                                        newBands[index] = rounded
-                                        root.eqBands = newBands
-                                        root.activePreset = ""
+                                        Services.EqService.setBand(index, rounded)
                                         eqCurve.requestPaint()
                                     }
 
-                                    onReleased: root.applyCustomEq()
+                                    onReleased: {
+                                        Services.EqService.dragging = false
+                                        Services.EqService.applyCustomEq()
+                                    }
                                 }
                             }
 
@@ -656,7 +586,7 @@ PanelWindow {
                             anchors.fill: parent
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
-                            onClicked: root.loadPreset(modelData)
+                            onClicked: Services.EqService.loadPreset(modelData)
                         }
                     }
                 }

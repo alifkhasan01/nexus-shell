@@ -23,7 +23,8 @@ Scope {
     id: root
 
     // ── PS button icons untuk password indicator ─────────────────────
-    readonly property var psIcons:  ["\uf111", "\uf00d", "\uf0d8", "\uf0c8"]
+    // Pakai Unicode standar: ● ✕ ▲ ■ — dijamin render tanpa perlu Nerd Font
+    readonly property var psIcons:  ["●", "✕", "▲", "■"]
     readonly property var psColors: ["#89b4fa", "#f38ba8", "#a6e3a1", "#cba6f7"]
     // (blue, red, green, mauve — hardcode agar bisa diakses dari delegate)
 
@@ -32,6 +33,7 @@ Scope {
     property string _message:       ""
     property bool   _messageIsErr:  false
     property bool   _checking:      false
+    property bool   _showPassword:  false
 
     // ── Kutipan motivasi ────────────────────────────────────────────────
     // Dicari dari artikel online (Kompas, CNN, Brilio, dll) — campuran
@@ -126,8 +128,9 @@ Scope {
         }
 
         onCompleted: result => {
-            root._checking = false
-            root._buffer   = ""
+            root._checking     = false
+            root._buffer       = ""
+            root._showPassword = false
 
             if (result === PamResult.Success) {
                 sessionLock.locked = false
@@ -554,16 +557,44 @@ Scope {
                         Item { Layout.preferredHeight: 20 }
 
                         // ── Password pill ─────────────────────────────
+                        // ── Password pill wrapper (untuk shake tanpa drift) ───────
+                        Item {
+                            Layout.alignment: Qt.AlignHCenter
+                            implicitWidth: inputPill.implicitWidth
+                            implicitHeight: inputPill.implicitHeight
+
+                            property real shakeOffset: 0
+
+                            SequentialAnimation {
+                                id: shakeAnim
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to: -14; duration: 45 }
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to:  12; duration: 65 }
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to: -10; duration: 65 }
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to:   7; duration: 65 }
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to:  -4; duration: 65 }
+                                NumberAnimation { target: inputPillWrapper; property: "shakeOffset"; to:   0; duration: 45 }
+                            }
+
+                            id: inputPillWrapper
+
+                            Connections {
+                                target: root
+                                function on_MessageIsErrChanged() {
+                                    if (root._messageIsErr) shakeAnim.start()
+                                }
+                            }
+
                         Rectangle {
                             id: inputPill
-                            Layout.alignment: Qt.AlignHCenter
+                            x: inputPillWrapper.shakeOffset
+                            anchors.verticalCenter: parent.verticalCenter
                             height: 48
                             radius: height / 2
                             color: Root.Colors.surface0
 
                             implicitWidth: root._buffer.length > 0
-                                           ? Math.min(root._buffer.length * 16 + 100, 300)
-                                           : 220
+                                           ? Math.min(root._buffer.length * 16 + 140, 340)
+                                           : 240
                             Behavior on implicitWidth {
                                 NumberAnimation { duration: 200; easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.standard }
                             }
@@ -574,27 +605,10 @@ Scope {
                             border.width: 1.5
                             Behavior on border.color { ColorAnimation { duration: 150 } }
 
-                            SequentialAnimation {
-                                id: shakeAnim
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x - 14; duration: 45 }
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x + 26; duration: 65 }
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x - 20; duration: 65 }
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x + 14; duration: 65 }
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x - 8;  duration: 65 }
-                                NumberAnimation { target: inputPill; property: "x"; to: inputPill.x;      duration: 45 }
-                            }
-
-                            Connections {
-                                target: root
-                                function on_MessageIsErrChanged() {
-                                    if (root._messageIsErr) shakeAnim.start()
-                                }
-                            }
-
                             RowLayout {
                                 anchors.fill: parent
                                 anchors.leftMargin: 14
-                                anchors.rightMargin: 14
+                                anchors.rightMargin: 10
                                 spacing: 8
 
                                 // Ikon kunci
@@ -615,7 +629,7 @@ Scope {
                                     }
                                 }
 
-                                // Area dots / placeholder — tidak ada text lain
+                                // Area dots / teks password / placeholder
                                 Item {
                                     Layout.fillWidth: true
                                     Layout.fillHeight: true
@@ -630,33 +644,90 @@ Scope {
                                         visible: root._buffer.length === 0 && !root._checking
                                     }
 
-                                    // PS button icons per karakter — cycle ○ × △ □
+                                    // Mode show: tampilkan teks asli
+                                    Text {
+                                        anchors.centerIn: parent
+                                        text: root._buffer
+                                        font.pixelSize: 14
+                                        color: Root.Colors.text
+                                        visible: root._showPassword && root._buffer.length > 0
+                                        elide: Text.ElideLeft
+                                        width: parent.width
+                                        horizontalAlignment: Text.AlignHCenter
+                                    }
+
+                                    // Mode hidden: PS button icons per karakter — cycle ● ✕ ▲ ■
                                     Row {
                                         id: dotsRow
                                         anchors.centerIn: parent
-                                        spacing: 4
-                                        visible: root._buffer.length > 0
+                                        spacing: 5
+                                        visible: !root._showPassword && root._buffer.length > 0
 
                                         Repeater {
                                             model: root._buffer.length
                                             delegate: Text {
                                                 required property int index
-                                                font.family: "CaskaydiaCove Nerd Font"
-                                                font.pixelSize: 14
+                                                font.pixelSize: 12
                                                 text: root.psIcons[index % 4]
                                                 color: root.psColors[index % 4]
-                                                scale: 0
-                                                Component.onCompleted: scaleAnim.start()
-                                                NumberAnimation {
-                                                    id: scaleAnim
-                                                    target: parent
-                                                    property: "scale"
+
+                                                NumberAnimation on scale {
                                                     from: 0; to: 1
                                                     duration: 150
-                                                    easing.type: Easing.Bezier; easing.bezierCurve: Root.Motion.enter
+                                                    easing.type: Easing.OutBack
                                                 }
                                             }
                                         }
+                                    }
+                                }
+
+                                // Tombol show/hide + badge counter karakter
+                                Item {
+                                    width: 36
+                                    height: 36
+                                    visible: root._buffer.length > 0 && !root._checking
+
+                                    // Icon eye
+                                    Text {
+                                        id: eyeIcon
+                                        anchors.centerIn: parent
+                                        // 󰈉 = eye-off (hidden), 󰈈 = eye (visible) — Nerd Font Material Design
+                                        text: root._showPassword ? "󰈉" : "󰈈"
+                                        font.family: "CaskaydiaCove Nerd Font"
+                                        font.pixelSize: 16
+                                        color: root._showPassword ? Root.Colors.blue : Root.Colors.subtext
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                    }
+
+                                    // Badge: jumlah karakter — hanya tampil saat hidden
+                                    Rectangle {
+                                        visible: !root._showPassword && root._buffer.length > 0
+                                        anchors.top: parent.top
+                                        anchors.right: parent.right
+                                        anchors.topMargin: 0
+                                        anchors.rightMargin: 0
+                                        width: Math.max(16, charCountLabel.implicitWidth + 6)
+                                        height: 16
+                                        radius: 8
+                                        color: Root.Colors.lavender
+
+                                        Behavior on width { NumberAnimation { duration: 120 } }
+
+                                        Text {
+                                            id: charCountLabel
+                                            anchors.centerIn: parent
+                                            text: root._buffer.length
+                                            font.pixelSize: 9
+                                            font.bold: true
+                                            color: Root.Colors.base
+                                        }
+                                    }
+
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        anchors.margins: -4
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: root._showPassword = !root._showPassword
                                     }
                                 }
 
@@ -691,6 +762,7 @@ Scope {
                                 }
                             }
                         }
+                        } // end inputPillWrapper
 
                         // State message
                         Text {
@@ -858,10 +930,11 @@ Scope {
 
     // ── Fungsi publik: dipanggil dari shell.qml via lockScreenRef.lock() ──
     function lock(): void {
-        root._buffer       = ""
-        root._message      = ""
-        root._checking     = false
-        root._messageIsErr = false
-        sessionLock.locked = true
+        root._buffer        = ""
+        root._message       = ""
+        root._checking      = false
+        root._messageIsErr  = false
+        root._showPassword  = false
+        sessionLock.locked  = true
     }
 }

@@ -26,6 +26,11 @@ PanelWindow {
             menuModel.update()  // refresh lagi saat dibuka, kalau DesktopEntries belum selesai dimuat
             navState.focusArea = "search"
             searchInput.forceActiveFocus()
+            // Reset scroll position ke atas setiap kali menu dibuka
+            if (appList) {
+                appList.positionViewAtBeginning()
+                appList.currentIndex = 0
+            }
         } else {
             // Reset ke posisi default: filter kategori "All", PWA tampil,
             // index kategori awal, dan fokus kembali ke search.
@@ -33,6 +38,11 @@ PanelWindow {
             navState.categoryIndex = 0
             navState.showWebApps = true
             navState.focusArea = "search"
+            // Reset scroll position saat menu ditutup juga untuk memastikan
+            if (appList) {
+                appList.positionViewAtBeginning()
+                appList.currentIndex = 0
+            }
         }
     }
 
@@ -169,8 +179,22 @@ PanelWindow {
             results = out
         }
 
-        onSearchTextChanged:   update()
-        onCategoryChanged:     update()
+        onSearchTextChanged:   {
+            update()
+            // Reset scroll ke atas setiap kali search berubah
+            if (appList) {
+                appList.positionViewAtBeginning()
+                appList.currentIndex = 0
+            }
+        }
+        onCategoryChanged:     {
+            update()
+            // Reset scroll ke atas setiap kali kategori berubah
+            if (appList) {
+                appList.positionViewAtBeginning()
+                appList.currentIndex = 0
+            }
+        }
         onAllChanged:          update()
         Component.onCompleted: update()
     }
@@ -178,15 +202,22 @@ PanelWindow {
     // Update saat toggle WebApps berubah
     Connections {
         target: navState
-        function onShowWebAppsChanged() { menuModel.update() }
+        function onShowWebAppsChanged() { 
+            menuModel.update()
+            // Reset scroll ke atas saat toggle WebApps berubah
+            if (appList) {
+                appList.positionViewAtBeginning()
+                appList.currentIndex = 0
+            }
+        }
     }
 
     // ── Kartu ─────────────────────────────────────────────────────────────
     FocusScope {
         id: card
 
-        x:      650
-        y:      200      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
+        x:      100
+        y:      5      // tepat di bawah bar (margin top 6px + bar 45px + gap 2px)
         width:  700
         height: Math.min(660, root.height - y - 12)
         focus: true

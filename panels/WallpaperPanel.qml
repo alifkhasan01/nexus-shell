@@ -154,7 +154,7 @@ PanelWindow {
         onTriggered: readCurrentProc.running = true
     }
 
-    function _home() { return "/home/youtta" }
+    function _home() { return Quickshell.env("HOME") || "" }
 
     function saveConfig() {
         const cfg = {
@@ -197,16 +197,18 @@ PanelWindow {
 
     // Kirim daftar path ke gen-thumbs.sh. Script otomatis skip file yang
     // thumb-nya sudah up-to-date (cek mtime), generate hanya yang baru/stale.
-    // Output per baris: "<thumbPath>|<origPath>" → diisi ke thumbCache.
+    // Generate paralel di sisi script (xargs -P). Output per baris:
+    // "<thumbPath>|<origPath>" → diisi ke thumbCache.
     function loadExistingThumbs(paths) {
         if (paths.length === 0) return
-        const scriptPath = "/home/youtta/.config/quickshell/scripts/gen-thumbs.sh"
-        const escaped = paths.map(p => p.replace(/'/g, "'\\''")).join("\\n")
-        // Jalankan script — entri yang thumb-nya sudah baru langsung return
-        // tanpa regenerate; entri yang belum ada atau stale akan di-generate.
+        const esc = paths.map(p => p.replace(/'/g, "'\\''"))
+        // Batch kecil supaya aman dari limit ARG_MAX saat koleksi ribuan file
+        const BATCH = 500
+        let prints = ""
+        for (let i = 0; i < esc.length; i += BATCH)
+            prints += "printf '" + esc.slice(i, i + BATCH).join("\\n") + "\\n'; "
         genThumbsProc.command = ["sh", "-c",
-            "printf '" + escaped + "\\n' | bash '" +
-            scriptPath.replace(/'/g, "'\\''") + "'"]
+            "{ " + prints + "} | bash \"$HOME/.config/quickshell/scripts/gen-thumbs.sh\""]
         genThumbsProc.running = true
     }
 
@@ -322,14 +324,14 @@ PanelWindow {
         onTriggered: root.hiddenForTransition = false
     }
 
-    // Map wallpaperMode → awww --scaling flag
-    function _modeToAwww(mode) {
+    // Map wallpaperMode → flag resize awww (--resize, awww ≥0.10 tidak pakai --scaling)
+    function _modeToResize(mode) {
         switch (mode) {
-            case "fit":     return "fit"
-            case "stretch": return "stretch"
-            case "center":  return "center"
-            case "tile":    return "tile"
-            default:        return "crop"   // "fill" → crop (PreserveAspectCrop)
+            case "fit":     return "--resize fit"
+            case "stretch": return "--resize stretch"
+            case "center":  return "--no-resize"   // center + padding
+            case "tile":    return "--resize crop" // awww tidak support tile
+            default:        return "--resize crop" // "fill" → crop (PreserveAspectCrop)
         }
     }
 
@@ -341,14 +343,14 @@ PanelWindow {
         reshowTimer.restart()
 
         const esc     = path.replace(/'/g, "'\\''")
-        const scaling = root._modeToAwww(root.wallpaperMode)
+        const resize  = root._modeToResize(root.wallpaperMode)
         setProc.command = ["sh", "-c",
             "(awww query >/dev/null 2>&1 || (awww-daemon >/dev/null 2>&1 & sleep 0.4)) && " +
             "awww img '" + esc + "'" +
             " --transition-type "     + root.transitionType +
             " --transition-duration " + root.transitionDuration +
             " --transition-fps "      + root.transitionFps +
-            " --scaling "             + scaling +
+            " "                       + resize +
             " && mkdir -p ~/.cache/wallpaper" +
             " && printf '%s' '" + esc + "' > ~/.cache/wallpaper/current" +
             " && ln -sf '"     + esc + "' ~/.cache/wallpaper/hyprlock-bg" +
@@ -358,6 +360,10 @@ PanelWindow {
 
     Process {
         id: setProc
+        property string lastError: ""
+        stderr: StdioCollector {
+            onStreamFinished: setProc.lastError = text.trim()
+        }
         stdout: StdioCollector {
             onStreamFinished: {
                 if (text.trim() === "ok") {
@@ -366,7 +372,8 @@ PanelWindow {
                     // Update WallpaperService
                     WallpaperService.setCurrent(root.previewPath)
                 } else {
-                    root.statusText = "⚠ Gagal set wallpaper."
+                    root.statusText = "⚠ Gagal set wallpaper." +
+                        (setProc.lastError.length > 0 ? " (" + setProc.lastError.split("\n")[0] + ")" : "")
                     // Gagal? tampilkan panel langsung jangan tunggu timer
                     reshowTimer.stop()
                     root.hiddenForTransition = false

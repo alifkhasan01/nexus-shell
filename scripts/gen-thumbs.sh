@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-# gen-thumbs.sh — Generate disk thumbnail cache untuk wallpaper picker.
+# gen-thumbs.sh — Generate disk thumbnail cache (paralel) untuk wallpaper picker.
 #
 # Penggunaan:
 #   gen-thumbs.sh <file1> [file2 ...]
-#   echo -e "file1\nfile2" | gen-thumbs.sh
+#   printf '%s\n' file1 file2 | gen-thumbs.sh
 #
 # Output per baris: "<thumb_path>|<orig_path>"
 # Thumbnail disimpan di ~/.cache/quickshell/thumbs/<md5(path)>.jpg
 # Skip jika thumbnail sudah ada DAN lebih baru dari sumber.
+# Paralel: THUMB_JOBS job serentak (default = jumlah core CPU).
 #
 # Dependensi (salah satu): ffmpegthumbnailer, convert (ImageMagick), atau magick (IM7)
 
 THUMB_DIR="${HOME}/.cache/quickshell/thumbs"
 THUMB_SIZE="${THUMB_SIZE:-320}"  # lebar px; tinggi proporsional
+PARALLEL="${THUMB_JOBS:-$(nproc 2>/dev/null || echo 4)}"
 
 mkdir -p "$THUMB_DIR"
 
@@ -73,11 +75,9 @@ make_thumb() {
 export -f make_thumb
 export THUMB_DIR ENGINE THUMB_SIZE
 
-# ── Baca input: args atau stdin ───────────────────────────────────────────────
+# ── Baca input: args atau stdin, lalu generate paralel via xargs ─────────────
 if [[ $# -gt 0 ]]; then
-    for f in "$@"; do make_thumb "$f"; done
+    printf '%s\n' "$@"
 else
-    while IFS= read -r line; do
-        [[ -n "$line" ]] && make_thumb "$line"
-    done
-fi
+    cat
+fi | xargs -r -d '\n' -P "$PARALLEL" -n 1 bash -c 'make_thumb "$1"' _

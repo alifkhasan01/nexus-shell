@@ -125,6 +125,15 @@ QtObject {
         }
     }
 
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "mic:mute"
+        description: "Toggle microphone mute"
+        onPressed: {
+            if (volumeControl) volumeControl.toggleMicMute()
+        }
+    }
+
     // ── Brightness Controls ────────────────────────────────────────────
     GlobalShortcut {
         appid: "quickshell"
