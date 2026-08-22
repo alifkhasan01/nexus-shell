@@ -78,7 +78,7 @@ PanelWindow {
 
         implicitHeight: cardRect.height
         height: implicitHeight
-        clip: false
+        clip: true
 
         // ── Animasi masuk ─────────────────────────────────────────────────
         opacity: 0
@@ -92,11 +92,14 @@ PanelWindow {
         }
 
         // ── Animasi keluar ────────────────────────────────────────────────
+        // Fade + tinggi menyusut bareng supaya isi & popup hilang serentak,
+        // kartu di bawah juga meluncur naik mulus tanpa lompat.
         ParallelAnimation {
             id: exitAnim
             running: false
             NumberAnimation { target: card;   property: "opacity"; to: 0; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
             NumberAnimation { target: slideT; property: "y";       to: -10; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
+            NumberAnimation { target: card;   property: "height";  to: 0; duration: Root.Appearance.animation.elementMoveExit.duration; easing.type: Root.Appearance.animation.elementMoveExit.type; easing.bezierCurve: Root.Appearance.animation.elementMoveExit.bezierCurve }
             onFinished: card.dismissed()
         }
 

@@ -489,19 +489,55 @@ PanelWindow {
         id: wpctlMuteProc
         running: false
     }
+    // Process kedua untuk set hardware sink secara bersamaan
+    Process {
+        id: wpctlVolHw
+        running: false
+    }
+    Process {
+        id: wpctlMuteHw
+        running: false
+    }
+
+    // Detect hardware sink aktif di balik EasyEffects.
+    // EasyEffects simpan node.driver-id = ID hardware sink yang sedang di-drive.
+    // Otomatis update saat user switch output (BT → speaker, dll).
+    function _hwSinkId(nodeId) {
+        if (!root.defaultSink || nodeId !== root.defaultSink.id) return ""
+        const eeName = (root.defaultSink.name || "").toLowerCase()
+        if (!eeName.includes("easyeffects")) return ""
+        const driverId = (root.defaultSink.properties || {})["node.driver-id"]
+        return driverId != null ? String(driverId) : ""
+    }
 
     // Helper: set volume device lewat wpctl (0.0 – 1.5)
+    // Kalau default sink adalah EasyEffects, set juga ke hardware sink supaya
+    // volume aktual berubah DAN persentase di EasyEffects sinkron.
     function deviceSetVolume(nodeId, value) {
-        wpctlVolProc.command = ["wpctl", "set-volume", String(nodeId),
-                                value.toFixed(3)]
+        const target = root.defaultSink && nodeId === root.defaultSink.id
+                       ? "@DEFAULT_SINK@" : String(nodeId)
+        wpctlVolProc.command = ["wpctl", "set-volume", target, value.toFixed(3)]
         wpctlVolProc.running = true
+
+        const hwId = _hwSinkId(nodeId)
+        if (hwId !== "") {
+            wpctlVolHw.command = ["wpctl", "set-volume", hwId, value.toFixed(3)]
+            wpctlVolHw.running = true
+        }
     }
 
     // Helper: set mute device lewat wpctl
     function deviceSetMute(nodeId, muted) {
-        wpctlMuteProc.command = ["wpctl", "set-mute", String(nodeId),
-                                 muted ? "1" : "0"]
+        const target = root.defaultSink && nodeId === root.defaultSink.id
+                       ? "@DEFAULT_SINK@" : String(nodeId)
+        wpctlMuteProc.command = ["wpctl", "set-mute", target, muted ? "1" : "0"]
         wpctlMuteProc.running = true
+
+        const hwId = _hwSinkId(nodeId)
+        if (hwId !== "") {
+            wpctlMuteHw.command = ["wpctl", "set-mute", hwId, muted ? "1" : "0"]
+            wpctlMuteHw.running = true
+        }
     }
 
     // ── Component: SectionLabel ────────────────────────────────────────────

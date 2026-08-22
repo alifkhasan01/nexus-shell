@@ -1,8 +1,9 @@
 {
-  "wallpaper_dir": "/home/youtta/Pictures/Wallpapers",
+  "wallpaper_dir": "/home/nexus/Pictures/Wallpapers",
   "transition_type": "random",
   "transition_duration": 1,
   "transition_fps": 120,
+  "wallpaper_mode": "fill",
   "thumb_size": 220,
   "columns": 4,
   "slideshow_enabled": false,

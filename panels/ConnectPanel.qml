@@ -1086,7 +1086,10 @@ PanelWindow {
         id: btDisconnectProc
         function disconnectDevice(addr) {
             root._lastDeviceName = (root.btDevices.find(d => d.address === addr) || {}).name || addr
-            command = ["sh", "-c", "bluetoothctl disconnect " + addr]
+            // Tandai agar auto-connect tidak menghubungkan ulang selama 5 menit
+            command = ["sh", "-c",
+                "echo '" + addr + " '\"$(date +%s)\" >> \"${XDG_RUNTIME_DIR:-/tmp}/qs-bt-autoconnect.skip\"; " +
+                "bluetoothctl disconnect " + addr]
             running = true
         }
         onRunningChanged: {

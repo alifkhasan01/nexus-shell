@@ -21,10 +21,18 @@ BT_PID=$!
 exec 9<>"$FIFO"
 rm -f "$FIFO"
 
-for cmd in "power on" "agent on" "default-agent"; do
+# NOTE: no "power on" here — adapter stays off at startup.
+# User can enable it via Connect Panel / BluetoothStatus toggle.
+for cmd in "agent on" "default-agent"; do
   echo "$cmd" >&9
   sleep 0.4
 done
+
+# Auto-connect perangkat yang sudah pernah dipairing (sound, dll)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+"$SCRIPT_DIR/btautoconnect.sh" &
+AC_PID=$!
+trap 'kill "$AC_PID" 2>/dev/null; exit' INT TERM
 
 tail -n +1 -f "$LOG" | while read -r line; do
   case "$line" in

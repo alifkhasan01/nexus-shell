@@ -12,6 +12,16 @@ PanelWindow {
 
     property bool open: false
     signal closeRequested()
+    signal pickFolderRequested()
+
+    // Dipanggil dari Bar setelah zenity selesai — update folder dan scan ulang
+    function onFolderPicked(dir) {
+        if (dir.length > 0) {
+            root.wallpaperDir = dir
+            root.saveConfig()
+            root.scanWallpapers()
+        }
+    }
 
     anchors { top: true; left: true; right: true; bottom: true }
     color: "transparent"
@@ -51,6 +61,8 @@ PanelWindow {
     property string wallpaperDir:   ""
     property bool   settingsOpen:   false
     property string searchQuery:    ""
+    // "fill" | "fit" | "stretch" | "center" | "tile"
+    property string wallpaperMode:  "fill"
     // path wallpaper yang sedang di-preview (hover / klik)
     property string previewPath:    ""
     property string currentWallpaperPath: ""  // wallpaper aktif saat ini
@@ -87,12 +99,13 @@ PanelWindow {
             onStreamFinished: {
                 try {
                     const c = JSON.parse(text)
-                    root.wallpaperDir       = c.wallpaper_dir                  || (root._home() + "/Pictures/Wallpapers")
-                    root.transitionType     = c.transition_type                || "wipe"
-                    root.transitionDuration = c.transition_duration            || 1.0
-                    root.transitionFps      = c.transition_fps                 || 60
-                    root.slideshowEnabled   = c.slideshow_enabled              || false
-                    root.slideshowMinutes   = c.slideshow_interval_minutes     || 5
+                    root.wallpaperDir       = c.wallpaper_dir              || (root._home() + "/Pictures/Wallpapers")
+                    root.transitionType     = c.transition_type            || "wipe"
+                    root.transitionDuration = c.transition_duration        || 1.0
+                    root.transitionFps      = c.transition_fps             || 60
+                    root.slideshowEnabled   = c.slideshow_enabled          || false
+                    root.slideshowMinutes   = c.slideshow_interval_minutes || 5
+                    root.wallpaperMode      = c.wallpaper_mode             || "fill"
                 } catch(e) {
                     root.wallpaperDir = root._home() + "/Pictures/Wallpapers"
                 }
@@ -149,6 +162,7 @@ PanelWindow {
             transition_type: root.transitionType,
             transition_duration: root.transitionDuration,
             transition_fps: root.transitionFps,
+            wallpaper_mode: root.wallpaperMode,
             thumb_size: 220, columns: 4,
             slideshow_enabled: root.slideshowEnabled,
             slideshow_interval_minutes: root.slideshowMinutes
@@ -308,22 +322,33 @@ PanelWindow {
         onTriggered: root.hiddenForTransition = false
     }
 
+    // Map wallpaperMode → awww --scaling flag
+    function _modeToAwww(mode) {
+        switch (mode) {
+            case "fit":     return "fit"
+            case "stretch": return "stretch"
+            case "center":  return "center"
+            case "tile":    return "tile"
+            default:        return "crop"   // "fill" → crop (PreserveAspectCrop)
+        }
+    }
+
     function setWallpaper(path) {
         root.statusText = "Menerapkan " + path.split("/").pop() + "..."
 
-        // Sembunyikan panel selama transisi awww berlangsung
-        // durasi transisi × 1000 + 800ms buffer agar transisi benar-benar selesai dulu
         root.hiddenForTransition = true
         reshowTimer.interval = Math.round(root.transitionDuration * 1000) + 800
         reshowTimer.restart()
 
-        const esc = path.replace(/'/g, "'\\''")
+        const esc     = path.replace(/'/g, "'\\''")
+        const scaling = root._modeToAwww(root.wallpaperMode)
         setProc.command = ["sh", "-c",
             "(awww query >/dev/null 2>&1 || (awww-daemon >/dev/null 2>&1 & sleep 0.4)) && " +
             "awww img '" + esc + "'" +
             " --transition-type "     + root.transitionType +
             " --transition-duration " + root.transitionDuration +
             " --transition-fps "      + root.transitionFps +
+            " --scaling "             + scaling +
             " && mkdir -p ~/.cache/wallpaper" +
             " && printf '%s' '" + esc + "' > ~/.cache/wallpaper/current" +
             " && ln -sf '"     + esc + "' ~/.cache/wallpaper/hyprlock-bg" +
@@ -571,153 +596,6 @@ PanelWindow {
                     Rectangle { Layout.fillWidth: true; height: 1; color: Root.Colors.surface1 }
                 }
 
-                // ── Settings collapsible ──────────────────────────────
-                Item {
-                    id: settingsPanel
-                    Layout.fillWidth: true
-                    Layout.leftMargin: 14; Layout.rightMargin: 14; Layout.topMargin: 4
-                    Layout.preferredHeight: root.settingsOpen ? settingsInner.height : 0
-                    clip: true
-                    visible: Layout.preferredHeight > 0
-                    Behavior on Layout.preferredHeight { NumberAnimation { duration: Root.Appearance.animation.elementResize.duration; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
-
-                    Rectangle {
-                        id: settingsInner
-                        anchors { left: parent.left; right: parent.right; top: parent.top }
-                        height: settingsCol.implicitHeight + 24
-                        radius: 10
-                        color: Root.Colors.base
-                        border.color: Root.Colors.surface1
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
-
-                        ColumnLayout {
-                            id: settingsCol
-                            anchors { top: parent.top; left: parent.left; right: parent.right; margins: 12 }
-                            spacing: 10
-
-                            // Folder
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Text { text: "Folder"; font.pixelSize: 11; color: Root.Colors.subtext; Layout.preferredWidth: 70 }
-                                Rectangle {
-                                    Layout.fillWidth: true; height: 28; radius: 6
-                                    color: dirHov.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0
-                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
-                                    RowLayout {
-                                        anchors.fill: parent; anchors.leftMargin: 8; anchors.rightMargin: 8; spacing: 6
-                                        Text { text: "󰉋"; font.pixelSize: 12; font.family: root.nf; color: Root.Colors.subtext }
-                                        Text { Layout.fillWidth: true; text: root.wallpaperDir; font.pixelSize: 11; color: Root.Colors.text; elide: Text.ElideLeft }
-                                    }
-                                    MouseArea {
-                                        id: dirHov; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                        onClicked: { dirPickProc.command = ["sh", "-c", "zenity --file-selection --directory --title='Pilih folder wallpaper' 2>/dev/null"]; dirPickProc.running = true }
-                                    }
-                                }
-                            }
-
-                            // Transition chips
-                            RowLayout {
-                                Layout.fillWidth: true
-                                Text { text: "Transisi"; font.pixelSize: 11; color: Root.Colors.subtext; Layout.preferredWidth: 70 }
-                                Flow {
-                                    spacing: 4; Layout.fillWidth: true
-                                    Repeater {
-                                        model: ["simple","fade","wipe","wave","grow","center","outer","random"]
-                                        delegate: Rectangle {
-                                            required property string modelData
-                                            height: 22; width: chipLbl.implicitWidth + 16; radius: 6
-                                            color: root.transitionType === modelData ? Root.Colors.blue : (chipMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
-                                            Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
-                                            Text { id: chipLbl; anchors.centerIn: parent; text: modelData; font.pixelSize: 10; color: root.transitionType === modelData ? Root.Colors.base : Root.Colors.text }
-                                            MouseArea { id: chipMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor; onClicked: { root.transitionType = modelData; root.saveConfig() } }
-                                        }
-                                    }
-                                }
-                            }
-
-                            // Dur / FPS
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
-
-                                Text { text: "Durasi"; font.pixelSize: 11; color: Root.Colors.subtext }
-                                Rectangle {
-                                    height: 24; width: 60; radius: 6; color: Root.Colors.surface0
-                                    TextInput {
-                                        id: durInput
-                                        anchors.centerIn: parent; width: parent.width - 10
-                                        text: root.transitionDuration
-                                        font.pixelSize: 11; color: Root.Colors.text
-                                        validator: DoubleValidator { bottom: 0.1; top: 5.0; decimals: 1 }
-                                        onEditingFinished: { root.transitionDuration = parseFloat(text) || 1.0; root.saveConfig() }
-                                    }
-                                }
-                                Text { text: "dtk"; font.pixelSize: 11; color: Root.Colors.subtext }
-
-                                Item { Layout.preferredWidth: 8 }
-
-                                Text { text: "FPS"; font.pixelSize: 11; color: Root.Colors.subtext }
-                                Rectangle {
-                                    height: 24; width: 52; radius: 6; color: Root.Colors.surface0
-                                    TextInput {
-                                        id: fpsInput
-                                        anchors.centerIn: parent; width: parent.width - 10
-                                        text: root.transitionFps
-                                        font.pixelSize: 11; color: Root.Colors.text
-                                        validator: IntValidator { bottom: 24; top: 144 }
-                                        onEditingFinished: { root.transitionFps = parseInt(text) || 60; root.saveConfig() }
-                                    }
-                                }
-
-                                Item { Layout.fillWidth: true }
-                            }
-
-                            // Slideshow
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: 10
-
-                                Text { text: "Slideshow"; font.pixelSize: 11; color: Root.Colors.subtext }
-                                Text { text: "tiap"; font.pixelSize: 11; color: Root.Colors.subtext }
-                                Rectangle {
-                                    height: 24; width: 46; radius: 6; color: Root.Colors.surface0
-                                    TextInput {
-                                        id: slideInput
-                                        anchors.centerIn: parent; width: parent.width - 10
-                                        text: root.slideshowMinutes
-                                        font.pixelSize: 11; color: Root.Colors.text
-                                        validator: IntValidator { bottom: 1; top: 120 }
-                                        onEditingFinished: { root.slideshowMinutes = parseInt(text) || 5; root.saveConfig() }
-                                    }
-                                }
-                                Text { text: "menit"; font.pixelSize: 11; color: Root.Colors.subtext }
-
-                                Item { Layout.fillWidth: true }
-
-                                Rectangle {
-                                    height: 26; width: slideLbl.implicitWidth + 22; radius: 6
-                                    color: root.slideshowEnabled ? Root.Colors.blue : (slideTogMa.containsMouse ? Root.Colors.surface1 : Root.Colors.surface0)
-                                    Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
-                                    Text { id: slideLbl; anchors.centerIn: parent; text: root.slideshowEnabled ? "ON" : "OFF"; font.pixelSize: 10; font.bold: true; color: root.slideshowEnabled ? Root.Colors.base : Root.Colors.subtext }
-                                    MouseArea { id: slideTogMa; anchors.fill: parent; hoverEnabled: true; cursorShape: Qt.PointingHandCursor
-                                        onClicked: { root.slideshowEnabled = !root.slideshowEnabled; root.saveConfig(); root.slideshowEnabled ? root.startSlideshow() : root.stopSlideshow() }
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Process {
-                        id: dirPickProc
-                        stdout: StdioCollector {
-                            onStreamFinished: {
-                                const d = text.trim()
-                                if (d.length > 0) { root.wallpaperDir = d; root.saveConfig(); root.scanWallpapers() }
-                            }
-                        }
-                    }
-                }
 
                 // ── Grid thumbnail ────────────────────────────────────
                 GridView {
@@ -911,23 +789,17 @@ PanelWindow {
             }
 
             // ════════════════════════════════════════════════════════════
-            // KOLOM KANAN — preview wallpaper (tersembunyi saat settings terbuka)
+            // KOLOM KANAN — preview wallpaper
             // ════════════════════════════════════════════════════════════
             Rectangle {
                 id: previewCol
-                Layout.preferredWidth: root.settingsOpen ? 0 : 260
+                Layout.preferredWidth: 260
                 Layout.minimumWidth: 0
-                Layout.maximumWidth: root.settingsOpen ? 0 : 260
                 Layout.fillHeight: true
                 clip: true
                 color: Root.Colors.base
                 radius: 0
                 layer.enabled: true
-                opacity: root.settingsOpen ? 0 : 1
-
-                Behavior on Layout.preferredWidth { NumberAnimation { duration: 200; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
-                Behavior on Layout.maximumWidth   { NumberAnimation { duration: 200; easing.type: Root.Appearance.animation.elementMove.type; easing.bezierCurve: Root.Appearance.animation.elementMove.bezierCurve } }
-                Behavior on opacity               { NumberAnimation { duration: 180 } }
                 Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
 
                 ColumnLayout {
@@ -1012,6 +884,41 @@ PanelWindow {
                         Text { id: activeLbl; anchors.centerIn: parent; text: "✓ Aktif saat ini"; font.pixelSize: 10; color: Root.Colors.green }
                     }
 
+                    // Badge mode positioning
+                    Rectangle {
+                        visible: root.wallpaperMode !== ""
+                        height: 22; width: modeBadgeLbl.implicitWidth + 16; radius: 6
+                        color: Qt.rgba(Root.Colors.lavender.r, Root.Colors.lavender.g, Root.Colors.lavender.b, 0.15)
+                        border.color: Qt.rgba(Root.Colors.lavender.r, Root.Colors.lavender.g, Root.Colors.lavender.b, 0.5)
+                        border.width: 1
+                        Behavior on color        { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration } }
+                        Behavior on border.color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration } }
+
+                        RowLayout {
+                            anchors.centerIn: parent; spacing: 4
+                            Text {
+                                text: {
+                                    switch (root.wallpaperMode) {
+                                        case "fit":     return "󰹚"
+                                        case "stretch": return "󰢅"
+                                        case "center":  return "󰘞"
+                                        case "tile":    return "󰙀"
+                                        default:        return "󰹙"  // fill
+                                    }
+                                }
+                                font.pixelSize: 11; font.family: root.nf
+                                color: Root.Colors.lavender
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration } }
+                            }
+                            Text {
+                                id: modeBadgeLbl
+                                text: root.wallpaperMode.charAt(0).toUpperCase() + root.wallpaperMode.slice(1)
+                                font.pixelSize: 10; color: Root.Colors.lavender
+                                Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration } }
+                            }
+                        }
+                    }
+
                     Item { Layout.fillHeight: true }
 
                     // Tombol Set Wallpaper
@@ -1060,6 +967,39 @@ PanelWindow {
                     }
                 }
             }
+        }
+
+        // ── Settings popup overlay ────────────────────────────────────────
+        WallpaperSettings {
+            id: settingsPopup
+            anchors.fill: parent
+
+            open: root.settingsOpen
+            onOpenChanged: root.settingsOpen = open
+
+            wallpaperDir:       root.wallpaperDir
+            transitionType:     root.transitionType
+            transitionDuration: root.transitionDuration
+            transitionFps:      root.transitionFps
+            slideshowEnabled:   root.slideshowEnabled
+            slideshowMinutes:   root.slideshowMinutes
+            wallpaperMode:      root.wallpaperMode
+
+            onWallpaperDirChanged:       root.wallpaperDir       = wallpaperDir
+            onTransitionTypeChanged:     root.transitionType     = transitionType
+            onTransitionDurationChanged: root.transitionDuration = transitionDuration
+            onTransitionFpsChanged:      root.transitionFps      = transitionFps
+            onSlideshowEnabledChanged: {
+                root.slideshowEnabled = slideshowEnabled
+                root.slideshowEnabled ? root.startSlideshow() : root.stopSlideshow()
+            }
+            onSlideshowMinutesChanged:   root.slideshowMinutes   = slideshowMinutes
+            onWallpaperModeChanged:      root.wallpaperMode      = wallpaperMode
+
+            onSaveRequested:        root.saveConfig()
+            onScanRequested:        root.scanWallpapers()
+            onPickFolderRequested:  root.pickFolderRequested()
+            onPickingDirChanged:    {} // tidak dipakai lagi
         }
     }
 

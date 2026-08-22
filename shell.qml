@@ -169,6 +169,13 @@ ShellRoot {
         onPressed: Quickshell.reload(true)
     }
 
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "media"
+        description: "Toggle media player & equalizer panel"
+        onPressed: shellStateObj.mediaOpen = !shellStateObj.mediaOpen
+    }
+
     // ── IPC / CLI Integration Shortcuts ───────────────────────────────────
     // These shortcuts communicate via Nexus IPC protocol to registered actions
     // without affecting the core 17 global shortcuts above

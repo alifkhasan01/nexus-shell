@@ -35,6 +35,7 @@ PanelWindow {
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
     property bool bgAppsPanelOpen: false
+    property bool mediaPanelOpen: shellState ? shellState.mediaOpen : false
 
     onConnectPanelOpenChanged: {
         if (!connectPanelOpen) connectCloseTimer.restart()
@@ -50,6 +51,7 @@ PanelWindow {
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
     onBgAppsPanelOpenChanged:    if (!bgAppsPanelOpen)    bgAppsCloseTimer.restart()
+    onMediaPanelOpenChanged:     if (!mediaPanelOpen)     mediaCloseTimer.restart()
 
     // ── Close timers — di root agar selalu tersedia ───────────────────────
     Timer { id: powerCloseTimer;     interval: 300; repeat: false }
@@ -62,6 +64,7 @@ PanelWindow {
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     Timer { id: bgAppsCloseTimer;    interval: 300; repeat: false }
+    Timer { id: mediaCloseTimer;     interval: 300; repeat: false }
     anchors { top: true; left: true; right: true }
     margins.top: 0
     margins.left: 98
@@ -542,8 +545,45 @@ PanelWindow {
         active: bar.wallpaperPanelOpen || wallpaperCloseTimer.running
 
         WallpaperPanel {
+            id: wallpaperPanel
             open: bar.wallpaperPanelOpen
             onCloseRequested: bar.shellState.wallpaperPanelOpen = false
+            onPickFolderRequested: bar.startWallpaperFolderPicker()
+        }
+    }
+
+    // ── Wallpaper folder picker (jalankan di level Bar agar panel bisa
+    //    ditutup dulu, zenity dibuka, lalu panel dibuka kembali — persis
+    //    pola face picker di dashboard).
+    function startWallpaperFolderPicker() {
+        bar.shellState.wallpaperPanelOpen = false
+        wallpaperFolderPickerProc.running = true
+    }
+
+    Process {
+        id: wallpaperFolderPickerProc
+        command: ["sh", "-c",
+            "zenity --file-selection --directory " +
+            "--title='Pilih folder wallpaper' 2>/dev/null || echo ''"]
+        stdout: StdioCollector {
+            onStreamFinished: {
+                const dir = text.trim()
+                // Buka kembali panel, lalu kirim hasilnya
+                bar.shellState.wallpaperPanelOpen = true
+                // Delay kecil agar panel sempat dibuat sebelum kita update
+                wallpaperFolderApplyTimer.pickedDir = dir
+                wallpaperFolderApplyTimer.start()
+            }
+        }
+    }
+
+    Timer {
+        id: wallpaperFolderApplyTimer
+        interval: 350; repeat: false
+        property string pickedDir: ""
+        onTriggered: {
+            if (pickedDir.length > 0 && wallpaperLoader.item)
+                wallpaperLoader.item.onFolderPicked(pickedDir)
         }
     }
 
@@ -582,6 +622,17 @@ PanelWindow {
         BackgroundAppsPanel {
             open: bar.bgAppsPanelOpen
             onCloseRequested: bar.bgAppsPanelOpen = false
+        }
+    }
+
+    // ── Media Player + Equalizer Panel ────────────────────────────────────
+    LazyLoader {
+        id: mediaPanelLoader
+        active: bar.mediaPanelOpen || mediaCloseTimer.running
+
+        MediaPanel {
+            open: bar.mediaPanelOpen
+            onCloseRequested: bar.shellState.mediaOpen = false
         }
     }
 

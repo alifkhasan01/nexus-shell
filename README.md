@@ -111,7 +111,7 @@ Mencakup bar, dashboard, panel, notifikasi, OSD, lockscreen, dan power menu — 
 ## Instalasi
 
 ```bash
-git clone https://github.com/alifkhasan01/qs.git ~/.config/quickshell
+git clone https://github.com/alifkhasan01/nexus-shell.git ~/.config/quickshell
 qs
 ```
 

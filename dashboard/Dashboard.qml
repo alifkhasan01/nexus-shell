@@ -284,7 +284,7 @@ PanelWindow {
                             id: dashFaceImg
                             anchors.fill: parent
                             anchors.margins: 3
-                            source: "file:///home/youtta/.face"
+                            source: "file:///home/nexus/.face"
                             fillMode: Image.PreserveAspectCrop
                             smooth: true
                             mipmap: true
