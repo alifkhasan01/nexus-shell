@@ -381,14 +381,15 @@ PanelWindow {
                             width: 28
                             height: 28
                             radius: 8
-                            color: Root.Colors.surface1
+                            color: settingsBtn.containsMouse ? Root.Colors.surface2 : Root.Colors.surface1
                             Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             
                             Text {
                                 anchors.centerIn: parent
-                                text: "⚙️"
+                                text: "󰒓"
+                                font.family: "CaskaydiaCove Nerd Font"
                                 font.pixelSize: 14
-                                color: Root.Colors.text
+                                color: settingsBtn.containsMouse ? Root.Colors.lavender : Root.Colors.subtext
                                 Behavior on color { ColorAnimation { duration: Root.Appearance.animation.elementMoveFast.duration; easing.type: Root.Appearance.animation.elementMoveFast.type; easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve } }
                             }
                             
@@ -735,8 +736,14 @@ PanelWindow {
     }
     
     // ── Settings launcher process ──────────────────────────────────────────
+    // Guard: hanya buka jika belum ada instance settings yang berjalan
     Process {
         id: settingsProc
-        command: ["sh", "-c", "cd ~/.config/quickshell && quickshell -p settings.qml &"]
+        command: ["sh", "-c",
+            // grep -vw "$$" : buang PID sh ini sendiri dari hasil pgrep,
+            // karena cmdline sh mengandung pola & teks launch (self-match).
+            "pgrep -f 'quickshell -p settings.qml' | grep -qw \"$$\" || " +
+            "(cd ~/.config/quickshell && quickshell -p settings.qml &)"
+        ]
     }
 }

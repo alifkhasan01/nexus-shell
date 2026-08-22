@@ -135,7 +135,7 @@ Item {
                 easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
             }}
             text: {
-                if (root.muted || !root.sink?.audio) return "  Mute"
+                if (root.muted || !root.sink?.audio) return "󰕿  Mute"
                 const pct = Math.round(root.volume * 100)
                 const icon = pct === 0 ? "󰕿" : (pct < 50 ? "󰖀" : "󰕾")
                 return icon + "  " + pct + "%"

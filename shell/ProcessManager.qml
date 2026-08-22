@@ -27,12 +27,13 @@ Item {
     property bool hasVisualizer: false
     property bool hasBluetoothctl: false
     property bool hasNotifySend: false
+    property bool hasSwappy: false
 
     // ── Dependency Check ───────────────────────────────────────────
     Process {
         id: depsCheckProc
         command: ["sh", "-c",
-            "for b in grimblast bluetoothctl notify-send; do " +
+            "for b in grimblast bluetoothctl notify-send swappy; do " +
             "command -v \"$b\" >/dev/null 2>&1 && echo \"$b:1\" || echo \"$b:0\"; done; " +
             "test -x \"" + Quickshell.shellPath("scripts/qs_visualizer") + "\" && echo \"qs_visualizer:1\" || echo \"qs_visualizer:0\""]
 
@@ -50,6 +51,7 @@ Item {
                     else if (parts[0] === "qs_visualizer") processManager.hasVisualizer = val
                     else if (parts[0] === "bluetoothctl") processManager.hasBluetoothctl = val
                     else if (parts[0] === "notify-send") processManager.hasNotifySend = val
+                    else if (parts[0] === "swappy") processManager.hasSwappy = val
                 }
                 processManager.depsChecked = true
                 processManager.applyDependencies()
@@ -127,6 +129,7 @@ Item {
                         "Screenshot Tersimpan",
                         file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
                     console.log("[Screenshot:Select] Saved to:", file)
+                    openInSwappy(file)
                 } else {
                     screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=dialog-error",
@@ -180,6 +183,7 @@ Item {
                         "Screenshot Tersimpan",
                         file.replace(/.*\//, "") + "  ·  disalin ke clipboard"]
                     console.log("[Screenshot:Full] Saved to:", file)
+                    openInSwappy(file)
                 } else {
                     screenshotNotifProc.command = ["notify-send", "--app-name=Quickshell",
                         "--expire-time=4000", "--icon=dialog-error",
@@ -202,6 +206,20 @@ Item {
     }
 
     Process { id: screenshotNotifProc }
+
+    // Buka hasil screenshot di swappy (annotation editor) — hanya jika tersedia
+    Process {
+        id: swappyProc
+        command: []
+    }
+
+    function openInSwappy(file) {
+        if (!hasSwappy || file === "") return
+        console.log("[Screenshot] Membuka di swappy:", file)
+        swappyProc.command = ["swappy", "-f", file]
+        swappyProc.running = true
+    }
+
 
     // ── BlueZ Agent Process ────────────────────────────────────────
     // Auto-answer bluetooth pairing requests

@@ -183,9 +183,20 @@ ShellRoot {
         onPressed: shellStateObj.mediaOpen = !shellStateObj.mediaOpen
     }
 
+    GlobalShortcut {
+        appid: "quickshell"
+        name: "settings"
+        description: "Open settings application"
+        onPressed: {
+            // Hindari buka duplikat — kalau sudah jalan, fokuskan saja
+            settingsProc.running = false  // reset dulu agar bisa re-trigger
+            settingsProc.running = true
+        }
+    }
+
     // ── IPC / CLI Integration Shortcuts ───────────────────────────────────
     // These shortcuts communicate via Nexus IPC protocol to registered actions
-    // without affecting the core 17 global shortcuts above
+    // without affecting the core 18 global shortcuts above
 
     GlobalShortcut {
         appid: "quickshell"
@@ -375,5 +386,21 @@ ShellRoot {
     // dijadikan default agar slider volume di Bar & Dashboard ikut
     // mengontrol volume perangkat bluetooth tersebut.
     BluetoothDevicePromotion {
+    }
+
+    // ── Settings Launcher ─────────────────────────────────────────────────
+    // Pakai pgrep untuk hindari buka duplikat: kalau sudah jalan,
+    // aktivasi/focus window yang ada; kalau belum, buka baru.
+    Process {
+        id: settingsProc
+        command: ["sh", "-c",
+            // grep -vw "$$" : buang PID sh ini sendiri dari hasil pgrep,
+            // karena cmdline sh mengandung pola & teks launch (self-match).
+            "pgrep -f 'quickshell -p settings.qml' | grep -qw \"$$\" || " +
+            "(cd ~/.config/quickshell && quickshell -p settings.qml &)"
+        ]
+        onRunningChanged: {
+            if (!running) settingsProc.running = false
+        }
     }
 }

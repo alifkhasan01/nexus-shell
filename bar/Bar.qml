@@ -31,7 +31,6 @@ PanelWindow {
     property bool batteryPanelOpen: false
     property bool wallpaperPanelOpen: shellState ? shellState.wallpaperPanelOpen : false
     property bool notifPanelOpen: false
-    property bool settingsPanelOpen: false
     property bool clipboardPanelOpen: shellState ? shellState.clipboardOpen : false
     property bool calendarPanelOpen: shellState ? shellState.calendarOpen : false
     property bool bgAppsPanelOpen: false
@@ -47,7 +46,6 @@ PanelWindow {
     onWallpaperPanelOpenChanged: if (!wallpaperPanelOpen) wallpaperCloseTimer.restart()
     onPowerMenuOpenChanged:      if (!powerMenuOpen)      powerCloseTimer.restart()
     onNotifPanelOpenChanged:     if (!notifPanelOpen)     notifCloseTimer.restart()
-    onSettingsPanelOpenChanged:  if (!settingsPanelOpen)  settingsCloseTimer.restart()
     onClipboardPanelOpenChanged: if (!clipboardPanelOpen) clipboardCloseTimer.restart()
     onCalendarPanelOpenChanged:  if (!calendarPanelOpen)  calendarCloseTimer.restart()
     onBgAppsPanelOpenChanged:    if (!bgAppsPanelOpen)    bgAppsCloseTimer.restart()
@@ -60,7 +58,6 @@ PanelWindow {
     Timer { id: batteryCloseTimer;   interval: 300; repeat: false }
     Timer { id: wallpaperCloseTimer; interval: 300; repeat: false }
     Timer { id: notifCloseTimer;     interval: 300; repeat: false }
-    Timer { id: settingsCloseTimer;  interval: 300; repeat: false }
     Timer { id: clipboardCloseTimer; interval: 300; repeat: false }
     Timer { id: calendarCloseTimer;  interval: 300; repeat: false }
     Timer { id: bgAppsCloseTimer;    interval: 300; repeat: false }
@@ -121,7 +118,6 @@ PanelWindow {
                             bar.notifPanelOpen                = false
                             bar.shellState.clipboardOpen      = false
                             bar.shellState.calendarOpen       = false
-                            bar.settingsPanelOpen             = false
                         }
                     }
 
@@ -174,7 +170,6 @@ PanelWindow {
                                     bar.notifPanelOpen = false
                                     bar.shellState.clipboardOpen = false
                                     bar.shellState.calendarOpen = false
-                                    bar.settingsPanelOpen = false
                                 }
                             }
                         }
@@ -207,7 +202,6 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
-                            bar.settingsPanelOpen = false
                         }
                         // Right click → dashboard
                         onRightClicked: {
@@ -219,7 +213,6 @@ PanelWindow {
                             bar.shellState.wallpaperPanelOpen = false
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
-                            bar.settingsPanelOpen = false
                         }
                     }
 
@@ -253,7 +246,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                     }
 
@@ -269,7 +261,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                         onToggleWifi: {} // handled inside NetworkStatus widget
                     }
@@ -286,7 +277,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                         onToggleBt: {} // handled inside BluetoothStatus widget
                     }
@@ -335,7 +325,6 @@ PanelWindow {
                                 bar.shellState.wallpaperPanelOpen = false
                                 bar.shellState.clipboardOpen = false
                                 bar.shellState.calendarOpen = false
-                                bar.settingsPanelOpen = false
                             }
                         }
                     }
@@ -351,7 +340,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                         onOsdVolume: (value, muted) => osd.showVolume(value, muted)
                     }
@@ -372,58 +360,8 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                     }
-
-                    // ── Settings Button ───────────────────────────────────
-                    // Item {
-                    //     width: 30
-                    //     height: 26
-
-                    //     Rectangle {
-                    //         anchors.fill: parent
-                    //         radius: 6
-                    //         color: settingsArea.containsMouse
-                    //              ? Root.Colors.surface1
-                    //              : (bar.settingsPanelOpen ? Root.Colors.surface0 : "transparent")
-                    //         Behavior on color { ColorAnimation {
-                    //             duration: Root.Appearance.animation.elementMoveFast.duration
-                    //             easing.type: Root.Appearance.animation.elementMoveFast.type
-                    //             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                    //         }}
-                    //     }
-
-                    //     Text {
-                    //         anchors.centerIn: parent
-                    //         text: "󰒓"
-                    //         font.family: "CaskaydiaCove Nerd Font"
-                    //         font.pixelSize: 15
-                    //         color: bar.settingsPanelOpen ? Root.Colors.blue : Root.Colors.subtext
-                    //         Behavior on color { ColorAnimation {
-                    //             duration: Root.Appearance.animation.elementMoveFast.duration
-                    //             easing.type: Root.Appearance.animation.elementMoveFast.type
-                    //             easing.bezierCurve: Root.Appearance.animation.elementMoveFast.bezierCurve
-                    //         }}
-                    //     }
-
-                    //     MouseArea {
-                    //         id: settingsArea
-                    //         anchors.fill: parent
-                    //         hoverEnabled: true
-                    //         cursorShape: Qt.PointingHandCursor
-                    //         onClicked: {
-                    //             bar.settingsPanelOpen = !bar.settingsPanelOpen
-                    //             bar.shellState.connectionOpen = false
-                    //             bar.volumePanelOpen = false
-                    //             bar.shellState.dashboardOpen = false
-                    //             bar.shellState.wallpaperPanelOpen = false
-                    //             bar.notifPanelOpen = false
-                    //             bar.shellState.clipboardOpen = false
-                    //             bar.shellState.calendarOpen = false
-                    //         }
-                    //     }
-                    // }
 
                     PowerButton {
                         menuOpen: bar.powerMenuOpen
@@ -436,7 +374,6 @@ PanelWindow {
                             bar.notifPanelOpen = false
                             bar.shellState.clipboardOpen = false
                             bar.shellState.calendarOpen = false
-                            bar.settingsPanelOpen = false
                         }
                     }
                 }
@@ -601,18 +538,6 @@ PanelWindow {
             }
         }
     }
-
-    // ── Settings Panel ─────────────────────────────────────────────────────
-    // LazyLoader {
-    //     id: settingsLoader
-    //     active: bar.settingsPanelOpen || settingsCloseTimer.running
-
-    //     SettingsPanel {
-    //         open: bar.settingsPanelOpen
-    //         shellState: bar.shellState
-    //         onCloseRequested: bar.settingsPanelOpen = false
-    //     }
-    // }
 
     // ── Background Apps Panel ─────────────────────────────────────────────
     LazyLoader {
